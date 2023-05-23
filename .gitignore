@@ -1,0 +1,8 @@
+*.pyc
+db.sqlite3
+__pycache__/
+media/
+static/
+.env
+migrations/
+.vscode/
