@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import UserManager
+from company.models import Company
 
 
 # Create your models here.
@@ -16,6 +17,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     base_type = UserTypes.VIEWER
 
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="company_users",
+        blank=True,
+        null=True,
+    )
     first_name = models.CharField("first name", max_length=150, blank=True)
     last_name = models.CharField("last name", max_length=150, blank=True)
     email = models.EmailField(verbose_name="email address", max_length=255, unique=True)

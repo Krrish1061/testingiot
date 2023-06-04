@@ -22,4 +22,5 @@ urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("user/", include("users.urls")),
     path("sensor/", include("sensor_data.urls")),
+    path("company/", include("company.urls")),
 ]

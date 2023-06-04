@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import IotDevice, AdminSensor, Sensor, SensorData
 from users.models import AdminUser
+from .pagination import CustomPagination
 
 
 class IotDeviceSerializer(serializers.ModelSerializer):
@@ -16,7 +17,7 @@ class SensorSerializer(serializers.ModelSerializer):
         fields = ["name", "value_type", "unit"]
 
 
-class SensorDataSerializer(serializers.ModelSerializer):
+class SensorDataSerializer(serializers.Serializer):
     boardid = serializers.IntegerField()
     timestamp = serializers.DateTimeField()
 
@@ -75,13 +76,32 @@ class SensorDataGetSerializer(serializers.ModelSerializer):
         fields = ["iot_device_id", "value", "timestamp"]
 
 
+# class AdminUserSensorSerializer(serializers.ModelSerializer):
+#     sensor = SensorSerializer()
+#     sensor_data = SensorDataGetSerializer(source="admin_data_list", many=True)
+
+#     class Meta:
+#         model = AdminSensor
+#         fields = ["sensor", "sensor_data"]
+
+
 class AdminUserSensorSerializer(serializers.ModelSerializer):
     sensor = SensorSerializer()
-    sensor_data = SensorDataGetSerializer(source="admin_data_list", many=True)
+    sensors_data = serializers.SerializerMethodField()
 
     class Meta:
         model = AdminSensor
-        fields = ["sensor", "sensor_data"]
+        fields = ["sensor", "sensors_data"]
+
+    def get_sensors_data(self, obj):
+        request = self.context.get("request")
+        paginator = CustomPagination()
+        paginated_data = paginator.paginate_queryset(
+            obj.admin_data_list.order_by("-timestamp"),
+            request,
+        )
+        serializer = SensorDataGetSerializer(paginated_data, many=True)
+        return serializer.data
 
 
 class AdminSerializer(serializers.ModelSerializer):

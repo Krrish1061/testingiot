@@ -53,3 +53,15 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True")
 
         return self.create_user(email, password, **extra_fields)
+
+
+class AdminManager(UserManager):
+    """Defining the Model Manager for the Admin Proxy Model"""
+
+    def get_queryset(self, *args, **kwargs):
+        """Filtering the queryset by the Admin usertype"""
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(type=self.model.UserTypes.ADMIN)
+        )

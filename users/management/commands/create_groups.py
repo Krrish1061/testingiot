@@ -21,7 +21,7 @@ class Command(BaseCommand):
             "view_adminuserextrafield",
             "view_group",
             "view_permission",
-            "view_sensorvalue",
+            "Can view sensor data",
         ]
 
         # Get the permissions based on codenames
@@ -34,7 +34,8 @@ class Command(BaseCommand):
         admin_group, created = Group.objects.get_or_create(name="admin")
         admin_permissions_codenames = [
             "add_user",
-            "view_sensorvalue",
+            "change_user",
+            "view_sensordata",
         ]
 
         admin_permissions = Permission.objects.filter(
@@ -46,13 +47,13 @@ class Command(BaseCommand):
         # Create the moderator group and assign the moderator_access permission to it
         moderator_group, created = Group.objects.get_or_create(name="moderator")
         moderator_permissions = [
-            Permission.objects.get(codename="view_sensorvalue"),
+            Permission.objects.get(codename="view_sensordata"),
         ]
         moderator_group.permissions.set(moderator_permissions)
 
         # Create the viewer group and assign the viewer_access permission to it
         viewer_group, created = Group.objects.get_or_create(name="viewer")
         viewer_permission = [
-            Permission.objects.get(codename="view_sensorvalue"),
+            Permission.objects.get(codename="view_sensordata"),
         ]
         viewer_group.permissions.set(viewer_permission)

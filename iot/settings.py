@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "sensor_data",
+    "company",
 ]
 
 MIDDLEWARE = [

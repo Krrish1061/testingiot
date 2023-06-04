@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import Group
 from .models import User, AdminUserExtraField as UserExtraField
 from .forms import UserChangeForm, UserCreationForm
 from django import forms
@@ -19,6 +18,7 @@ class UserAdmin(BaseUserAdmin):
         "id",
         "first_name",
         "last_name",
+        "company",
         "type",
         "is_staff",
         "is_active",
@@ -28,7 +28,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ["email", "is_staff", "is_active", "type"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (("Personal info"), {"fields": ("first_name", "last_name")}),
+        (("Personal info"), {"fields": ("first_name", "last_name", "company")}),
         (
             "Permissions",
             {
@@ -55,6 +55,7 @@ class UserAdmin(BaseUserAdmin):
                     "password1",
                     "password2",
                     "type",
+                    "company",
                     "company_name",
                     "create_partition",
                     "is_staff",

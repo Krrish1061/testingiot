@@ -43,7 +43,7 @@ class Sensor(models.Model):
 
     """
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     value_type = models.CharField(max_length=150)
     unit = models.CharField(max_length=150)
 
