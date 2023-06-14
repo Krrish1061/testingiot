@@ -66,7 +66,7 @@ ROOT_URLCONF = "iot.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -192,6 +192,5 @@ CORS_ALLOW_HEADERS = [
     "Content-Type",
     "AUTHORIZATION",
 ]
-
 
 AUTH_USER_MODEL = "users.User"
