@@ -6,7 +6,7 @@ from django.conf import settings
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def handle_user_registered(sender, created, instance, **kwargs):
-    # mske sure api key are generated for the admin user created by the superadmin only
+    # make sure api key are generated for the admin user created by the superadmin only
     if created:
         # and instance.type == "ADMIN": implement it after testing
         api_key = ""

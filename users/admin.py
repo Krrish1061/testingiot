@@ -1,8 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, AdminUserExtraField as UserExtraField
+from .models import User
 from .forms import UserChangeForm, UserCreationForm
-from django import forms
 
 
 # Register your models here.
@@ -56,8 +55,6 @@ class UserAdmin(BaseUserAdmin):
                     "password2",
                     "type",
                     "company",
-                    "company_name",
-                    "create_partition",
                     "is_staff",
                     "is_active",
                     "groups",
@@ -66,27 +63,5 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
-    search_fields = ("email",)
-    ordering = ("email",)
-
-
-# admin.site.register(AdminUserExtraField)
-@admin.register(UserExtraField)
-class AdminUserExtraField(admin.ModelAdmin):
-    list_display = ["admin_user", "company_name", "create_partition"]
-    fieldsets = (
-        ((None, {"fields": ("admin_user", "company_name", "create_partition")})),
-    )
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": (
-                    "admin_user",
-                    "create_partition",
-                    "company_name",
-                ),
-            },
-        ),
-    )
+    search_fields = ("email", "company")
+    ordering = ("email", "company")

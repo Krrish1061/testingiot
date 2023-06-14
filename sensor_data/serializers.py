@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from .models import IotDevice, AdminSensor, Sensor, SensorData
-from users.models import AdminUser
-from .pagination import CustomPagination
+from .models import IotDevice, CompanySensor, Sensor, SensorData
+from company.models import Company
 
 
 class IotDeviceSerializer(serializers.ModelSerializer):
@@ -17,6 +16,36 @@ class SensorSerializer(serializers.ModelSerializer):
         fields = ["name", "value_type", "unit"]
 
 
+class CompanySensorSerializer(serializers.Serializer):
+    company = serializers.IntegerField()
+    fieldname_sensor_dict = serializers.DictField(
+        child=serializers.CharField(max_length=255)
+    )
+
+    def validate(self, attrs):
+        sensor_name_list = set(self.context["sensor_name"])
+        if set(attrs["fieldname_sensor_dict"].values()).issubset(sensor_name_list):
+            return attrs
+        else:
+            raise serializers.ValidationError({"error": "Sensor does not exist"})
+
+    def create(self, validated_data):
+        try:
+            company = Company.objects.get(pk=validated_data["company"])
+        except Company.DoesNotExist:
+            raise serializers.ValidationError({"error": "Company does not exist"})
+        company_sensors = []
+        for field_name, sensor_value in validated_data["fieldname_sensor_dict"].items():
+            sensor_obj = Sensor.objects.get(name=sensor_value)
+            company_sensor = CompanySensor(
+                company=company,
+                sensor=sensor_obj,
+                field_name=field_name,
+            )
+            company_sensors.append(company_sensor)
+        return CompanySensor.objects.bulk_create(company_sensors)
+
+
 class SensorDataSerializer(serializers.Serializer):
     boardid = serializers.IntegerField()
     timestamp = serializers.DateTimeField()
@@ -27,13 +56,13 @@ class SensorDataSerializer(serializers.Serializer):
 
     def get_sensor_fields(self):
         fields = {}
-        admin_user_sensors = self.context["admin_user_sensors"]
+        company_sensors = self.context["company_sensors"]
 
-        for admin_user_sensor in admin_user_sensors:
-            field_name = admin_user_sensor.field_name
-            if admin_user_sensor.sensor.name == "mains":
+        for company_sensor in company_sensors:
+            field_name = company_sensor.field_name
+            if company_sensor.sensor.name == "mains":
                 fields[field_name] = serializers.ChoiceField(
-                    choices=[(1, "On"), (0, "Off")]
+                    choices=[(1, "ON"), (0, "OFF")]
                 )
             else:
                 fields[field_name] = serializers.FloatField()
@@ -45,82 +74,26 @@ class SensorDataSerializer(serializers.Serializer):
         try:
             iot_device = IotDevice.objects.get(iot_device_id=boardid)
         except IotDevice.DoesNotExist:
-            raise serializers.ValidationError({"message": "Device does not exist"})
-        if user != iot_device.user:
-            raise serializers.ValidationError({"message": "Invalid Iot device"})
+            raise serializers.ValidationError({"error": "Device does not exist"})
+        if user.company != iot_device.company:
+            raise serializers.ValidationError({"error": "Invalid Iot device"})
         return attrs
 
     def create(self, validated_data):
         sensor_data = []
-        admin_user_sensors = self.context["admin_user_sensors"]
+        company_sensors = self.context["company_sensors"]
         boardid = self.context["request"].POST.get("boardid")
         iot_device = IotDevice.objects.get(iot_device_id=boardid)
-        for admin_user_sensor in admin_user_sensors:
-            field_name = admin_user_sensor.field_name
+        for company_sensor in company_sensors:
+            field_name = company_sensor.field_name
             sensor_data.append(
                 SensorData(
-                    admin_user_sensor=admin_user_sensor,
+                    company_sensor=company_sensor,
                     iot_device=iot_device,
-                    admin_user_id=admin_user_sensor.user,
+                    company_id=company_sensor.company,
                     value=validated_data[field_name],
                     timestamp=validated_data.get("timestamp"),
                 )
             )
 
         return SensorData.objects.bulk_create(sensor_data)
-
-
-class SensorDataGetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SensorData
-        fields = ["iot_device_id", "value", "timestamp"]
-
-
-# class AdminUserSensorSerializer(serializers.ModelSerializer):
-#     sensor = SensorSerializer()
-#     sensor_data = SensorDataGetSerializer(source="admin_data_list", many=True)
-
-#     class Meta:
-#         model = AdminSensor
-#         fields = ["sensor", "sensor_data"]
-
-
-class AdminUserSensorSerializer(serializers.ModelSerializer):
-    sensor = SensorSerializer()
-    sensors_data = serializers.SerializerMethodField()
-
-    class Meta:
-        model = AdminSensor
-        fields = ["sensor", "sensors_data"]
-
-    def get_sensors_data(self, obj):
-        request = self.context.get("request")
-        paginator = CustomPagination()
-        paginated_data = paginator.paginate_queryset(
-            obj.admin_data_list.order_by("-timestamp"),
-            request,
-        )
-        serializer = SensorDataGetSerializer(paginated_data, many=True)
-        return serializer.data
-
-
-class AdminSerializer(serializers.ModelSerializer):
-    user_type = serializers.CharField(max_length=255, source="type", read_only=True)
-    iot_device = IotDeviceSerializer(
-        source="iot_device_list", many=True, read_only=True
-    )
-    sensor_data = AdminUserSensorSerializer(
-        source="sensor_list", many=True, read_only=True
-    )
-
-    class Meta:
-        model = AdminUser
-        fields = [
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-            "user_type",
-            "iot_device",
-            "sensor_data",
-        ]

@@ -132,6 +132,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static/"
+# STATICFILES_DIRS = [BASE_DIR / "iot-frontend/dist/assets"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -188,6 +189,8 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = [
     "API-KEY",
+    "Content-Type",
+    "AUTHORIZATION",
 ]
 
 

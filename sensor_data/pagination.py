@@ -1,9 +1,8 @@
-from django.core.paginator import Page, Paginator
 from collections import defaultdict
+from django.core.paginator import Page, Paginator, PageNotAnInteger
 from django.utils.functional import cached_property
-from math import ceil
 from rest_framework.utils.urls import remove_query_param, replace_query_param
-from rest_framework.pagination import PageNumberPagination
+from math import ceil
 
 
 class SensorDataPaginator(Paginator):
@@ -50,7 +49,7 @@ class SensorDataPaginator(Paginator):
         sensors = self.get_sensors(request)
         for sensor in sensors:
             sensors_data[sensor].append(
-                self.object_list.filter(admin_user_sensor__sensor__name=sensor)
+                self.object_list.filter(company_sensor__sensor__name=sensor)
             )
         sensor_data = {
             sensor: querysets[0][bottom:top] if querysets else None
@@ -89,21 +88,6 @@ class SensorDataPaginator(Paginator):
         """Return the total number of pages."""
         if self.count == 0 and not self.allow_empty_first_page:
             return 0
+        # handle division by zero when there are no sensor names
         hits = max(1, (self.count / len(self.sensor_names)))
         return ceil(hits / self.per_page)
-
-
-class CustomPagination(PageNumberPagination):
-    page_size = 10  # Number of items to include in each page
-    page_size_query_param = "page_size"
-    max_page_size = 800  # Maximum number of items per page
-
-    @cached_property
-    def get_count(self, queryset):
-        """
-        Determine an object count, supporting either querysets or regular lists.
-        """
-        try:
-            return queryset.count()
-        except (AttributeError, TypeError):
-            return len(queryset)

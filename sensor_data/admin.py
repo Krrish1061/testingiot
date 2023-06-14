@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     IotDevice,
     Sensor,
-    AdminSensor,
+    CompanySensor,
     SensorData,
 )
 
@@ -11,7 +11,7 @@ from .models import (
 @admin.register(IotDevice)
 class IotDeviceAdmin(admin.ModelAdmin):
     list_display = (
-        "user",
+        "company",
         "iot_device_id",
         "iot_device_location",
         "is_active",
@@ -27,10 +27,10 @@ class SensorAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(AdminSensor)
+@admin.register(CompanySensor)
 class AdminUserSensorAdmin(admin.ModelAdmin):
     list_display = (
-        "user",
+        "company",
         "sensor",
         "field_name",
     )
@@ -39,8 +39,8 @@ class AdminUserSensorAdmin(admin.ModelAdmin):
 @admin.register(SensorData)
 class SensorDataAdmin(admin.ModelAdmin):
     list_display = (
-        "admin_user_sensor",
-        "admin_user_id",
+        "company_sensor",
+        "company_id",
         "iot_device",
         "value",
         "timestamp",

@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 
 class UserManager(BaseUserManager):
@@ -20,6 +21,19 @@ class UserManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+
+        if user.type == "SUPERADMIN":
+            super_admin_group = Group.objects.get(name="super_admin")
+            user.groups.add(super_admin_group)
+        elif user.type == "ADMIN":
+            admin_group = Group.objects.get(name="admin")
+            user.groups.add(admin_group)
+        elif user.type == "MODERATOR":
+            moderator_group = Group.objects.get(name="moderator")
+            user.groups.add(moderator_group)
+        else:
+            viewer_group = Group.objects.get(name="viewer")
+            user.groups.add(viewer_group)
         return user
 
     def create_staffuser(self, email, password, **extra_fields):

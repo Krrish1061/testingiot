@@ -6,8 +6,6 @@ from company.models import Company
 
 
 # Create your models here.
-
-
 class User(AbstractBaseUser, PermissionsMixin):
     class UserTypes(models.TextChoices):
         SUPERADMIN = "SUPERADMIN", "superadmin"
@@ -19,7 +17,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     company = models.ForeignKey(
         Company,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="company_users",
         blank=True,
         null=True,
@@ -68,27 +66,6 @@ class AdminUser(User):
 
     class Meta:
         proxy = True
-
-
-class AdminUserExtraField(models.Model):
-    """Defining the extra field needed for the admin user"""
-
-    admin_user = models.OneToOneField(
-        AdminUser, on_delete=models.CASCADE, related_name="admin_extra_field"
-    )
-
-    company_name = models.CharField(
-        max_length=50,
-        unique=True,
-        null=True,
-        blank=True,
-        # editable=False,
-        help_text="Company name will be used as a MYSQL Table partition name for the admin User",
-    )
-    create_partition = models.BooleanField(default=True)
-
-    def __str__(self) -> str:
-        return self.company_name if self.company_name else "no company name associated"
 
 
 # Modifying the query set for proxy Moderator model

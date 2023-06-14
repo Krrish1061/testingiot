@@ -10,8 +10,8 @@ class ApiKeyAuthentication(BaseAuthentication):
     """User Authentication via Api Key"""
 
     def authenticate(self, request):
+        print(request.headers.get("Authorization"))
         api_key = request.headers.get("api-key")
-
         if not api_key:
             raise AuthenticationFailed(
                 "Include API key or unsupported format", status.HTTP_401_UNAUTHORIZED
