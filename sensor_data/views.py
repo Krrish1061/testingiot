@@ -126,6 +126,17 @@ def save_sensor_data(request):
         for data in datas:
             sensor_data[data.user_sensor.sensor.name] = data.value
         print(sensor_data)
+        try:
+            url = "https://tserver.devchandant.com/api/root/sensor/get-data"
+            #     "https://coldstorenepal.com/api/root/sensor/get-data", data=sensor_data
+
+            response = requests.post(url=url, json=sensor_data)
+            print("send", json.dumps(sensor_data))
+            print("Response status code:", response.status_code)
+            print("Response content:", response.content)
+        except requests.exceptions.RequestException as e:
+            # Print the error message
+            print("An error occurred:", e)
 
         #  websocket
         send_data_to_group(
@@ -163,8 +174,8 @@ def save_sensor_data(request):
             datas = serializer.save()
 
         sensor_data = {}
-        sensor_data["user_email"] = datas[0].company_sensor.company.email
-        sensor_data["iot_device_id"] = datas[0].iot_device.id
+        sensor_data["useremail"] = datas[0].company_sensor.company.email
+        sensor_data["iotdeviceid"] = datas[0].iot_device.id
         sensor_data["timestamp"] = (
             datas[0]
             .timestamp.astimezone(timezone.get_default_timezone())
@@ -172,11 +183,12 @@ def save_sensor_data(request):
         )
         for data in datas:
             sensor_data[data.company_sensor.sensor.name] = data.value
-        print(sensor_data)
-        # requests.post(
-        #     "https://coldstorenepal.com/api/root/sensor/get-data", data=sensor_data
-        # )
-
+        # print(sensor_data)
+        response = requests.post(
+            #     "https://coldstorenepal.com/api/root/sensor/get-data", data=sensor_data
+            "https://tserver.devchandant.com/api/root/sensor/get-data",
+            json=sensor_data,
+        )
         # websocket
         send_data_to_group(
             user=None,

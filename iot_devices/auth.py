@@ -10,6 +10,8 @@ class DeviceAuthentication(BaseAuthentication):
     def authenticate(self, request):
         api_key = request.headers.get("api-key")
         if not api_key:
+            api_key = request.data.get("API-KEY")
+        if not api_key:
             raise AuthenticationFailed(
                 {"error": "Include API key or unsupported format"},
                 status.HTTP_401_UNAUTHORIZED,
