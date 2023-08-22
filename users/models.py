@@ -1,12 +1,48 @@
-from django.db import models
 from django.utils import timezone
+from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from .managers import UserManager
 from company.models import Company
+from users.validators import validate_file_size
+from .managers import UserManager, AdminManager, ModeratorManager, ViewerManager
 
 
 # Create your models here.
 class User(AbstractBaseUser, PermissionsMixin):
+    """
+    User model representing users in the system.
+
+    The model provides fields for basic user information, such as
+    first name, last name, email etc.
+
+    Fields:
+        company (Company): The company associated with the user.
+            If not associated with any company, this field will be blank and set to null.
+
+        is_associated_with_company (bool): A boolean flag indicating if the user is associated
+            with a company. If True, the 'company' field must be present.
+
+        email (str): The email address of the user. Must be unique.
+
+        is_staff (bool): A boolean flag indicating if the user is a staff member with admin
+            access to the Django admin interface.
+
+        is_active (bool): A boolean flag indicating if the user account is active.
+
+        date_joined (datetime): The date and time when the user account was created.
+
+        api_key (str): The authentication API key for the user, if applicable.
+
+        type (str): The user type, chosen from the UserTypes enumeration. Defaults to 'VIEWER'.
+            UserTypes (Enum): An enumeration representing the possible user types.
+                - SUPERADMIN: Represents a superadmin user with the highest privileges.
+                - ADMIN: Represents an admin user with administrative privileges.
+                - MODERATOR: Represents a moderator user with specific moderation privileges.
+                - VIEWER: Represents a viewer user with viewer privileges.
+            base_type (str): The default user type for new users. Set to 'VIEWER' by default.
+
+    """
+
     class UserTypes(models.TextChoices):
         SUPERADMIN = "SUPERADMIN", "superadmin"
         ADMIN = "ADMIN", "admin"
@@ -22,14 +58,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=True,
     )
-    first_name = models.CharField("first name", max_length=150, blank=True)
-    last_name = models.CharField("last name", max_length=150, blank=True)
+    is_associated_with_company = models.BooleanField(default=False, blank=True)
     email = models.EmailField(verbose_name="email address", max_length=255, unique=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now, editable=False)
     api_key = models.CharField(
-        verbose_name="Authentication Api key", max_length=32, null=True, blank=True
+        verbose_name="Authentication Api key",
+        max_length=32,
+        unique=True,
+        null=True,
+        blank=True,
     )
     type = models.CharField(
         verbose_name="User type",
@@ -49,17 +88,40 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Returns the string representation of the User model"""
         return self.email
 
+    def clean(self):
+        if self.company and not self.is_associated_with_company:
+            raise ValidationError(
+                "is_associated_with_company must be True when user is associated with company."
+            )
+        if not self.company and self.is_associated_with_company:
+            raise ValidationError(
+                "is_associated_with_company must be False when user is not associated with company."
+            )
 
-class AdminManager(UserManager):
-    """Defining the Model Manager for the Admin Proxy Model"""
+    def save(self, *args, **kwargs):
+        if self.company:
+            self.is_associated_with_company = True
+        else:
+            self.is_associated_with_company = False
+        super().save(*args, **kwargs)
 
-    def get_queryset(self, *args, **kwargs):
-        """Filtering the queryset by the Admin usertype"""
-        return super().get_queryset(*args, **kwargs).filter(type=User.UserTypes.ADMIN)
 
-
+# Defining the proxy model for Admin usertypes
 class AdminUser(User):
-    """Defining the proxy model for the Admin User"""
+    """
+    Proxy model representing an Admin User.
+
+    This model extends the base User model to represent users with administrative
+    privileges. It inherits all fields and behavior from the User model but sets
+    user type to 'ADMIN'.
+
+    base_type (str): The base user type of this model. It is set to 'ADMIN'.
+    objects (AdminManager): Custom manager to retrieve AdminUser instances.
+
+    Note: AdminUser is a proxy model, meaning it shares the same database table
+          and fields with the User model. It does not create a separate table.
+
+    """
 
     base_type = User.UserTypes.ADMIN
     objects = AdminManager()
@@ -68,19 +130,23 @@ class AdminUser(User):
         proxy = True
 
 
-# Modifying the query set for proxy Moderator model
-class ModeratorManager(UserManager):
-    """Defining the Model Manager for the Moderator Proxy Model"""
-
-    def get_queryset(self, *args, **kwargs):
-        return (
-            super().get_queryset(*args, **kwargs).filter(type=User.UserTypes.MODERATOR)
-        )
-
-
 # Defining the proxy model for Moderator usertypes
 class ModeratorUser(User):
-    """Defining the proxy model for the Moderator User"""
+
+    """
+    Proxy model representing an Moderator User.
+
+    This model extends the base User model to represent users with Moderator
+    privileges. It inherits all fields and behavior from the User model but sets
+    user type to 'Moderator'.
+
+    base_type (str): The base user type of this model. It is set to 'MODERATOR'.
+    objects (ModeratorManager): Custom manager to retrieve ModeratorUser instances.
+
+    Note: ModeratorUser is a proxy model, meaning it shares the same database table
+          and fields with the User model. It does not create a separate table.
+
+    """
 
     base_type = User.UserTypes.MODERATOR
     objects = ModeratorManager()
@@ -89,20 +155,112 @@ class ModeratorUser(User):
         proxy = True
 
 
-# Modifying the query set for proxy Viewer model
-class ViewerManager(UserManager):
-    """Defining the Model Manager for the Viewer Proxy Model"""
-
-    def get_queryset(self, *args, **kwargs):
-        return super().get_queryset(*args, **kwargs).filter(type=User.UserTypes.VIEWER)
-
-
 # defining the proxy model for viewer usertypes
 class ViewerUser(User):
-    """Defining the proxy model for the viewer User"""
+
+    """
+    Proxy model representing an Viewer User.
+
+    This model extends the base User model to represent users with Viewer
+    privileges. It inherits all fields and behavior from the User model but sets
+    user type to 'viewer'.
+
+    base_type (str): The base user type of this model. It is set to 'VIEWER'.
+    objects (ViewerManager): Custom manager to retrieve ViewerUser instances.
+
+    Note: ViewerUser is a proxy model, meaning it shares the same database table
+          and fields with the User model. It does not create a separate table.
+
+    """
 
     base_type = User.UserTypes.VIEWER
     objects = ViewerManager()
 
     class Meta:
         proxy = True
+
+
+#  change name of the class
+class UserAdditionalField(models.Model):
+    """
+    Model to define user extra field.
+
+    This model represents a one-to-one relationship with the User model, allowing
+    to define extra field for user. Each user can be associated
+    with their user creation limit, a count of how many users they have created.
+
+    Fields:
+        user (User): The user associated with this creation limit.
+        created_by (User): The user who created the user define in user field.
+                           Can be null if created automatically or not applicable.
+        limit (int): The maximum number of users the associated user can create.
+                     Default value is 5.
+        count (int): The current count of users created by the associated user.
+                     Default value is 0.
+    """
+
+    # change related name field
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="user_extra_field",
+        null=True,
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        User,
+        #  change to do nothing so that error does not occur when admin user is deleted
+        on_delete=models.SET_NULL,
+        related_name="created_user_list",
+        blank=True,
+        null=True,
+    )
+    user_limit = models.PositiveSmallIntegerField(default=0)
+    user_count = models.PositiveSmallIntegerField(default=0)
+
+
+class UserProfile(models.Model):
+    """
+    User profile model representing extended information about users in the system.
+
+    Fields:
+        user (User): The user associated with this profile. It has a one-to-one relationship with the User model.
+
+        profile_picture (ImageField): The profile picture of the user.
+
+        first_name (str): A first name of the user.
+
+        last_name (str): A last name of the user.
+
+        facebook_profile (str): URL to the user's Facebook profile.
+
+        linkedin_profile (str): URL to the user's LinkedIn profile.
+
+        phone_number (str): The user's contact phone number.
+
+        date_of_birth (date): The user's date of birth.
+
+        # Add other fields as needed
+    """
+
+    # allow superadmin to delete user photo
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    first_name = models.CharField("first name", max_length=150, blank=True)
+    last_name = models.CharField("last name", max_length=150, blank=True)
+    # generates thumbnail and use that thumbnail
+    profile_picture = models.ImageField(
+        upload_to="users/profile_pictures/",
+        validators=[validate_file_size],
+        blank=True,
+        null=True,
+    )
+    facebook_profile = models.URLField(blank=True, null=True)
+    linkedin_profile = models.URLField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    # Add other fields as needed
+
+    def __str__(self):
+        """Returns the string representation of the UserProfile model."""
+        return f"Profile of {self.user.email}"

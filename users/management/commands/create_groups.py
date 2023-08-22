@@ -1,40 +1,73 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Permission, Group
-from users.models import User
+from django.contrib.contenttypes.models import ContentType
+from users.models import AdminUser, ModeratorUser, ViewerUser
+from django.apps import apps
 
 
 class Command(BaseCommand):
-    help = "Creating groups and assigning permissions"
+    help = "Creating groups and assigning permissions to the Group"
 
     def handle(self, *args, **options):
-        # Create the super_admin group if it doesn't exist
-        super_admin_group, created = Group.objects.get_or_create(name="super_admin")
+        # fetching all models including third-party apps and Django's built-in apps
+        all_models = apps.get_models()
 
-        # Use contentype to assign all the permission of the model
-        # Define the codenames of the required permissions
-        permission_codenames = [
+        # django App label name of the app defined
+        app_label = ("users", "sensors", "iot_devices", "sensor_data", "company")
+
+        # getting all the model except proxy model defined in app_label
+        models_in_apps = [
+            model
+            for model in all_models
+            if model._meta.app_label in app_label and not model._meta.proxy
+        ]
+
+        # Get content types for models defined in your app
+        content_types = ContentType.objects.filter(
+            model__in=[model.__name__.lower() for model in models_in_apps]
+        )
+
+        # content type for all the proxy model
+        proxy_content_types = []
+
+        proxy_content_types.append(
+            ContentType.objects.get_for_model(AdminUser, for_concrete_model=False)
+        )
+        proxy_content_types.append(
+            ContentType.objects.get_for_model(ModeratorUser, for_concrete_model=False)
+        )
+        proxy_content_types.append(
+            ContentType.objects.get_for_model(ViewerUser, for_concrete_model=False)
+        )
+
+        # getting Permissions for the model
+        permissions_for_models = Permission.objects.filter(
+            content_type__in=content_types
+        )
+
+        permissions_for_proxy_models = Permission.objects.filter(
+            content_type__in=proxy_content_types
+        )
+
+        # Create the super_admin group if it doesn't exist
+        super_admin_group, _ = Group.objects.get_or_create(name="super_admin")
+
+        # Assign the permissions to the super_admin group
+        all_permissions = permissions_for_models | permissions_for_proxy_models
+        super_admin_group.permissions.set(all_permissions)
+
+        # Create the admin group and assign the admin_access permission to it
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        admin_permissions_codenames = [
             "add_user",
             "change_user",
             "view_user",
             "delete_user",
-            "add_adminuserextrafield",
-            "view_adminuserextrafield",
-            "view_group",
-            "view_permission",
-            "Can view sensor data",
-        ]
-
-        # Get the permissions based on codenames
-        permissions = Permission.objects.filter(codename__in=permission_codenames)
-
-        # Assign the permissions to the super_admin group
-        super_admin_group.permissions.set(permissions)
-
-        # Create the admin group and assign the admin_access permission to it
-        admin_group, created = Group.objects.get_or_create(name="admin")
-        admin_permissions_codenames = [
-            "add_user",
             "change_user",
+            "view_usercreationlimit",
+            "add_usercreationlimit",
+            "change_usercreationlimit",
+            "delete_usercreationlimit",
             "view_sensordata",
         ]
 
@@ -45,14 +78,14 @@ class Command(BaseCommand):
         admin_group.permissions.set(admin_permissions)
 
         # Create the moderator group and assign the moderator_access permission to it
-        moderator_group, created = Group.objects.get_or_create(name="moderator")
+        moderator_group, _ = Group.objects.get_or_create(name="moderator")
         moderator_permissions = [
             Permission.objects.get(codename="view_sensordata"),
         ]
         moderator_group.permissions.set(moderator_permissions)
 
         # Create the viewer group and assign the viewer_access permission to it
-        viewer_group, created = Group.objects.get_or_create(name="viewer")
+        viewer_group, _ = Group.objects.get_or_create(name="viewer")
         viewer_permission = [
             Permission.objects.get(codename="view_sensordata"),
         ]

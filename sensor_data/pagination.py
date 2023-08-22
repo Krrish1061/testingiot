@@ -15,6 +15,7 @@ class SensorDataPaginator(Paginator):
         self,
         object_list,
         per_page,
+        is_associated_with_company,
         sensor_names,
         orphans=0,
         allow_empty_first_page=True,
@@ -23,6 +24,7 @@ class SensorDataPaginator(Paginator):
             per_page = self.max_page_size
         super().__init__(object_list, per_page, orphans, allow_empty_first_page)
         self.sensor_names = sensor_names
+        self.is_associated_with_company = is_associated_with_company
 
     def get_sensors(self, request):
         try:
@@ -47,10 +49,19 @@ class SensorDataPaginator(Paginator):
 
         sensors_data = defaultdict(list)
         sensors = self.get_sensors(request)
-        for sensor in sensors:
-            sensors_data[sensor].append(
-                self.object_list.filter(company_sensor__sensor__name=sensor)
-            )
+
+        # improve later
+        if self.is_associated_with_company:
+            for sensor in sensors:
+                sensors_data[sensor].append(
+                    self.object_list.filter(company_sensor__sensor__name=sensor)
+                )
+        else:
+            for sensor in sensors:
+                sensors_data[sensor].append(
+                    self.object_list.filter(user_sensor__sensor__name=sensor)
+                )
+
         sensor_data = {
             sensor: querysets[0][bottom:top] if querysets else None
             for sensor, querysets in sensors_data.items()
@@ -89,5 +100,6 @@ class SensorDataPaginator(Paginator):
         if self.count == 0 and not self.allow_empty_first_page:
             return 0
         # handle division by zero when there are no sensor names
-        hits = max(1, (self.count / len(self.sensor_names)))
+        length = len(self.sensor_names) if len(self.sensor_names) != 0 else 1
+        hits = max(1, (self.count / length))
         return ceil(hits / self.per_page)

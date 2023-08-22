@@ -4,8 +4,7 @@ from . import views
 
 # URLConfig
 urlpatterns = [
-    path("register/", views.create_company),
-    path("<int:id>/", views.company_detail),
-    path("iot-device/<int:id>/", views.iot_device_view),
-    path("iot-device/", views.iot_device),
+    path("", views.company, name="company-detail"),
+    path("<slug:company_slug>/<int:id>/", views.company),
+    path("<slug:company_slug>/<int:id>/profile/", views.company_profile),
 ]

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, UserAdditionalField, UserProfile
 from .forms import UserChangeForm, UserCreationForm
 
 
@@ -15,9 +15,8 @@ class UserAdmin(BaseUserAdmin):
     list_display = [
         "email",
         "id",
-        "first_name",
-        "last_name",
         "company",
+        "is_associated_with_company",
         "type",
         "is_staff",
         "is_active",
@@ -27,7 +26,15 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ["email", "is_staff", "is_active", "type"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (("Personal info"), {"fields": ("first_name", "last_name", "company")}),
+        (
+            ("Personal info"),
+            {
+                "fields": (
+                    "company",
+                    "is_associated_with_company",
+                )
+            },
+        ),
         (
             "Permissions",
             {
@@ -49,12 +56,11 @@ class UserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
-                    "first_name",
-                    "last_name",
                     "password1",
                     "password2",
                     "type",
                     "company",
+                    "is_associated_with_company",
                     "is_staff",
                     "is_active",
                     "groups",
@@ -65,3 +71,28 @@ class UserAdmin(BaseUserAdmin):
     )
     search_fields = ("email", "company")
     ordering = ("email", "company")
+
+
+@admin.register(UserAdditionalField)
+class UserAdditionalFieldAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "created_by",
+        "user_count",
+        "user_limit",
+    )
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "first_name",
+        "last_name",
+        "profile_picture",
+        "facebook_profile",
+        "linkedin_profile",
+        "phone_number",
+        "date_of_birth",
+    )

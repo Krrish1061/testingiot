@@ -33,6 +33,7 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOST", cast=lambda hosts: hosts.split(","
 # Application definition
 
 INSTALLED_APPS = [
+    "channels",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -44,8 +45,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "users",
-    "sensor_data",
     "company",
+    "sensor_data",
+    "iot_devices",
+    "sensors",
+    "api",
+    "websocket",
+    "send_livedata",
 ]
 
 MIDDLEWARE = [
@@ -66,7 +72,7 @@ ROOT_URLCONF = "iot.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -79,8 +85,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "iot.wsgi.application"
+# WSGI_APPLICATION = "iot.wsgi.application"
+ASGI_APPLICATION = "iot.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -92,6 +107,7 @@ DATABASES = {
         "HOST": config("DB_HOST"),
         "USER": config("DB_USER"),
         "PASSWORD": config("DB_PASSWORD"),
+        "PORT": config("DB_PORT"),
     }
 }
 
@@ -134,6 +150,9 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static/"
 # STATICFILES_DIRS = [BASE_DIR / "iot-frontend/dist/assets"]
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media/"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -157,9 +176,9 @@ REST_FRAMEWORK = {
 #  Simple jwt settings
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
-    "ROTATE_REFRESH_TOKENS": True,
+    "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
@@ -178,7 +197,7 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
     "JTI_CLAIM": "jti",
-    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -196,3 +215,23 @@ CORS_ALLOW_HEADERS = [
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 AUTH_USER_MODEL = "users.User"
+
+
+# Celery setting
+# database_url = f"mysql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
+
+# CELERY_BROKER_URL = "redis://localhost:6379/1"
+# CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+# CELERY_RESULT_BACKEND = f"db+{database_url}"
+
+
+#  Redis cache setting
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        # "OPTIONS": {
+        #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        # },
+    }
+}

@@ -1,54 +1,44 @@
 from rest_framework import serializers
-from .models import IotDevice, CompanySensor, Sensor, SensorData
-from company.models import Company
+from iot_devices.models import IotDevice
+from django.utils import timezone
+from .models import CompanySensorData, AdminUserSensorData
 
 
-class IotDeviceSerializer(serializers.ModelSerializer):
+class SensorDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IotDevice
-        fields = ["iot_device_id", "iot_device_location", "is_active"]
-        read_only_fields = ["iot_device_id"]
+        model = CompanySensorData
+        fields = [
+            "company_sensor",
+            "iot_device",
+            "timestamp",
+            "value",
+        ]
 
 
-class SensorSerializer(serializers.ModelSerializer):
+class AdminSensorDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Sensor
-        fields = ["name", "value_type", "unit"]
+        model = AdminUserSensorData
+        fields = [
+            "user_sensor",
+            "iot_device",
+            "timestamp",
+            "value",
+        ]
 
 
-class CompanySensorSerializer(serializers.Serializer):
-    company = serializers.IntegerField()
-    fieldname_sensor_dict = serializers.DictField(
-        child=serializers.CharField(max_length=255)
-    )
-
-    def validate(self, attrs):
-        sensor_name_list = set(self.context["sensor_name"])
-        if set(attrs["fieldname_sensor_dict"].values()).issubset(sensor_name_list):
-            return attrs
-        else:
-            raise serializers.ValidationError({"error": "Sensor does not exist"})
-
-    def create(self, validated_data):
-        try:
-            company = Company.objects.get(pk=validated_data["company"])
-        except Company.DoesNotExist:
-            raise serializers.ValidationError({"error": "Company does not exist"})
-        company_sensors = []
-        for field_name, sensor_value in validated_data["fieldname_sensor_dict"].items():
-            sensor_obj = Sensor.objects.get(name=sensor_value)
-            company_sensor = CompanySensor(
-                company=company,
-                sensor=sensor_obj,
-                field_name=field_name,
-            )
-            company_sensors.append(company_sensor)
-        return CompanySensor.objects.bulk_create(company_sensors)
-
-
-class SensorDataSerializer(serializers.Serializer):
-    boardid = serializers.IntegerField()
-    timestamp = serializers.DateTimeField()
+class CompanySensorDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanySensorData
+        fields = [
+            "company_sensor",
+            "iot_device",
+            "timestamp",
+            "value",
+        ]
+        extra_kwargs = {
+            "company_sensor": {"required": False},
+            "iot_device": {"required": False},
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,38 +52,89 @@ class SensorDataSerializer(serializers.Serializer):
             field_name = company_sensor.field_name
             if company_sensor.sensor.name == "mains":
                 fields[field_name] = serializers.ChoiceField(
-                    choices=[(1, "ON"), (0, "OFF")]
+                    choices=[(1, "ON"), (0, "OFF")], required=False
                 )
             else:
-                fields[field_name] = serializers.FloatField()
+                fields[field_name] = serializers.FloatField(required=False)
         return fields
 
     def validate(self, attrs):
-        boardid = self.context["request"].POST.get("boardid")
-        user = self.context["request"].user
-        try:
-            iot_device = IotDevice.objects.get(iot_device_id=boardid)
-        except IotDevice.DoesNotExist:
-            raise serializers.ValidationError({"error": "Device does not exist"})
-        if user.company != iot_device.company:
-            raise serializers.ValidationError({"error": "Invalid Iot device"})
+        if not attrs:
+            raise serializers.ValidationError({"error": "Request data is empty"})
+        attrs["timestamp"] = timezone.now()
         return attrs
 
     def create(self, validated_data):
         sensor_data = []
         company_sensors = self.context["company_sensors"]
-        boardid = self.context["request"].POST.get("boardid")
-        iot_device = IotDevice.objects.get(iot_device_id=boardid)
+        iot_device = self.context["iot_device"]
         for company_sensor in company_sensors:
             field_name = company_sensor.field_name
+            if field_name in validated_data:
+                sensor_data.append(
+                    CompanySensorData(
+                        company_sensor=company_sensor,
+                        iot_device=iot_device,
+                        value=validated_data[field_name],
+                        timestamp=validated_data["timestamp"],
+                    )
+                )
+
+        return CompanySensorData.objects.bulk_create(sensor_data)
+
+
+class AdminUserSensorDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdminUserSensorData
+        fields = [
+            "user_sensor",
+            "iot_device",
+            "timestamp",
+            "value",
+        ]
+        extra_kwargs = {
+            "user_sensor": {"required": False},
+            "iot_device": {"required": False},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.update(self.get_sensor_fields())
+
+    def get_sensor_fields(self):
+        fields = {}
+        admin_user_sensors = self.context["admin_user_sensors"]
+
+        for admin_user_sensor in admin_user_sensors:
+            field_name = admin_user_sensor.field_name
+            if admin_user_sensor.sensor.name == "mains":
+                fields[field_name] = serializers.ChoiceField(
+                    choices=[(1, "ON"), (0, "OFF")], required=False
+                )
+            else:
+                fields[field_name] = serializers.FloatField(required=False)
+        return fields
+
+    def validate(self, attrs):
+        print("In serializer = ", attrs)
+        if not attrs:
+            raise serializers.ValidationError({"error": "Request data is empty"})
+        attrs["timestamp"] = timezone.now()
+        return attrs
+
+    def create(self, validated_data):
+        sensor_data = []
+        admin_user_sensors = self.context["admin_user_sensors"]
+        iot_device = self.context["iot_device"]
+        for admin_user_sensor in admin_user_sensors:
+            field_name = admin_user_sensor.field_name
             sensor_data.append(
-                SensorData(
-                    company_sensor=company_sensor,
+                AdminUserSensorData(
+                    user_sensor=admin_user_sensor,
                     iot_device=iot_device,
-                    company_id=company_sensor.company,
                     value=validated_data[field_name],
-                    timestamp=validated_data.get("timestamp"),
+                    timestamp=validated_data["timestamp"],
                 )
             )
 
-        return SensorData.objects.bulk_create(sensor_data)
+        return AdminUserSensorData.objects.bulk_create(sensor_data)

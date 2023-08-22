@@ -19,7 +19,7 @@ class UserCreationForm(BaseUserCreationForm):
 
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "is_staff", "is_active", "type")
+        fields = ("email", "is_staff", "is_active", "type")
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -41,4 +41,4 @@ class UserChangeForm(BaseUserChangeForm):
 
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "is_staff", "is_active", "type")
+        fields = ("email", "is_staff", "is_active", "type")

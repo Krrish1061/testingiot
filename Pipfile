@@ -4,17 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
-djangorestframework = "*"
-mysqlclient = "*"
-djangorestframework-simplejwt = "*"
-django-debug-toolbar = "*"
-django-cors-headers = "*"
-python-decouple = "*"
-whitenoise = "*"
-gunicorn = "*"
+hiredis = "*"
+celery = "*"
+sqlalchemy = "*"
+redis = {extras = ["hiredis"], version = "*"}
+pillow = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.10"

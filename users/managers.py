@@ -1,5 +1,4 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
 
@@ -78,4 +77,30 @@ class AdminManager(UserManager):
             super()
             .get_queryset(*args, **kwargs)
             .filter(type=self.model.UserTypes.ADMIN)
+        )
+
+
+# Modifying the query set for proxy Moderator model
+class ModeratorManager(UserManager):
+    """Defining the Model Manager for the Moderator Proxy Model"""
+
+    def get_queryset(self, *args, **kwargs):
+        """Filtering the queryset by the MODERATOR usertype"""
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(type=self.model.UserTypes.MODERATOR)
+        )
+
+
+# Modifying the query set for proxy Viewer model
+class ViewerManager(UserManager):
+    """Defining the Model Manager for the Viewer Proxy Model"""
+
+    def get_queryset(self, *args, **kwargs):
+        """Filtering the queryset by the VIEWER usertype"""
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(type=self.model.UserTypes.VIEWER)
         )

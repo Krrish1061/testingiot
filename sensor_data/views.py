@@ -1,10 +1,13 @@
+from collections import defaultdict
 from datetime import timedelta
+from django.utils import timezone
+import json
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.db import transaction
-from django.utils import timezone
+from django.db.models import Window, F
+from django.db.models.functions import RowNumber
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -13,236 +16,344 @@ from rest_framework.decorators import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from django.core.cache import cache
 from users.auth import ApiKeyAuthentication
+from iot_devices.auth import DeviceAuthentication
 from company.models import Company
-
-from .models import CompanySensor, IotDevice, Sensor, SensorData
+from .models import CompanySensorData, AdminUserSensorData
+from iot_devices.models import IotDevice
+from sensors.models import Sensor, CompanySensor, AdminUserSensor
 from .pagination import SensorDataPaginator
 from .serializers import (
-    IotDeviceSerializer,
-    SensorDataSerializer,
-    SensorSerializer,
-    CompanySensorSerializer,
+    AdminUserSensorDataSerializer,
+    CompanySensorDataSerializer,
 )
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+import redis
+from itertools import chain
+import requests
 
 
 User = get_user_model()
-# Create your views here.
 
 
-# Api handling of the Sensordata model
-@api_view(["POST"])
-@authentication_classes([ApiKeyAuthentication])
-def save_sensor_data(request):
-    company_sensors = CompanySensor.objects.select_related("sensor").filter(
-        company=request.user.company
+def prepare_sensor_data(sensor_obj_list, data, iot_device_id, timestamp):
+    """
+    sensor data prepared in format
+    {
+        "sensor_name": sensor value,
+        "sensor_name": sensor value,
+        "iot_device_id": 6,
+        "timestamp": %Y-%m-%d %H:%M:%S
+    }
+
+    """
+    sensor_data = {}
+
+    for sensor_obj in sensor_obj_list:
+        field_name = sensor_obj.field_name
+        if field_name in data:
+            sensor_data[sensor_obj.sensor.name] = data[field_name]
+
+    sensor_data["iot_device_id"] = iot_device_id
+    localized_timestamp = timestamp.astimezone(timezone.get_default_timezone())
+    formatted_timestamp = localized_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    sensor_data["timestamp"] = formatted_timestamp
+
+    return sensor_data
+
+
+# Handling Caching to get the data
+def send_data_to_group(user, company, sensor_obj_list, data, iot_device_id):
+    """
+    Function to send data over Websockets
+    connects to the send_data function in the consumer.py
+    """
+    channel_layer = get_channel_layer()
+
+    group_name = company.slug if not user else f"admin-user-{user.id}"
+
+    sensor_data = prepare_sensor_data(
+        sensor_obj_list, data, iot_device_id, data["timestamp"]
     )
-    serializer = SensorDataSerializer(
-        data=request.data,
-        context={
-            "request": request,
-            "company_sensors": company_sensors,
+
+    async_to_sync(channel_layer.group_send)(
+        group_name,
+        {
+            "type": "send_data",
+            "data": sensor_data,
         },
     )
-    serializer.is_valid(raise_exception=True)
-    with transaction.atomic():
-        serializer.save()
-    return Response("ok", status=status.HTTP_200_OK)
+
+
+# Create your views here.
+# Api handling of the Sensordata model
+@api_view(["POST"])
+@authentication_classes([DeviceAuthentication])
+def save_sensor_data(request):
+    if request.user:
+        iot_device = request.auth
+        admin_user_sensors = AdminUserSensor.objects.select_related("sensor").filter(
+            user=request.user
+        )
+        if not admin_user_sensors:
+            return Response(
+                {"error": "No sensor is associated with the Admin user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = AdminUserSensorDataSerializer(
+            data=request.data,
+            context={
+                "iot_device": iot_device,
+                "request": request,
+                "admin_user_sensors": admin_user_sensors,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        # is it necessary ??
+        with transaction.atomic():
+            datas = serializer.save()
+
+        sensor_data = {}
+        sensor_data["user_email"] = datas[0].user_sensor.user.email
+        sensor_data["iot_device_id"] = datas[0].iot_device.id
+        sensor_data["timestamp"] = (
+            datas[0]
+            .timestamp.astimezone(timezone.get_default_timezone())
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
+        for data in datas:
+            sensor_data[data.user_sensor.sensor.name] = data.value
+        print(sensor_data)
+
+        #  websocket
+        send_data_to_group(
+            user=request.user,
+            company=None,
+            sensor_obj_list=admin_user_sensors,
+            data=serializer.validated_data,
+            iot_device_id=iot_device.id,
+        )
+
+        return Response(status=status.HTTP_200_OK)
+
+    else:
+        iot_device, company = request.auth
+        # handle what will happen when company sensor is empty make error message consistence
+        company_sensors = CompanySensor.objects.select_related("sensor").filter(
+            company=company
+        )
+        if not company_sensors:
+            return Response(
+                {"error": "No sensor is associated with the company"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = CompanySensorDataSerializer(
+            data=request.data,
+            context={
+                "iot_device": iot_device,
+                "request": request,
+                "company_sensors": company_sensors,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            datas = serializer.save()
+
+        sensor_data = {}
+        sensor_data["user_email"] = datas[0].company_sensor.company.email
+        sensor_data["iot_device_id"] = datas[0].iot_device.id
+        sensor_data["timestamp"] = (
+            datas[0]
+            .timestamp.astimezone(timezone.get_default_timezone())
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
+        for data in datas:
+            sensor_data[data.company_sensor.sensor.name] = data.value
+        print(sensor_data)
+        # requests.post(
+        #     "https://coldstorenepal.com/api/root/sensor/get-data", data=sensor_data
+        # )
+
+        # websocket
+        send_data_to_group(
+            user=None,
+            company=company,
+            sensor_obj_list=company_sensors,
+            data=serializer.validated_data,
+            iot_device_id=iot_device.id,
+        )
+        return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 # @authentication_classes([ApiKeyAuthentication])
 @permission_classes([IsAuthenticated])
 def sensor_data_view(request):
-    company_sensor = (
-        CompanySensor.objects.select_related("sensor")
-        .filter(company=request.user.company)
-        .values("id", "sensor__name")
-    )
-
-    sensor_names = {sensor__name["sensor__name"] for sensor__name in company_sensor}
     one_month_ago = timezone.now() - timedelta(days=30)
-
-    sensor_data_qs = (
-        SensorData.objects.select_related("iot_device", "company_sensor")
-        .filter(company_sensor__id__in=company_sensor.values("id"))
-        .values("iot_device_id", "value", "timestamp")
-        .filter(timestamp__gte=one_month_ago)
-        .order_by("-timestamp")
-    )
-
-    try:
-        page_size = int(request.query_params["page_size"])
-    except (KeyError, ValueError):
-        page_size = 25
-
-    paginator = SensorDataPaginator(
-        sensor_data_qs, page_size, sensor_names=sensor_names
-    )
-
-    try:
-        page_number = int(request.query_params["page"])
-    except (KeyError, ValueError):
-        page_number = 1
-
-    try:
-        page = paginator.page(page_number, request)
-    except (EmptyPage, PageNotAnInteger):
-        return Response(
-            {"error": "Invalid page Number or EmptyPage"},
-            status=status.HTTP_404_NOT_FOUND,
+    if request.user.type == "SUPERADMIN":
+        company_sensor_data_qs = (
+            CompanySensorData.objects.filter(timestamp__gte=one_month_ago)
+            .values(
+                "company_sensor__sensor__name", "iot_device_id", "value", "timestamp"
+            )
+            .order_by("-timestamp")
+        )
+        admin_user_sensor_data_qs = (
+            AdminUserSensorData.objects.filter(timestamp__gte=one_month_ago)
+            .values("user_sensor__sensor__name", "iot_device_id", "value", "timestamp")
+            .order_by("-timestamp")
         )
 
-    response = {
-        "count": paginator.count,
-        "total-pages": paginator.num_pages,
-        "next": paginator.get_next_link(page=page, request=request),
-        "previous": paginator.get_previous_link(page=page, request=request),
-        "results": page.object_list,
-    }
-    return Response(response)
+        combined_sensor_data = sorted(
+            chain(company_sensor_data_qs, admin_user_sensor_data_qs),
+            key=lambda data: data["timestamp"],
+            reverse=True,
+        )
 
+        sensors_data = defaultdict(list)
+        for data in combined_sensor_data:
+            sensor_name = data.pop("company_sensor__sensor__name", None) or data.pop(
+                "user_sensor__sensor__name", None
+            )
+            sensors_data[sensor_name].append(data)
+        return Response(sensors_data)
 
-#  Api handling of the iot-device
-@login_required
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def create_iot_device(request):
-    if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-        serializer = IotDeviceSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
     else:
-        return Response(
-            {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
+        sensor_list = (
+            CompanySensor.objects.filter(company=request.user.company).values_list(
+                "id", flat=True
+            )
+            if request.user.is_associated_with_company
+            else (
+                AdminUserSensor.objects.filter(user=request.user).values_list(
+                    "id", flat=True
+                )
+            )
         )
 
-
-@login_required
-@api_view(["GET", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([ApiKeyAuthentication])
-def iot_device(request, id):
-    try:
-        iot_device = IotDevice.objects.select_related("company").get(pk=id)
-    except ObjectDoesNotExist:
-        return Response(
-            {"error": f"Iot device does not exists"}, status=status.HTTP_404_NOT_FOUND
-        )
-
-    if request.method == "GET":
-        if iot_device.company != request.user.company:
+        if not sensor_list:
             return Response(
-                {
-                    "error": f"Requested Iot device is not associated with the {request.user.company.upper()} company."
-                },
-                status=status.HTTP_403_FORBIDDEN,
+                f"No sensor associated with the {request.user.comapany if request.user.is_associated_with_company else request.user}"
             )
-        serializer = IotDeviceSerializer(iot_device)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    elif request.method == "PATCH":
-        if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-            serializer = IotDeviceSerializer(
-                iot_device, data=request.data, partial=True
+        sensor_data_qs = (
+            (
+                CompanySensorData.objects.select_related("company_sensor")
+                .filter(company_sensor__id__in=sensor_list)
+                .values(
+                    "company_sensor__sensor__name",
+                    "iot_device_id",
+                    "value",
+                    "timestamp",
+                )
+                .filter(timestamp__gte=one_month_ago)
+                .order_by("-timestamp")
             )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-    elif request.method == "DELETE":
-        if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-            iot_device.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-    else:
-        return Response(
-            {"error": "Method not allowed"},
-            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            if request.user.is_associated_with_company
+            else (
+                AdminUserSensorData.objects.select_related("user_sensor")
+                .filter(user_sensor__id__in=sensor_list)
+                .values(
+                    "user_sensor__sensor__name", "iot_device_id", "value", "timestamp"
+                )
+                .filter(timestamp__gte=one_month_ago)
+                .order_by("-timestamp")
+            )
         )
+        sensors_data = defaultdict(list)
+        for data in sensor_data_qs:
+            sensor_name = data.pop("company_sensor__sensor__name", None) or data.pop(
+                "user_sensor__sensor__name", None
+            )
+            sensors_data[sensor_name].append(data)
+        return Response(sensors_data)
 
 
-#  Api handling of the Sensor model
-@login_required
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def create_sensor(request):
-    if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-        serializer = SensorSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    else:
-        return Response(
-            {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
-        )
-
-
-# @login_required
-@api_view(["GET", "PATCH", "DELETE"])
-# @permission_classes([IsAuthenticated])
+@api_view(["GET"])
 @authentication_classes([ApiKeyAuthentication])
-def sensor(request, name):
-    try:
-        sensor = Sensor.objects.get(name=name)
-    except ObjectDoesNotExist:
-        return Response(
-            {"error": "Sensor does not exists"}, status=status.HTTP_404_NOT_FOUND
+# @permission_classes([IsAuthenticated])
+def sensorData_by_iotdevice(request):
+    one_month_ago = timezone.now() - timedelta(days=30)
+    if request.user.type == "SUPERADMIN":
+        company_sensor_data_qs = (
+            CompanySensorData.objects.filter(timestamp__gte=one_month_ago)
+            .values(
+                "company_sensor__sensor__name",
+                "iot_device_id",
+                "value",
+                "timestamp",
+            )
+            .order_by("-timestamp")
+        )
+        admin_user_sensor_data_qs = (
+            AdminUserSensorData.objects.filter(timestamp__gte=one_month_ago)
+            .values("user_sensor__sensor__name", "iot_device_id", "value", "timestamp")
+            .order_by("-timestamp")
         )
 
-    if request.method == "GET":
-        if (
-            CompanySensor.objects.select_related("company")
-            .filter(company=request.user.company, sensor=sensor)
-            .exists()
-            or request.user.type == "SUPERADMIN"
-        ):
-            serializer = SensorSerializer(sensor)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
+        combined_sensor_data = sorted(
+            chain(company_sensor_data_qs, admin_user_sensor_data_qs),
+            key=lambda data: data["timestamp"],
+            reverse=True,
+        )
+
+        sensors_data = defaultdict(list)
+        for data in combined_sensor_data:
+            sensor_name = data.pop("company_sensor__sensor__name", None) or data.pop(
+                "user_sensor__sensor__name", None
+            )
+            sensors_data[sensor_name].append(data)
+        return Response(sensors_data)
+
+    else:
+        sensor_list = (
+            CompanySensor.objects.filter(company=request.user.company).values_list(
+                "id", flat=True
+            )
+            if request.user.is_associated_with_company
+            else (
+                AdminUserSensor.objects.filter(user=request.user).values_list(
+                    "id", flat=True
+                )
+            )
+        )
+
+        if not sensor_list:
             return Response(
-                {
-                    "error": f"Requested {sensor} sensor is not associated with the {request.user.company.name.upper()} company."
-                },
-                status=status.HTTP_403_FORBIDDEN,
+                f"No sensor associated with the {request.user.comapany if request.user.is_associated_with_company else request.user}"
             )
 
-    elif request.method == "PATCH":
-        if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-            serializer = SensorSerializer(sensor, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-    elif request.method == "DELETE":
-        if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-            sensor.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-    else:
-        return Response(
-            {"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+        sensor_data_qs = (
+            (
+                CompanySensorData.objects.select_related("company_sensor")
+                .filter(company_sensor__id__in=sensor_list)
+                .values(
+                    "company_sensor__sensor__name",
+                    "iot_device_id",
+                    "value",
+                    "timestamp",
+                )
+                .filter(timestamp__gte=one_month_ago)
+                .order_by("-timestamp")
+            )
+            if request.user.is_associated_with_company
+            else (
+                AdminUserSensorData.objects.select_related("user_sensor")
+                .filter(user_sensor__id__in=sensor_list)
+                .values(
+                    "user_sensor__sensor__name", "iot_device_id", "value", "timestamp"
+                )
+                .filter(timestamp__gte=one_month_ago)
+                .order_by("-timestamp")
+            )
         )
-
-
-#  Api handling of the CompanySensor model
-# @login_required
-@api_view(["POST"])
-# @permission_classes([IsAuthenticated])
-@authentication_classes([ApiKeyAuthentication])
-def create_company_sensor(request):
-    if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
-        sensor_name = Sensor.objects.all().values_list("name", flat=True)
-        serializer = CompanySensorSerializer(
-            data=request.data,
-            context={"sensor_name": sensor_name},
-        )
-        serializer.is_valid(raise_exception=True)
-        print("in view", serializer.validated_data)
-        serializer.save()
-
-        return Response("ok", status=status.HTTP_200_OK)
-    else:
-        return Response(
-            {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
-        )
+        sensors_data = defaultdict(list)
+        for data in sensor_data_qs:
+            sensor_name = data.pop("company_sensor__sensor__name", None) or data.pop(
+                "user_sensor__sensor__name", None
+            )
+            sensors_data[sensor_name].append(data)
+        return Response(sensors_data)
