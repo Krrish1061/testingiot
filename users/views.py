@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from rest_framework import status
@@ -236,20 +237,31 @@ def user_profile(request, id):
 def login_user(request):
     if request.method == "POST":
         # handle the error(not implemented) gracefully logging user is not required
-        email = request.data.get("username")
+        email = request.data.get("email")
         password = request.data.get("password")
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password)
         if user:
             # login(request, user)
             serializer = UserSerializer(user)
             refresh = RefreshToken.for_user(user)
-            response = {
-                "user": serializer.data,
+            token = {
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             }
-            # print(user.groups.values_list("name", flat=True))
-            return Response(response, status=status.HTTP_200_OK)
+            response = Response(status=status.HTTP_200_OK)
+            response.data = {
+                "user": serializer.data,
+            }
+            response.set_cookie(
+                key=settings.SIMPLE_JWT["AUTH_COOKIE"],
+                value=token,
+                expires=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
+                secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
+                httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
+                samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+            )
+
+            return response
 
         # token handling
         else:
@@ -289,3 +301,19 @@ def logout_user(request):
 #             )
 #         serializer = UserSerializer(user)
 #         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def setcookie(request):
+    response = Response("cookie setup", status=status.HTTP_200_OK)
+    # response.delete_cookie("test")
+    response.set_cookie(
+        key="test",
+        value="Testing cookie implementation",
+        secure=False,
+        max_age=60 * 60,
+        httponly=True,
+        samesite="Lax",
+    )
+
+    return response

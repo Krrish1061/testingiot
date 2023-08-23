@@ -33,4 +33,31 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
                     "error": "Instance should only be associate with either Admin User or Company"
                 }
             )
+
+        if "user" in attrs:
+            if attrs["user"].is_associated_with_company:
+                raise serializers.ValidationError(
+                    {"error": "User should not be associate with the Company"}
+                )
+
+            if attrs["user"].type != "ADMIN":
+                raise serializers.ValidationError(
+                    {"error": "Only User be of type ADMIN are permitted"}
+                )
         return attrs
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user = instance.user
+        company = instance.company
+
+        if user:
+            representation["user"] = user.email
+            # removing company field from response
+            representation.pop("company")
+        if company:
+            representation["company"] = company.name
+            # removing user field from response
+            representation.pop("user")
+
+        return representation

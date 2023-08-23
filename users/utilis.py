@@ -1,8 +1,5 @@
 import random
 import string
-from datetime import timedelta
-from django.utils import timezone
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 
 def generate_api_key():

@@ -8,7 +8,7 @@ class DeviceAuthentication(BaseAuthentication):
     """Device Authentication via Api Key"""
 
     def authenticate(self, request):
-        api_key = request.headers.get("api-key")
+        api_key = request.headers.get("API-KEY")
         if not api_key:
             api_key = request.data.get("API-KEY")
         if not api_key:
@@ -23,11 +23,10 @@ class DeviceAuthentication(BaseAuthentication):
                 {"error": "Invalid API key"}, status.HTTP_401_UNAUTHORIZED
             )
 
-        #  handle error in company and user doesnot exist
         if iot_device.user:
             return (iot_device.user, iot_device)
 
         return (None, (iot_device, iot_device.company))
 
-    def authenticate_header(self):
-        return "API-Key"
+    def authenticate_header(self, request):
+        return "API-KEY"

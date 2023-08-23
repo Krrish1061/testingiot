@@ -21,7 +21,6 @@ User = get_user_model()
 @authentication_classes([ApiKeyAuthentication])
 # @permission_classes([IsAuthenticated])
 def send_livedata(request, id=None):
-    print(id)
     if User.objects.filter(pk=request.user.id, groups__name="super_admin").exists():
         if request.method == "POST":
             serializer = SendLiveDataListSerializer(data=request.data)

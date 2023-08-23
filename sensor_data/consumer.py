@@ -23,7 +23,6 @@ User = get_user_model()
 # assign group mistake to super admin and viewer and moderator
 class SensorDataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print(dict(self.scope["headers"]))
         user = self.scope["user"]
         self.is_superadmin = user.type == "SUPERADMIN"
 

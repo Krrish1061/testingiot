@@ -16,4 +16,5 @@ urlpatterns = [
     # path("websocket-token/", views.websocket_token, name="websocket_token"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("setcookie/", views.setcookie),
 ]
