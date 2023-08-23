@@ -39,53 +39,53 @@ import requests
 User = get_user_model()
 
 
-def prepare_sensor_data(sensor_obj_list, data, iot_device_id, timestamp):
-    """
-    sensor data prepared in format
-    {
-        "sensor_name": sensor value,
-        "sensor_name": sensor value,
-        "iot_device_id": 6,
-        "timestamp": %Y-%m-%d %H:%M:%S
-    }
+# def prepare_sensor_data(sensor_obj_list, data, iot_device_id, timestamp):
+#     """
+#     sensor data prepared in format
+#     {
+#         "sensor_name": sensor value,
+#         "sensor_name": sensor value,
+#         "iot_device_id": 6,
+#         "timestamp": %Y-%m-%d %H:%M:%S
+#     }
 
-    """
-    sensor_data = {}
+#     """
+#     sensor_data = {}
 
-    for sensor_obj in sensor_obj_list:
-        field_name = sensor_obj.field_name
-        if field_name in data:
-            sensor_data[sensor_obj.sensor.name] = data[field_name]
+#     for sensor_obj in sensor_obj_list:
+#         field_name = sensor_obj.field_name
+#         if field_name in data:
+#             sensor_data[sensor_obj.sensor.name] = data[field_name]
 
-    sensor_data["iot_device_id"] = iot_device_id
-    localized_timestamp = timestamp.astimezone(timezone.get_default_timezone())
-    formatted_timestamp = localized_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    sensor_data["timestamp"] = formatted_timestamp
+#     sensor_data["iot_device_id"] = iot_device_id
+#     localized_timestamp = timestamp.astimezone(timezone.get_default_timezone())
+#     formatted_timestamp = localized_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+#     sensor_data["timestamp"] = formatted_timestamp
 
-    return sensor_data
+#     return sensor_data
 
 
-# Handling Caching to get the data
-def send_data_to_group(user, company, sensor_obj_list, data, iot_device_id):
-    """
-    Function to send data over Websockets
-    connects to the send_data function in the consumer.py
-    """
-    channel_layer = get_channel_layer()
+# # Handling Caching to get the data
+# def send_data_to_group(user, company, sensor_obj_list, data, iot_device_id):
+#     """
+#     Function to send data over Websockets
+#     connects to the send_data function in the consumer.py
+#     """
+#     channel_layer = get_channel_layer()
 
-    group_name = company.slug if not user else f"admin-user-{user.id}"
+#     group_name = company.slug if not user else f"admin-user-{user.id}"
 
-    sensor_data = prepare_sensor_data(
-        sensor_obj_list, data, iot_device_id, data["timestamp"]
-    )
+#     sensor_data = prepare_sensor_data(
+#         sensor_obj_list, data, iot_device_id, data["timestamp"]
+#     )
 
-    async_to_sync(channel_layer.group_send)(
-        group_name,
-        {
-            "type": "send_data",
-            "data": sensor_data,
-        },
-    )
+#     async_to_sync(channel_layer.group_send)(
+#         group_name,
+#         {
+#             "type": "send_data",
+#             "data": sensor_data,
+#         },
+#     )
 
 
 # Create your views here.
@@ -139,13 +139,13 @@ def save_sensor_data(request):
                 pass
 
         #  websocket
-        send_data_to_group(
-            user=request.user,
-            company=None,
-            sensor_obj_list=admin_user_sensors,
-            data=serializer.validated_data,
-            iot_device_id=iot_device.id,
-        )
+        # send_data_to_group(
+        #     user=request.user,
+        #     company=None,
+        #     sensor_obj_list=admin_user_sensors,
+        #     data=serializer.validated_data,
+        #     iot_device_id=iot_device.id,
+        # )
 
         return Response(status=status.HTTP_200_OK)
 
@@ -195,13 +195,13 @@ def save_sensor_data(request):
             except requests.exceptions.RequestException as e:
                 pass
         # websocket
-        send_data_to_group(
-            user=None,
-            company=company,
-            sensor_obj_list=company_sensors,
-            data=serializer.validated_data,
-            iot_device_id=iot_device.id,
-        )
+        # send_data_to_group(
+        #     user=None,
+        #     company=company,
+        #     sensor_obj_list=company_sensors,
+        #     data=serializer.validated_data,
+        #     iot_device_id=iot_device.id,
+        # )
         return Response(status=status.HTTP_200_OK)
 
 
