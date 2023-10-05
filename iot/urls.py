@@ -25,14 +25,15 @@ urlpatterns = [
     # path("", TemplateView.as_view(template_name="base.html")),
     path("admin/", admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
-    path("users/", include("users.urls")),
     path("sensor/", include("sensors.urls")),
-    path("iot-devices/", include("iot_devices.urls")),
+    path("iot-device/", include("iot_devices.urls")),
     path("sensor-data/", include("sensor_data.urls")),
     path("company/", include("company.urls")),
+    path("websocket/", include("websocket.urls")),
     path("api/", include("api.urls")),
-    # slug or username
     path("send-data-to/", include("send_livedata.urls")),
+    path("", include("users.auth_urls")),
+    path("<str:username>/", include("users.urls")),
 ]
 
 if settings.DEBUG:

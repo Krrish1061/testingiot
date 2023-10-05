@@ -8,7 +8,6 @@ class SensorAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "name",
-        "value_type",
         "unit",
         "symbol",
     )

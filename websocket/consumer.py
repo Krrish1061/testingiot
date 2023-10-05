@@ -1,30 +1,24 @@
+import json
 from collections import defaultdict
+
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
-from channels.db import database_sync_to_async
-from company.models import Company
-from sensor_data.models import CompanySensorData, AdminUserSensorData
-import json
-from datetime import timedelta
+from django.db.models import F, OuterRef, Subquery
 from django.utils import timezone
 
-from django.db.models import OuterRef, Subquery, F
+from company.models import Company
+from sensor_data.models import AdminUserSensorData, CompanySensorData
 
-
-from sensors.models import AdminUserSensor, CompanySensor
+from utils.constants import UserType
 
 User = get_user_model()
 
-# Constants for user types think how to change in whole project
-# SUPERADMIN = "SUPERADMIN"
-# ADMIN = "ADMIN"
 
-
-# assign group mistake to super admin and viewer and moderator
 class SensorDataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
-        self.is_superadmin = user.type == "SUPERADMIN"
+        self.is_superadmin = user.type == UserType.SUPERADMIN
 
         if not self.is_superadmin:
             self.group_name = await self.get_group_name(user)
@@ -33,8 +27,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             self.subscribed_group = ""
 
         await self.accept()
-        if user.is_associated_with_company:
-            #  filter if super admin is associate with company
+        if user.is_associated_with_company and not self.is_superadmin:
             initial_data = await self.send_initial_data(user=None, company=user.company)
             await self.send(text_data=json.dumps(initial_data))
         elif not self.is_superadmin:
@@ -45,14 +38,15 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         await self.unsubscribe_from_group()
 
     async def send_data(self, event):
+        print("inside send_data consumers.py")
         data = event["data"]
         # Send the data to the websocket
         await self.send(text_data=json.dumps(data))
+        print("exiting send_data consumers.py")
 
     async def receive(self, text_data):
         if self.is_superadmin:
             data = json.loads(text_data)
-            print(data)
             message_type = data.get("type")
 
             if message_type == "group_subscribe":
@@ -84,7 +78,8 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         if user.is_associated_with_company:
             return user.company.slug
         else:
-            if user.type != "ADMIN":
+            if user.type != UserType.ADMIN:
+                # extra database call
                 admin_user_id = user.user_extra_field.created_by.id
                 return f"admin-user-{admin_user_id}"
             else:
@@ -97,10 +92,9 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     ):
         if group_name:
             if group_type == "user":
-                user = User.objects.get(pk=user_id)
+                user = User.objects.select_related("user_extra_field").get(pk=user_id)
             else:
                 company = Company.objects.get(slug=group_name)
-        print(user, company)
 
         if user:
             iot_device_list = []
@@ -166,8 +160,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 iot_device_id = data.pop("iot_device_id")
                 data["timestamp"] = timezone.localtime(
                     data.pop("latest_timestamp")
-                    # .astimezone(timezone.get_default_timezone())
-                    # .strftime("%Y-%m-%d %H:%M:%S")
                 ).strftime("%Y/%m/%d %H:%M:%S")
                 sensor_name = data.pop("company_sensor__sensor__name")
                 sensor_value = data.pop("value")

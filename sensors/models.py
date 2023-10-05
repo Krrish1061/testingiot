@@ -2,6 +2,9 @@ from django.db import models
 from company.models import Company
 from users.models import AdminUser
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+from utils.error_message import ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY
 
 
 # set maximum limit and minimum limit for sensor
@@ -11,16 +14,17 @@ class Sensor(models.Model):
 
     Fields:
     - name: The name of the sensor.
-    - value_type: The type of the sensor value.
     - unit: The unit of measurement for the sensor value.
     - symbol: symbol of the sensor
 
     """
 
     name = models.CharField(max_length=255, unique=True)
-    value_type = models.CharField(max_length=150)
     unit = models.CharField(max_length=150, null=True, blank=True)
     symbol = models.CharField(max_length=10, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    max_value = models.PositiveSmallIntegerField(blank=True, null=True)
+    min_value = models.PositiveSmallIntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -31,7 +35,6 @@ class Sensor(models.Model):
 
     class Meta:
         ordering = ["name"]
-        unique_together = ["name"]
         indexes = [models.Index(fields=["name"])]
 
 
@@ -88,6 +91,7 @@ class AdminUserSensor(models.Model):
     sensor = models.ForeignKey(
         Sensor, on_delete=models.PROTECT, related_name="user_sensor"
     )
+
     field_name = models.CharField(
         max_length=255,
         blank=False,
@@ -106,4 +110,4 @@ class AdminUserSensor(models.Model):
 
     def clean(self):
         if self.user.is_associated_with_company:
-            raise ValidationError("User should not be associate with any Company")
+            raise ValidationError(ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY)

@@ -1,20 +1,13 @@
 from django.urls import path
 from . import views
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
 # URLConfig
 urlpatterns = [
-    path("", views.user),
-    path("<int:id>/", views.user),
-    path("profile/<int:id>/", views.user_profile, name="user_profile"),
-    path("login/", views.login_user, name="login_user"),
-    path("logout/", views.logout_user),
-    # path("<int:id>/", views.user_view),
-    # path("websocket-token/", views.websocket_token, name="websocket_token"),
-    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("setcookie/", views.setcookie),
+    path("", views.add_user, name="add-user"),
+    path("users/all/", views.user_list_all, name="user-list-all"),
+    path("<int:id>/", views.user, name="user-detail"),
+    path("profile/", views.user_profile, name="user_profile"),
+    path("api-key/", views.generate_api_key, name="generate_api_key"),
+    # path("token-csrf/", views.get_csrf_token),
+    # path("token/refresh/", views.cookie_token_refresh, name="token_refresh"),
 ]

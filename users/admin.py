@@ -13,8 +13,9 @@ class UserAdmin(BaseUserAdmin):
     add_form = UserCreationForm
 
     list_display = [
-        "email",
         "id",
+        "email",
+        "username",
         "company",
         "is_associated_with_company",
         "type",
@@ -25,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
     ]
     list_filter = ["email", "is_staff", "is_active", "type"]
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
+        (None, {"fields": ("email", "password", "username")}),
         (
             ("Personal info"),
             {
@@ -56,6 +57,7 @@ class UserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
+                    "username",
                     "password1",
                     "password2",
                     "type",
@@ -69,8 +71,16 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
-    search_fields = ("email", "company")
-    ordering = ("email", "company")
+    search_fields = (
+        "email",
+        "company",
+        "username",
+    )
+    ordering = (
+        "email",
+        "company",
+        "username",
+    )
 
 
 @admin.register(UserAdditionalField)

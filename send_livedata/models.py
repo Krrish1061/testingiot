@@ -3,6 +3,7 @@ from django.forms import ValidationError
 
 from company.models import Company
 from users.models import AdminUser
+from utils.error_message import ERROR_INVALID_ASSIGNMENT
 
 
 # Create your models here.
@@ -24,10 +25,11 @@ class SendLiveDataList(models.Model):
     endpoint = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"Send live data over Company or Admin user"
+        if self.company:
+            return f"Send live data over {self.company}"
+        else:
+            return f"Send live data over {self.user}"
 
     def clean(self):
         if (self.company and self.user) or (not self.company and not self.user):
-            raise ValidationError(
-                "Instance should only be associate with either Admin user or Company"
-            )
+            raise ValidationError(ERROR_INVALID_ASSIGNMENT)

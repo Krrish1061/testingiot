@@ -1,8 +1,9 @@
 from collections import defaultdict
-from django.core.paginator import Page, Paginator, PageNotAnInteger
+from math import ceil
+
+from django.core.paginator import Page, Paginator
 from django.utils.functional import cached_property
 from rest_framework.utils.urls import remove_query_param, replace_query_param
-from math import ceil
 
 
 class SensorDataPaginator(Paginator):

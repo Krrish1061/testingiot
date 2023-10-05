@@ -1,29 +1,8 @@
-from rest_framework import serializers
-from iot_devices.models import IotDevice
 from django.utils import timezone
-from .models import CompanySensorData, AdminUserSensorData
+from rest_framework import serializers
+from utils.error_message import ERROR_NO_VALUE
 
-
-class SensorDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompanySensorData
-        fields = [
-            "company_sensor",
-            "iot_device",
-            "timestamp",
-            "value",
-        ]
-
-
-class AdminSensorDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AdminUserSensorData
-        fields = [
-            "user_sensor",
-            "iot_device",
-            "timestamp",
-            "value",
-        ]
+from .models import AdminUserSensorData, CompanySensorData
 
 
 class CompanySensorDataSerializer(serializers.ModelSerializer):
@@ -60,7 +39,7 @@ class CompanySensorDataSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if not attrs:
-            raise serializers.ValidationError({"error": "Request data is empty"})
+            raise serializers.ValidationError({"error": ERROR_NO_VALUE})
         attrs["timestamp"] = timezone.now()
         return attrs
 
@@ -70,12 +49,20 @@ class CompanySensorDataSerializer(serializers.ModelSerializer):
         iot_device = self.context["iot_device"]
         for company_sensor in company_sensors:
             field_name = company_sensor.field_name
+            sensor = company_sensor.sensor
+            value = min(
+                max(
+                    validated_data[field_name],
+                    sensor.min_value if sensor.min_value else float("-inf"),
+                ),
+                sensor.max_value if sensor.max_value else float("inf"),
+            )
             if field_name in validated_data:
                 sensor_data.append(
                     CompanySensorData(
                         company_sensor=company_sensor,
                         iot_device=iot_device,
-                        value=validated_data[field_name],
+                        value=value,
                         timestamp=validated_data["timestamp"],
                     )
                 )
@@ -116,9 +103,8 @@ class AdminUserSensorDataSerializer(serializers.ModelSerializer):
         return fields
 
     def validate(self, attrs):
-        print("In serializer = ", attrs)
         if not attrs:
-            raise serializers.ValidationError({"error": "Request data is empty"})
+            raise serializers.ValidationError({"error": ERROR_NO_VALUE})
         attrs["timestamp"] = timezone.now()
         return attrs
 
@@ -128,11 +114,21 @@ class AdminUserSensorDataSerializer(serializers.ModelSerializer):
         iot_device = self.context["iot_device"]
         for admin_user_sensor in admin_user_sensors:
             field_name = admin_user_sensor.field_name
+            # checking the min and max value
+            sensor = admin_user_sensor.sensor
+            value = min(
+                max(
+                    validated_data[field_name],
+                    sensor.min_value if sensor.min_value else float("-inf"),
+                ),
+                sensor.max_value if sensor.max_value else float("inf"),
+            )
+
             sensor_data.append(
                 AdminUserSensorData(
                     user_sensor=admin_user_sensor,
                     iot_device=iot_device,
-                    value=validated_data[field_name],
+                    value=value,
                     timestamp=validated_data["timestamp"],
                 )
             )

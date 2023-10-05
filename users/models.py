@@ -1,10 +1,18 @@
-from django.utils import timezone
-from django.db import models
-from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils import timezone
+from django.core.validators import RegexValidator
 from company.models import Company
-from users.validators import validate_file_size
-from .managers import UserManager, AdminManager, ModeratorManager, ViewerManager
+from utils.error_message import (
+    ERROR_IS_ASSOCIATION_WITH_COMPANY_FALSE,
+    ERROR_IS_ASSOCIATION_WITH_COMPANY_TRUE,
+    ERROR_NO_UNIQUE_USERNAME,
+    ERROR_PHONE_NUMBER,
+)
+
+from .managers import AdminManager, ModeratorManager, UserManager, ViewerManager
+from .validators import alphanumeric_validator, validate_file_size
 
 
 # Create your models here.
@@ -50,7 +58,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         VIEWER = "VIEWER", "viewer"
 
     base_type = UserTypes.VIEWER
-
     company = models.ForeignKey(
         Company,
         on_delete=models.PROTECT,
@@ -58,8 +65,31 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=True,
     )
-    is_associated_with_company = models.BooleanField(default=False, blank=True)
+
     email = models.EmailField(verbose_name="email address", max_length=255, unique=True)
+    username = models.CharField(
+        verbose_name="Username",
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Required. 20 characters or fewer. Letters and digits only.",
+        validators=[alphanumeric_validator],
+        error_messages={"unique": ERROR_NO_UNIQUE_USERNAME},
+    )
+    phone_number = models.CharField(
+        max_length=10,
+        validators=[
+            RegexValidator(
+                regex=r"^[0-9]{10}$",
+                message=ERROR_PHONE_NUMBER,
+            ),
+        ],
+        blank=True,
+        null=True,
+    )
+
+    is_associated_with_company = models.BooleanField(default=False, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now, editable=False)
@@ -70,6 +100,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True,
     )
+
     type = models.CharField(
         verbose_name="User type",
         max_length=20,
@@ -86,17 +117,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         """Returns the string representation of the User model"""
-        return self.email
+        return self.username
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["username"]),
+            models.Index(fields=["api_key"]),
+        ]
 
     def clean(self):
         if self.company and not self.is_associated_with_company:
-            raise ValidationError(
-                "is_associated_with_company must be True when user is associated with company."
-            )
+            raise ValidationError(ERROR_IS_ASSOCIATION_WITH_COMPANY_FALSE)
         if not self.company and self.is_associated_with_company:
-            raise ValidationError(
-                "is_associated_with_company must be False when user is not associated with company."
-            )
+            raise ValidationError(ERROR_IS_ASSOCIATION_WITH_COMPANY_TRUE)
 
     def save(self, *args, **kwargs):
         if self.company:
@@ -218,6 +252,10 @@ class UserAdditionalField(models.Model):
     user_limit = models.PositiveSmallIntegerField(default=0)
     user_count = models.PositiveSmallIntegerField(default=0)
 
+    def __str__(self):
+        """Returns the string representation of the model"""
+        return f"UserAdditionalField of {self.user}"
+
 
 class UserProfile(models.Model):
     """
@@ -257,8 +295,19 @@ class UserProfile(models.Model):
     )
     facebook_profile = models.URLField(blank=True, null=True)
     linkedin_profile = models.URLField(blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(
+        max_length=10,
+        validators=[
+            RegexValidator(
+                regex=r"^[0-9]{10}$",
+                message=ERROR_PHONE_NUMBER,
+            ),
+        ],
+        blank=True,
+        null=True,
+    )
     date_of_birth = models.DateField(blank=True, null=True)
+    is_username_modified = models.BooleanField(default=False, blank=True)
     # Add other fields as needed
 
     def __str__(self):

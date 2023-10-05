@@ -1,6 +1,13 @@
 from rest_framework import serializers
-from django.core.exceptions import ObjectDoesNotExist
-from company.views import User
+from utils.constants import UserType
+from utils.error_message import (
+    ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
+    ERROR_ADMIN_USER_NOT_FOUND,
+    ERROR_COMPANY_NOT_FOUND,
+    ERROR_INVALID_ASSIGNMENT,
+    ERROR_ONLY_ADMIN_USER_PERMITTED,
+)
+
 from .models import SendLiveDataList
 
 
@@ -15,34 +22,26 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             "company": {
-                "error_messages": {
-                    "does_not_exist": "Company with the specified ID does not exist."
-                },
+                "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},
             },
             "user": {
-                "error_messages": {
-                    "does_not_exist": "Admin User with the specified ID does not exist."
-                },
+                "error_messages": {"does_not_exist": ERROR_ADMIN_USER_NOT_FOUND},
             },
         }
 
     def validate(self, attrs):
         if ("user" in attrs) and ("company" in attrs):
-            raise serializers.ValidationError(
-                {
-                    "error": "Instance should only be associate with either Admin User or Company"
-                }
-            )
+            raise serializers.ValidationError({"error": ERROR_INVALID_ASSIGNMENT})
 
         if "user" in attrs:
             if attrs["user"].is_associated_with_company:
                 raise serializers.ValidationError(
-                    {"error": "User should not be associate with the Company"}
+                    {"error": ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY}
                 )
 
-            if attrs["user"].type != "ADMIN":
+            if attrs["user"].type != UserType.ADMIN:
                 raise serializers.ValidationError(
-                    {"error": "Only User be of type ADMIN are permitted"}
+                    {"error": ERROR_ONLY_ADMIN_USER_PERMITTED}
                 )
         return attrs
 

@@ -1,6 +1,15 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import Group
 
+from utils.constants import GroupName, UserType
+from utils.error_message import (
+    ERROR_NO_EMAIL,
+    ERROR_STAFF_USER_SET_FALSE,
+    ERROR_STAFF_USER_SET_IS_SUPERADMIN_TRUE,
+    ERROR_SUPERADMIN_SET_IS_STAFF_FALSE,
+    ERROR_SUPERADMIN_SET_IS_SUPERUSER_FALSE,
+)
+
 
 class UserManager(BaseUserManager):
     """
@@ -14,24 +23,24 @@ class UserManager(BaseUserManager):
         """
 
         if not email:
-            raise ValueError("Users must have an email address")
+            raise ValueError(ERROR_NO_EMAIL)
 
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
 
-        if user.type == "SUPERADMIN":
-            super_admin_group = Group.objects.get(name="super_admin")
+        if user.type == UserType.SUPERADMIN:
+            super_admin_group = Group.objects.get(name=GroupName.SUPERADMIN_GROUP)
             user.groups.add(super_admin_group)
-        elif user.type == "ADMIN":
-            admin_group = Group.objects.get(name="admin")
+        elif user.type == UserType.ADMIN:
+            admin_group = Group.objects.get(name=GroupName.ADMIN_GROUP)
             user.groups.add(admin_group)
-        elif user.type == "MODERATOR":
-            moderator_group = Group.objects.get(name="moderator")
+        elif user.type == UserType.MODERATOR:
+            moderator_group = Group.objects.get(name=GroupName.MODERATOR_GROUP)
             user.groups.add(moderator_group)
         else:
-            viewer_group = Group.objects.get(name="viewer")
+            viewer_group = Group.objects.get(name=GroupName.VIEWER_GROUP)
             user.groups.add(viewer_group)
         return user
 
@@ -44,9 +53,9 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_active", True)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("Staff user must have is_staff=True")
+            raise ValueError(ERROR_STAFF_USER_SET_FALSE)
         if extra_fields.get("is_superuser") is not False:
-            raise ValueError("Staff user must have is_superuser=False")
+            raise ValueError(ERROR_STAFF_USER_SET_IS_SUPERADMIN_TRUE)
 
         return self.create_user(email, password, **extra_fields)
 
@@ -61,11 +70,13 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("type", self.model.UserTypes.SUPERADMIN)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True")
+            raise ValueError(ERROR_SUPERADMIN_SET_IS_STAFF_FALSE)
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True")
+            raise ValueError(ERROR_SUPERADMIN_SET_IS_SUPERUSER_FALSE)
 
         return self.create_user(email, password, **extra_fields)
+
+    # def delete(self, )
 
 
 class AdminManager(UserManager):

@@ -1,4 +1,12 @@
 from rest_framework import serializers
+
+from utils.error_message import (
+    ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
+    ERROR_ADMIN_USER_NOT_FOUND,
+    ERROR_COMPANY_NOT_FOUND,
+    ERROR_DEVICE_NO_VALID_ASSOCIATION,
+)
+
 from .models import IotDevice
 
 
@@ -9,21 +17,19 @@ class IotDeviceSerializer(serializers.ModelSerializer):
             "id",
             "iot_device_location",
             "is_active",
+            "created_at",
             "company",
             "user",
         ]
 
+        read_only_fields = ("created_at",)
         extra_kwargs = {
             "is_active": {"default": True},
             "company": {
-                "error_messages": {
-                    "does_not_exist": "Company with the specified ID does not exist."
-                },
+                "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},
             },
             "user": {
-                "error_messages": {
-                    "does_not_exist": "Admin User with the specified ID does not exist."
-                },
+                "error_messages": {"does_not_exist": ERROR_ADMIN_USER_NOT_FOUND},
             },
         }
 
@@ -49,7 +55,7 @@ class IotDeviceSerializer(serializers.ModelSerializer):
         if "user" in attrs:
             if attrs.get("user").is_associated_with_company:
                 raise serializers.ValidationError(
-                    {"error": "Admin User should not be associate with any Company"}
+                    {"error": ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY}
                 )
 
         if request.method == "POST":
@@ -57,17 +63,13 @@ class IotDeviceSerializer(serializers.ModelSerializer):
                 "user" in attrs and "company" in attrs
             ):
                 raise serializers.ValidationError(
-                    {
-                        "error": "Iot device must be associated with either admin user or the company."
-                    }
+                    {"error": ERROR_DEVICE_NO_VALID_ASSOCIATION}
                 )
 
         elif request.method == "PATCH":
             if "user" in attrs and "company" in attrs:
                 raise serializers.ValidationError(
-                    {
-                        "error": "Iot device must be associated with either admin user or the company."
-                    }
+                    {"error": ERROR_DEVICE_NO_VALID_ASSOCIATION}
                 )
 
         return attrs

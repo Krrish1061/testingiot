@@ -131,6 +131,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+AUTHENTICATION_BACKENDS = [
+    "users.backends.EmailorUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -197,13 +203,13 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
     "JTI_CLAIM": "jti",
-    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
-    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    # "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
+    # "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     # Cookies Field
     # custom
-    "AUTH_COOKIE": "access_token",  # Cookie name. Enables cookies if value is set.
+    "AUTH_COOKIE": "refresh_token",  # Cookie name. Enables cookies if value is set.
     "AUTH_COOKIE_DOMAIN": None,  # A string like "example.com", or None for standard domain cookie.
     "AUTH_COOKIE_SECURE": False,  # Whether the auth cookies should be secure (https:// only).
     "AUTH_COOKIE_HTTP_ONLY": True,  # Http only cookie flag.It's not fetch by javascript.
@@ -213,34 +219,50 @@ SIMPLE_JWT = {
 
 
 # Cors problem
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",  # Add your frontend's origin here
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "API-KEY",
     "Content-Type",
     "AUTHORIZATION",
+    "X-CSRFToken",
 ]
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:5173",
+]
+
+# CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = None
+
 
 AUTH_USER_MODEL = "users.User"
 
 
 # Celery setting
-# database_url = f"mysql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
+database_url = f"mysql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
 
-# CELERY_BROKER_URL = "redis://localhost:6379/1"
-# CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-# CELERY_RESULT_BACKEND = f"db+{database_url}"
+CELERY_BROKER_URL = "redis://localhost:6379/2"
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_RESULT_BACKEND = f"db+{database_url}"
 
 
-# #  Redis cache setting
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         # "OPTIONS": {
-#         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         # },
-#     }
-# }
+#  Redis cache setting
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "KEY_PREFIX": "iot",
+        "TIMEOUT": 300  # value in seconds
+        # "OPTIONS": {
+        #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        # },
+    }
+}

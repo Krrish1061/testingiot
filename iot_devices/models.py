@@ -1,7 +1,13 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
+
 from company.models import Company
 from users.models import AdminUser
-from django.core.exceptions import ValidationError
+from utils.error_message import (
+    ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
+    ERROR_DEVICE_NO_VALID_ASSOCIATION,
+)
 
 
 # Create your models here.
@@ -14,6 +20,8 @@ class IotDevice(models.Model):
     - user: The admin user who owns the iot device.
     - iot_device_location: The location of the device.
     - is_active: Flag indicating if the device is active.
+    - api_key: Unique Identity for each iot devices
+    - created_at: Date and time in which Iot devices is registered in system
 
     An Iot device is either owned by a company or an individual user but not both.
     """
@@ -41,6 +49,7 @@ class IotDevice(models.Model):
         unique=True,
         blank=True,
     )
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     def __str__(self):
         """Returns the string representation of the Iot Device model"""
@@ -50,20 +59,14 @@ class IotDevice(models.Model):
             return f"{self.user}-{self.id}"
 
     class Meta:
-        # ordering = ["iot_device_id"]
-        # unique_together = [["company", "iot_device_id"], ["user", "iot_device_id"]]
-        indexes = [models.Index(fields=["company", "user"])]
+        indexes = [
+            models.Index(fields=["api_key"]),
+        ]
 
     def clean(self):
         #  not invoked automatically need to call it before saving the model calling r.clean or r.full_clean also not called on bulk_create
         if self.user and self.user.is_associated_with_company:
-            raise ValidationError("Admin User cannot be associated with company.")
+            raise ValidationError(ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY)
 
-        if self.company and self.user:
-            raise ValidationError(
-                "An Iot device cannot be owned by both a company and an individual user."
-            )
-        elif not self.company and not self.user:
-            raise ValidationError(
-                "An Iot device should be owned either by a company or an individual admin user."
-            )
+        if (self.company and self.user) or (not self.company and not self.user):
+            raise ValidationError(ERROR_DEVICE_NO_VALID_ASSOCIATION)

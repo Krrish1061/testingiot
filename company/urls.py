@@ -1,10 +1,15 @@
 from django.urls import path
-from . import views
 
+from . import views
 
 # URLConfig
 urlpatterns = [
-    path("", views.company, name="company-detail"),
-    path("<slug:company_slug>/<int:id>/", views.company),
-    path("<slug:company_slug>/<int:id>/profile/", views.company_profile),
+    path("", views.add_company, name="add-company"),
+    path("all/", views.company_list_all, name="company-list-all"),
+    path("<slug:company_slug>/<int:id>/", views.company, name="company-detail"),
+    path(
+        "<slug:company_slug>/<int:id>/profile/",
+        views.company_profile,
+        name="company-profile",
+    ),
 ]

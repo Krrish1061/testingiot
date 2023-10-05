@@ -8,9 +8,10 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "email",
+            "phone_number",
             "slug",
             "address",
-            "email",
             "user_limit",
         ]
         read_only_fields = ("slug",)
@@ -23,5 +24,6 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
             "company",
             "logo",
             "contact_phone",
+            "description",
         ]
         read_only_fields = ("company",)
