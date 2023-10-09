@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import User from "../entities/User";
 
-type AuthUser = Partial<User> & Pick<User, "groups" | "id" | "username">;
+type AuthUser = Partial<User> &
+  Pick<User, "groups" | "id" | "username" | "type">;
 
 interface AuthStore {
   user: AuthUser | null;

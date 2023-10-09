@@ -11,8 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
-from rest_framework_simplejwt.tokens import RefreshToken, Token, UntypedToken
-from rest_framework_simplejwt.views import token_verify
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .serializers import CustomTokenObtainPairSerializer
 from django.core.signing import BadSignature
 
@@ -96,9 +96,11 @@ def get_request_user_authentication(requested_user, user):
     if requested_user == user or requested_user.type == UserType.SUPERADMIN:
         return True
 
-    if requested_user == UserType.ADMIN:
+    if requested_user.type == UserType.ADMIN:
         # checking user and requested user belong to same company and
         # if not checking user is created by requested admin user or not
+
+        # also check if company superadmin ---- other admin can't view info
         if (
             requested_user.is_associated_with_company
             and requested_user.company == user.company
@@ -137,6 +139,9 @@ def check_delete_action(user, requested_user):
     elif requested_user.type == "ADMIN":
         # preventing user to delete other user created by other admin
         # and preventing user belonging to different company
+        # if user.type == UserType.ADMIN and :
+        #     error_message = "Deletion of other Admin User Account is not allowed"
+        #     is_error = True
         if (
             not requested_user.is_associated_with_company
             and user.user_extra_field.created_by != requested_user
@@ -146,6 +151,8 @@ def check_delete_action(user, requested_user):
         ):
             error_message = ERROR_DELETE_OTHER_USER
             is_error = True
+
+        # handling of deleting account of admin user by other admin user of the same company
 
     return (is_error, f"{ERROR_PERMISSION_DENIED} {error_message}")
 
@@ -165,14 +172,14 @@ def get_user_profile(requested_user):
     return user_profile
 
 
-def get_user(user_id):
-    user = Cache.get_from_list(USER_LIST_CACHE_KEY, user_id)
+def get_user(username):
+    user = Cache.get_user_by_username(USER_LIST_CACHE_KEY, username)
     if user is None:
         try:
             user = (
                 User.objects.select_related("company", "user_extra_field")
                 .prefetch_related("groups")
-                .get(pk=user_id)
+                .get(username=username)
             )
             Cache.set_to_list(
                 cache_key=USER_LIST_CACHE_KEY,
@@ -293,7 +300,10 @@ def user(request, username, id):
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
     # user is the user object excepted to be return in response
-    user = get_user(id)
+    user_username = request.query_params.get("user")
+
+    user = get_user(user_username) if user_username else get_user(username)
+
     if user is None:
         return Response(
             {"error": ERROR_404_USER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND
@@ -312,13 +322,17 @@ def user(request, username, id):
         pk=requested_user.id,
         groups__name__in=(GroupName.ADMIN_GROUP, GroupName.SUPERADMIN_GROUP),
     ).exists():
+        print("in view", request.data)
         if request.method == "PATCH":
             serializer = UserSerializer(
                 user, data=request.data, context={"request": request}, partial=True
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            Cache.delete_from_list(USER_LIST_CACHE_KEY, user.id)
+            print("serializer data", serializer.data)
+            Cache.delete_from_list(
+                USER_LIST_CACHE_KEY, app_name=USER_LIST_CACHE_KEY_APP_NAME, id=user.id
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "DELETE":
@@ -329,7 +343,11 @@ def user(request, username, id):
                 )
             try:
                 user.delete()
-                Cache.delete_from_list(USER_LIST_CACHE_KEY, user.id)
+                Cache.delete_from_list(
+                    USER_LIST_CACHE_KEY,
+                    app_name=USER_LIST_CACHE_KEY_APP_NAME,
+                    id=user.id,
+                )
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects
@@ -574,7 +592,7 @@ def autheticate_me(request):
 
     user_id = refresh_token_obj.payload.get("user_id")
     username = refresh_token_obj.payload.get("username")
-    user = get_user(user_id)
+    user = get_user(username)
     # causes error if usrname is changed
     if (user is None) or (user.username != username):
         return Response(

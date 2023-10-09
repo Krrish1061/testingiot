@@ -16,6 +16,7 @@ from utils.error_message import (
 )
 
 from .models import User, UserProfile
+from company.models import Company
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -42,7 +43,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
-    groups = GroupSerializer(many=True)
+    groups = GroupSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -58,12 +59,39 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "date_joined",
         ]
-        read_only_fields = ("is_associated_with_company", "date_joined", "username")
+        read_only_fields = (
+            "is_associated_with_company",
+            "date_joined",
+            "username",
+            "groups",
+        )
         extra_kwargs = {
             "company": {
                 "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},
             },
         }
+
+    def to_internal_value(self, data):
+        # Replace the company slug with the corresponding Company instance
+        company_slug = data.get("company")
+        print("insinde jsdjfurek to_internal_value", company_slug)
+        if company_slug:
+            try:
+                company_instance = Company.objects.get(slug=company_slug)
+                data["company"] = company_instance.pk
+            except Company.DoesNotExist:
+                raise serializers.ValidationError("Company not found.")
+
+        return super().to_internal_value(data)
+
+    # def validate_company(self, value):
+    #     print("get_company", value)
+    #     try:
+    #         company_instance = Company.objects.get(slug=value)
+    #     except Company.DoesNotExist:
+    #         raise serializers.ValidationError("Company not found.")
+
+    #     return company_instance
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -79,10 +107,10 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(error))
         return value
 
-    def user_type_validation(user, attrs):
+    def user_type_validation(self, user, attrs):
         # no one can create a super_admin user
         if attrs.get("type") == UserType.SUPERADMIN:
-            return False
+            return True
 
         if user.type == UserType.ADMIN:
             if user.is_associated_with_company:
@@ -92,7 +120,7 @@ class UserSerializer(serializers.ModelSerializer):
                     UserType.MODERATOR,
                     UserType.VIEWER,
                 ):
-                    return False
+                    return True
 
                 # ensure that company admin user cannot create other admin user
                 if (
@@ -101,17 +129,18 @@ class UserSerializer(serializers.ModelSerializer):
                         name=GroupName.COMPANY_SUPERADMIN_GROUP
                     ).exists()
                 ):
-                    return False
+                    return True
 
             # if user is not associated with company he/she can only create moderator and viewer type user
             if not user.is_associated_with_company and attrs.get("type") not in (
                 UserType.MODERATOR,
                 UserType.VIEWER,
             ):
-                return False
-        return True
+                return True
+        return False
 
     def validate(self, attrs):
+        print("sdasdasdasda", attrs)
         request = self.context["request"]
         user = request.user
         if request.method == "POST":
@@ -200,15 +229,17 @@ class UserSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        type = validated_data.get("type")
+        user_type = validated_data.get("type")
         is_active = validated_data.get("is_active")
+        print(type(is_active))
 
-        if type:
+        if user_type:
             # need to convert user group delete
-            instance.type = type
-        if is_active:
+            instance.type = user_type
+        if is_active is not None:
             # cannot set own account to set is_active to false
             instance.is_active = is_active
+        instance.save()
         return instance
 
     def create(self, validated_data):

@@ -37,9 +37,9 @@ const useLoginUser = () => {
 
   return useMutation<UserResponse, AxiosError<string>, FormData>({
     mutationFn: loginUser,
-    onSuccess: (UserResponse) => {
-      setUser(UserResponse.user);
-      setToken(UserResponse.access);
+    onSuccess: (userResponse) => {
+      setUser(userResponse.user);
+      setToken(userResponse.access);
       enqueueSnackbar("Login sucessfull", { variant: "success" });
     },
     onError: (error) => {

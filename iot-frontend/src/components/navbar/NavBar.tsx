@@ -1,37 +1,73 @@
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
-import AppBar from "@mui/material/AppBar";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
-import NavButton from "./NavButton";
-import { styled } from "@mui/material/styles";
-import Avatar from "@mui/material/Avatar";
-import Face2Icon from "@mui/icons-material/Face2";
+import NavUserButton from "./NavUserButton";
 import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import styled from "@mui/material/styles/styled";
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
+import useDrawerStore from "../../store/drawerStore";
+// import AppBar from "@mui/material/AppBar";
 
-const UserButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.dark,
-  borderColor: theme.palette.common.white,
-  color: theme.palette.primary.contrastText,
-  "&:hover": {
-    backgroundColor: theme.palette.common.white,
-    borderColor: theme.palette.primary.dark,
-    color: theme.palette.common.black,
-  },
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+}
+
+const drawerWidth = 240;
+
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== "open",
+})<AppBarProps>(({ theme, open }) => ({
+  zIndex: theme.zIndex.drawer,
+  color: "inherit",
+  backgroundColor: "white",
+  transition: theme.transitions.create(["width", "margin"], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    marginLeft: drawerWidth,
+    [theme.breakpoints.up("sm")]: {
+      width: `calc(100% - ${drawerWidth}px)`,
+    },
+
+    transition: theme.transitions.create(["width", "margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+  ...(!open && {
+    transition: theme.transitions.create(["width", "margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    overflowX: "hidden",
+    // if you change any value change in sidebar also
+    [theme.breakpoints.up("sm")]: {
+      width: `calc(100% - ${theme.spacing(8)} + 1px)`,
+    },
+  }),
 }));
 
 function NavBar() {
+  const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
+  const setIsDrawerOpen = useDrawerStore((state) => state.setIsDrawerOpen);
+
+  const handleDrawerOpen = () => {
+    setIsDrawerOpen();
+  };
+
   return (
-    <AppBar position="fixed">
+    <AppBar position="fixed" component="nav" open={isDrawerOpen}>
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
         <IconButton
           size="large"
           edge="start"
           color="inherit"
           aria-label="menu"
+          onClick={handleDrawerOpen}
           sx={{
             marginRight: 5,
           }}
@@ -44,33 +80,22 @@ function NavBar() {
           alignItems="center"
           justifyContent="center"
         >
-          <NavButton icon={<AddIcon />} label="Company" />
-          <NavButton icon={<AddIcon />} label="User" />
-          {/* <UserButton /> */}
-          <Box>
-            <UserButton disableElevation variant="outlined">
-              <Avatar
-                sx={{
-                  marginRight: 2,
-                  height: 30,
-                  width: 30,
-                }}
-              >
-                <Face2Icon color="info" sx={{ height: 25, width: 25 }} />
-              </Avatar>
-              <Typography
-                component="h1"
-                variant="h6"
-                //   color="white"
-                fontSize={16}
-                noWrap
-                textAlign="center"
-              >
-                {/* first name only truncate the name if exceeds */}
-                Krishna
-              </Typography>
-            </UserButton>
-          </Box>
+          {/* need to decreases size on mobile devices */}
+          <Button
+            variant="outlined"
+            disableElevation
+            startIcon={<AddIcon fontSize="large" />}
+          >
+            <Typography>Company</Typography>
+          </Button>
+          <Button
+            variant="outlined"
+            disableElevation
+            startIcon={<AddIcon fontSize="large" />}
+          >
+            <Typography>User</Typography>
+          </Button>
+          <NavUserButton />
         </Stack>
       </Toolbar>
     </AppBar>

@@ -13,8 +13,9 @@ class CompanySerializer(serializers.ModelSerializer):
             "slug",
             "address",
             "user_limit",
+            "created_at",
         ]
-        read_only_fields = ("slug",)
+        read_only_fields = ("slug", "created_at")
 
 
 class CompanyProfileSerializer(serializers.ModelSerializer):

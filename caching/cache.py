@@ -78,7 +78,7 @@ class Cache:
     @staticmethod
     def get_user_by_username(cache_key: str, username: str) -> object | None:
         cached_data = cache.get(cache_key)
-        print("inside get_company_by_slug cache class=", cached_data)
+        print("inside get_user_by_username cache class=", cached_data)
         if cached_data:
             result = next(
                 (data for data in cached_data if data.username == username),
@@ -103,8 +103,9 @@ class Cache:
                 cache.set_many(cached_data, Cache.CACHE_TTL)
 
     @staticmethod
-    def delete_from_list(cache_key: str, id: int) -> None:
+    def delete_from_list(cache_key: str, app_name: str, id: int) -> None:
         cached_data = cache.get(cache_key)
+        print("type of cached_data", type(cached_data))
         print("inside delete_from_list cache class=", cached_data)
         if cached_data:
             item_to_delete = next(
@@ -112,8 +113,11 @@ class Cache:
                 None,
             )
             if item_to_delete:
-                cached_data.remove(item_to_delete)
-                Cache.set(cache_key, cached_data)
+                # cached_data.remove(item_to_delete)
+                # removes the item from the list and doesn't include it
+                # cached_data = cached_data.exclude(pk=item_to_delete.pk)
+                # Cache.set_all(cache_key, app_name, cached_data)
+                cache.delete(cache_key)
 
     @staticmethod
     def get(cache_key: str) -> object | None:

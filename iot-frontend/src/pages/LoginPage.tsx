@@ -21,21 +21,24 @@ import useLoginUser from "../hooks/useLoginUser";
 import Logo from "/logo.png";
 
 const schema = z.object({
-  username: z.string().refine(
-    (username) => {
-      if (username.includes("@")) {
-        // If '@' is present, validate it as an email
-        return z.string().email().safeParse(username).success;
-      } else {
-        // If '@' is absent, validate it as an alphanumeric username
-        return /^[a-z0-9]+$/i.test(username);
+  username: z
+    .string()
+    .nonempty("This field is required")
+    .refine(
+      (username) => {
+        if (username.includes("@")) {
+          // If '@' is present, validate it as an email
+          return z.string().email().safeParse(username).success;
+        } else {
+          // If '@' is absent, validate it as an alphanumeric username
+          return /^[a-z0-9]+$/i.test(username);
+        }
+      },
+      {
+        message: "Invalid username or email address",
       }
-    },
-    {
-      message: "Invalid username or email address",
-    }
-  ),
-  password: z.string().nonempty("Password field is required"),
+    ),
+  password: z.string().nonempty("This field is required"),
 });
 
 type FormData = z.infer<typeof schema>;

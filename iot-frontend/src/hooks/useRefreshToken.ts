@@ -13,8 +13,9 @@ interface Token {
 }
 
 interface accessToken extends JwtPayload {
-  username: string;
   user_id: number;
+  username: string;
+  type: string;
   groups: string[];
 }
 
@@ -46,6 +47,7 @@ const useRefreshToken = () => {
         setUser({
           id: accessToken.user_id,
           username: accessToken.username,
+          type: accessToken.type,
           groups: accessToken.groups,
         });
       }
