@@ -1,7 +1,6 @@
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
 import DrawerList from "./DrawerList";
 import DrawerHeader from "./DrawerHeader";
-import Box from "@mui/material/Box";
 import useDrawerStore from "../../store/drawerStore";
 
 const drawerWidth = 240;
@@ -38,9 +37,7 @@ export default function SwipeableTemporaryDrawer() {
       }}
     >
       <DrawerHeader />
-      <Box marginTop={30}>
-        <DrawerList />
-      </Box>
+      <DrawerList />
     </SwipeableDrawer>
   );
 }

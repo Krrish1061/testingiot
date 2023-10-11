@@ -10,11 +10,11 @@ function useEditUser() {
   const axiosInstance = useAxios();
 
   const editUser = (modifiedUser: User) => {
-    console.log("in hook", modifiedUser);
+    // console.log("in hook", modifiedUser);
 
     return axiosInstance
       .patch<User>(
-        `${user?.username}/${user?.id}/?user=${modifiedUser.username}`,
+        `${user?.username}/${user?.id}/?user=${modifiedUser.username}x`,
         modifiedUser
       )
       .then((res) => res.data);

@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
-import AdminDashboard from "../components/dashboard/AdminDashboard";
-import SuperAdminDashboard from "../components/dashboard/SuperAdminDashboard";
-import GroupNames from "../constants/groupNames";
-import useAuthStore from "../store/authStore";
+import AdminDashboard from "./AdminDashboard";
+import SuperAdminDashboard from "./SuperAdminDashboard";
+import GroupNames from "../../constants/groupNames";
+import useAuthStore from "../../store/authStore";
 
 function Dashboard() {
   const user = useAuthStore((state) => state.user);

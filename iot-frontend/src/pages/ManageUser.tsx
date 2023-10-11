@@ -27,7 +27,7 @@ interface rows extends User {
 
 function ManageUser() {
   const { data, isLoading, isError, isSuccess } = useGetAllUser();
-  const { mutate: editUser } = useEditUser();
+  const { mutateAsync: editUser, isLoading: mutatingUser } = useEditUser();
   // const { mutate: deleteUser } = useDeleteUser();
   const [rows, setRows] = useState<rows[]>([] as rows[]);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
@@ -83,6 +83,7 @@ function ManageUser() {
   const processRowUpdate = (newRow: GridRowModel) => {
     // called to handle the row update send data to the server
     console.log("processRowUpdate id ", newRow);
+
     editUser(newRow as User);
     const updatedRow = { ...newRow, isNew: false };
     // setSnackbar({ children: "User successfully saved", severity: "success" });
@@ -97,10 +98,11 @@ function ManageUser() {
   };
 
   const handleProcessRowUpdateError = useCallback((error: AxiosError) => {
-    console.log("handleRowModesModelChangeError ", error);
+    console.log("handleRowModesModelChangeError dsdas ", error);
     // setSnackbar({ children: error.message, severity: "error" });
   }, []);
 
+  // use memo hook to remeber in each render
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", align: "center", headerAlign: "center" },
     {
@@ -169,6 +171,7 @@ function ManageUser() {
             <GridActionsCellItem
               icon={<SaveIcon />}
               label="Save"
+              disabled={mutatingUser}
               sx={{
                 color: "primary.main",
               }}

@@ -1,7 +1,9 @@
 function Index() {
   return (
     <div>
-      Index Lorem ipsum dolor sit amet consectetur adipisicing elit. Aspernatur
+      Index
+      <br />
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Aspernatur
       perferendis laborum nihil inventore deleniti architecto totam porro maxime
       repudiandae nisi nemo praesentium officiis consequatur deserunt laudantium
       eveniet, temporibus alias magni vitae illum quis. Possimus nulla quae quas

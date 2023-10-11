@@ -10,7 +10,12 @@ import Divider from "@mui/material/Divider";
 const DrawerList = () => {
   return (
     <List>
-      <DrawerListItem icon={<DashboardIcon />} linkto="/" text="Dashboard" />
+      <DrawerListItem
+        icon={<DashboardIcon />}
+        linkto="/"
+        text="Dashboard"
+        autoFocus
+      />
       <Divider component="li" />
 
       <DrawerListItem
