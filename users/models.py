@@ -77,6 +77,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[alphanumeric_validator],
         error_messages={"unique": ERROR_NO_UNIQUE_USERNAME},
     )
+    # not needed
     phone_number = models.CharField(
         max_length=10,
         validators=[

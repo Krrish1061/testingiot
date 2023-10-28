@@ -16,6 +16,9 @@ class Sensor(models.Model):
     - name: The name of the sensor.
     - unit: The unit of measurement for the sensor value.
     - symbol: symbol of the sensor
+    - created_at: Date and Time Sensor is created
+    - max_value: Sensor max value it can measure
+    - min_value: Senaor min value it can measure
 
     """
 

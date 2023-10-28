@@ -1,8 +1,6 @@
 import BorderColorIcon from "@mui/icons-material/BorderColor";
-import Face2Icon from "@mui/icons-material/Face2";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
@@ -17,6 +15,10 @@ import Popper from "@mui/material/Popper";
 import Typography from "@mui/material/Typography";
 import { useRef, useState } from "react";
 import ProfileCard from "./ProfileCard";
+import useLogout from "../../hooks/useLogout";
+import CircularProgress from "@mui/material/CircularProgress";
+import useAuthStore from "../../store/authStore";
+import ImageAvatar from "../ImageAvatar";
 
 // import styled from "@mui/material/styles/styled";
 // const NavButton = styled(Button)(({ theme }) => ({
@@ -30,7 +32,9 @@ import ProfileCard from "./ProfileCard";
 
 function NavUserButton() {
   const [open, setOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const { mutate, isLoading } = useLogout();
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -45,6 +49,10 @@ function NavUserButton() {
     }
 
     setOpen(false);
+  };
+
+  const handleLogout = () => {
+    mutate();
   };
 
   function handleListKeyDown(event: React.KeyboardEvent) {
@@ -68,26 +76,24 @@ function NavUserButton() {
         disableElevation
         variant="outlined"
       >
-        <Avatar
-          sx={{
-            marginRight: 2,
-            height: 30,
-            width: 30,
-          }}
-        >
-          <Face2Icon color="info" sx={{ height: 25, width: 25 }} />
-        </Avatar>
+        <ImageAvatar
+          imgUrl={user?.profile?.profile_picture}
+          altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+          height={30}
+          width={30}
+        />
+        {/* // marginRight: 2, */}
         {/* display typography component only on larger screen sizes */}
         <Typography
           component="h1"
           variant="h6"
-          //   color="white"
           fontSize={16}
           noWrap
+          marginLeft={2}
           textAlign="center"
         >
           {/* first name only truncate the name if exceeds */}
-          Krishna
+          {user?.profile?.first_name}
         </Typography>
       </Button>
       <Popper
@@ -136,11 +142,25 @@ function NavUserButton() {
                       </ListItemIcon>
                       <ListItemText primary="View Profile" />
                     </MenuItem>
-                    <MenuItem onClick={handleClose}>
+                    <MenuItem disabled={isLoading} onClick={handleLogout}>
                       <ListItemIcon>
                         <LogoutIcon />
                       </ListItemIcon>
                       <ListItemText primary="Logout" />
+                      {isLoading && (
+                        <CircularProgress
+                          color="primary"
+                          size={30}
+                          thickness={5}
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            marginTop: "-12px",
+                            marginLeft: "-12px",
+                          }}
+                        />
+                      )}
                     </MenuItem>
                   </MenuList>
                 </Box>

@@ -63,7 +63,6 @@ function useMuiDataGrid() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-  console.log("cat");
 
   const handleDialogNoButton = () => {
     if (promiseArguments) {

@@ -8,6 +8,8 @@ import ManageUser from "../pages/ManageUser";
 import Test from "../components/Test";
 import ManageIotDevices from "../pages/ManageIotDevices";
 import ManageSensors from "../pages/ManageSensors";
+import CompanyIndex from "../components/CompanyIndex";
+import AdminDashboard from "../components/dashboard/AdminDashboard";
 
 const router = createBrowserRouter([
   {
@@ -21,9 +23,12 @@ const router = createBrowserRouter([
           { path: "/manage-users", element: <ManageUser /> },
           { path: "/iot-devices", element: <ManageIotDevices /> },
           { path: "/sensors", element: <ManageSensors /> },
+          { path: "/company", element: <CompanyIndex /> },
           { path: "/test", element: <Test /> },
         ],
       },
+
+      { path: "/test1", element: <AdminDashboard /> },
 
       {
         element: <IsUserAuthenticated />,

@@ -9,12 +9,10 @@ function useEditUser() {
   const user = useAuthStore((state) => state.user);
   const axiosInstance = useAxios();
 
-  const editUser = (modifiedUser: User) => {
-    // console.log("in hook", modifiedUser);
-
+  const editUser = async (modifiedUser: User) => {
     return axiosInstance
       .patch<User>(
-        `${user?.username}/${user?.id}/?user=${modifiedUser.username}x`,
+        `${user?.username}/${user?.id}/?user=${modifiedUser.username}`,
         modifiedUser
       )
       .then((res) => res.data);
@@ -23,10 +21,10 @@ function useEditUser() {
   return useMutation<User, AxiosError, User>({
     mutationFn: editUser,
     onSuccess: () => {
-      enqueueSnackbar("User sucessfull Edited", { variant: "success" });
+      enqueueSnackbar("User sucessfully Edited", { variant: "success" });
     },
     onError: () => {
-      enqueueSnackbar("UserModification failed", { variant: "error" });
+      enqueueSnackbar("User Modification failed", { variant: "error" });
     },
   });
 }

@@ -14,5 +14,5 @@ def get_websocket_token(request):
     token_key = generate_token_key()
     while WebSocketToken.objects.filter(token=token_key).exists():
         token_key = generate_token_key()
-    token = WebSocketToken.objects.create(user=request.user, token=token_key)
-    return Response(token, status=status.HTTP_200_OK)
+    webSocketToken = WebSocketToken.objects.create(user=request.user, token=token_key)
+    return Response({"token": webSocketToken.token}, status=status.HTTP_200_OK)

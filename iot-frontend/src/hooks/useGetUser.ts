@@ -4,19 +4,23 @@ import useAxios from "../api/axiosInstance";
 import User from "../entities/User";
 import useAuthStore from "../store/authStore";
 
-function useGetAllUser() {
+function useGetUser() {
   const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
   const axiosInstance = useAxios();
 
-  const fetchUsers = () =>
+  const fetchUser = () =>
     axiosInstance
-      .get<User[]>(`${user?.username}/users/all`)
+      .get<User>(`${user?.username}/${user?.id}/`)
       .then((res) => res.data);
 
-  return useQuery<User[], AxiosError>({
-    queryKey: ["userList"],
-    queryFn: fetchUsers,
+  return useQuery<User, AxiosError>({
+    queryKey: [`${user?.username}`],
+    queryFn: fetchUser,
+    onSuccess: (data) => {
+      setUser(data);
+    },
   });
 }
 
-export default useGetAllUser;
+export default useGetUser;

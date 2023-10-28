@@ -17,13 +17,13 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
-import useLoginUser from "../hooks/useLoginUser";
+import useLogin from "../hooks/useLogin";
 import Logo from "/logo.png";
 
 const schema = z.object({
   username: z
     .string()
-    .nonempty("This field is required")
+    .min(1, "This field is required")
     .refine(
       (username) => {
         if (username.includes("@")) {
@@ -38,13 +38,13 @@ const schema = z.object({
         message: "Invalid username or email address",
       }
     ),
-  password: z.string().nonempty("This field is required"),
+  password: z.string().min(1, "This field is required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 const LoginPage = () => {
-  const { mutate, isLoading } = useLoginUser();
+  const { mutate, isLoading } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -90,7 +90,12 @@ const LoginPage = () => {
             </Typography>
             <form noValidate onSubmit={handleSubmit(onSubmit)}>
               <Box marginBottom={2}>
-                <Typography component={InputLabel} htmlFor="username">
+                <Typography
+                  component={InputLabel}
+                  required
+                  color="inherit"
+                  htmlFor="username"
+                >
                   Username or Email:
                 </Typography>
                 <TextField
@@ -105,7 +110,12 @@ const LoginPage = () => {
               </Box>
               <Box marginBottom={3}>
                 <Stack direction="row" justifyContent="space-between">
-                  <Typography component={InputLabel} htmlFor="password">
+                  <Typography
+                    component={InputLabel}
+                    required
+                    color="inherit"
+                    htmlFor="password"
+                  >
                     Password:
                   </Typography>
                   <Link href="#" variant="body1" underline="hover">

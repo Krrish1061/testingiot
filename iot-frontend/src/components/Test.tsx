@@ -1,261 +1,196 @@
-import useGetAllUser from "../hooks/useGetAllUser";
 import Box from "@mui/material/Box";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Close";
-import {
-  GridColDef,
-  GridRowModes,
-  GridActionsCellItem,
-  DataGrid,
-} from "@mui/x-data-grid";
-import { useEffect, useMemo, useRef } from "react";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import useGetAllUser from "../hooks/useGetAllUser";
 import User from "../entities/User";
-import useEditUser from "../hooks/useEditUser";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import Button from "@mui/material/Button";
-import DialogActions from "@mui/material/DialogActions";
-import Dialog from "@mui/material/Dialog";
-import useMuiDataGrid from "../hooks/useMuiDataGrid";
-import useUserDataGridStore from "../store/userDataGridStore";
-import muiDataGridCommonFunction from "../constants/muiDataGrid/commonFunction";
+import { useState } from "react";
+import IconButton from "@mui/material/IconButton";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import ImageAvatar from "./ImageAvatar";
+import LoadingSpinner from "./LoadingSpinner";
+import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
+// import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import CancelIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import InputLabel from "@mui/material/InputLabel";
+import TextField from "@mui/material/TextField";
 
-function ManageUser() {
-  console.log("count me");
-  const { data, isError, isSuccess } = useGetAllUser();
-  const { mutateAsync: editUser, isLoading: mutatingUser } = useEditUser();
+interface Props {
+  row: User;
+}
 
-  const {
-    handleEditClick,
-    handleSaveClick,
-    handleDeleteClick,
-    handleCancelClick,
-    processRowUpdate,
-    handleDialogNoButton,
-    handleDialogYesButton,
-    handleRowModesModelChange,
-    handleProcessRowUpdateError,
-  } = useMuiDataGrid();
-
-  const rows = useUserDataGridStore((state) => state.rows);
-  const setRows = useUserDataGridStore((state) => state.setRows);
-  const setRowModesModel = useUserDataGridStore(
-    (state) => state.setRowModesModel
-  );
-  const rowModesModel = useUserDataGridStore((state) => state.rowModesModel);
-  const promiseArguments = useUserDataGridStore(
-    (state) => state.promiseArguments
-  );
-  const noButtonRef = useRef<HTMLButtonElement>(null);
-
-  const handleEntered = () => {
-    // The `autoFocus` is not used because, if used, the same Enter that saves
-    // the cell triggers "No". Instead, we manually focus the "No" button once
-    // the dialog is fully open.
-    noButtonRef.current?.focus();
-  };
-
-  const renderConfirmDialog = () => {
-    if (!promiseArguments) {
-      return null;
-    }
-
-    // const { newRow, oldRow } = promiseArguments;
-    // const mutation = muiDataGridCommonFunction.computeMutation(newRow, oldRow);
-
-    return (
-      <Dialog
-        maxWidth="xs"
-        TransitionProps={{ onEntered: handleEntered }}
-        open={!!promiseArguments}
-      >
-        <DialogTitle>Are you sure?</DialogTitle>
-        <DialogContent dividers>
-          {`Pressing 'Yes' will Confirm the changes made to the User.`}
-        </DialogContent>
-        <DialogActions>
-          <Button ref={noButtonRef} onClick={handleDialogNoButton}>
-            No
-          </Button>
-          <Button onClick={() => handleDialogYesButton<User>(editUser)}>
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };
-
-  // use memo hook to remeber in each render
-  const columns: GridColDef[] = useMemo(
-    () => [
-      { field: "id", headerName: "ID", align: "center", headerAlign: "center" },
-      {
-        field: "username",
-        headerName: "Username",
-        minWidth: 100,
-        flex: 1,
-        editable: false,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "email",
-        headerName: "Email",
-        minWidth: 100,
-        flex: 1,
-        editable: true,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "type",
-        headerName: "UserType",
-        minWidth: 110,
-        flex: 1,
-        editable: true,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "company",
-        headerName: "Company",
-        minWidth: 100,
-        flex: 1,
-        editable: true,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "is_active",
-        headerName: "is Active",
-        editable: true,
-        type: "boolean",
-      },
-      {
-        field: "date_joined",
-        headerName: "Created at",
-        editable: false,
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "actions",
-        type: "actions",
-        headerName: "Actions",
-        align: "center",
-        headerAlign: "center",
-        cellClassName: "actions",
-        getActions: ({ id }) => {
-          const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-          if (isInEditMode) {
-            return [
-              <GridActionsCellItem
-                icon={<SaveIcon />}
-                label="Save"
-                disabled={mutatingUser}
-                sx={{
-                  color: "primary.main",
-                }}
-                onClick={handleSaveClick(id)}
-              />,
-
-              <GridActionsCellItem
-                icon={<CancelIcon />}
-                label="Cancel"
-                sx={{
-                  color: "error.main",
-                }}
-                className="textPrimary"
-                onClick={handleCancelClick(id)}
-                color="inherit"
-              />,
-            ];
-          }
-
-          return [
-            <GridActionsCellItem
-              icon={<EditIcon />}
-              label="Edit"
-              sx={{
-                color: "info.main",
-              }}
-              className="textPrimary"
-              onClick={handleEditClick(id)}
-              color="inherit"
-            />,
-            <GridActionsCellItem
-              icon={<DeleteIcon />}
-              label="Delete"
-              sx={{
-                color: "error.main",
-              }}
-              onClick={handleDeleteClick(id)}
-              color="inherit"
-            />,
-          ];
-        },
-      },
-    ],
-
-    [
-      handleCancelClick,
-      handleDeleteClick,
-      handleEditClick,
-      handleSaveClick,
-      mutatingUser,
-      rowModesModel,
-    ]
-  );
-
-  useEffect(() => {
-    if (isSuccess) {
-      setRows(data);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
-
-  if (isError) return <Box>Error Ocurred</Box>;
+function Row({ row }: Props) {
+  const [open, setOpen] = useState(false);
+  const [company, setCompany] = useState<string>(row.company || "N/A");
+  const [email, setEmail] = useState<string>(row.email);
+  const [isEditMode, setIsEditMode] = useState(false);
   return (
-    <Box
-      sx={{
-        width: 1,
-      }}
-    >
-      {!isSuccess ? (
-        <Box>ManageUser</Box>
-      ) : (
-        <Box>
-          {renderConfirmDialog()}
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            autoHeight
-            editMode="row"
-            disableColumnSelector
-            disableRowSelectionOnClick
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={handleRowModesModelChange}
-            onRowEditStop={muiDataGridCommonFunction.handleRowEditStop}
-            onRowEditStart={muiDataGridCommonFunction.handleRowEditStart}
-            processRowUpdate={processRowUpdate}
-            onProcessRowUpdateError={handleProcessRowUpdateError}
-            slotProps={{
-              toolbar: { setRows, setRowModesModel },
-            }}
-            sx={{
-              "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-cell:focus": {
-                outline: "none", // Remove cell border
-              },
-            }}
+    <>
+      <TableRow>
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          <ImageAvatar
+            imgUrl={row.profile.profile_picture}
+            altText={`${row.profile?.first_name} ${row?.profile?.last_name}`}
           />
-        </Box>
+        </TableCell>
+        <TableCell align="left">{row.username}</TableCell>
+        <TableCell align="left">{row.type}</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={12}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 0.5, width: 1 }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h6" gutterBottom component="h2">
+                  {row.profile.first_name} {row.profile.last_name}
+                </Typography>
+                <Box>
+                  {!isEditMode ? (
+                    <>
+                      <IconButton onClick={() => setIsEditMode(true)}>
+                        <EditIcon color="primary" />
+                      </IconButton>
+                      <IconButton>
+                        <DeleteIcon color="error" />
+                      </IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <IconButton>
+                        <SaveIcon color="primary" />
+                      </IconButton>
+                      <IconButton onClick={() => setIsEditMode(false)}>
+                        <CancelIcon />
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
+              </Stack>
+
+              <Stack
+                direction="row"
+                justifyContent="center"
+                alignItems="center"
+                spacing={2}
+                paddingLeft={2}
+              >
+                <Typography
+                  component={InputLabel}
+                  variant="h6"
+                  fontSize={16}
+                  color="inherit"
+                  // textAlign="start"
+                  htmlFor="email"
+                  width={80}
+                >
+                  Email:
+                </Typography>
+                <TextField
+                  id="email"
+                  type="text"
+                  variant="standard"
+                  value={email}
+                  InputProps={{
+                    disableUnderline: !isEditMode,
+                    readOnly: !isEditMode,
+                  }}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                />
+              </Stack>
+              <Stack
+                direction="row"
+                justifyContent="center"
+                alignItems="center"
+                spacing={2}
+                paddingLeft={2}
+              >
+                <Typography
+                  component={InputLabel}
+                  fontSize={16}
+                  variant="h6"
+                  color="inherit"
+                  htmlFor="company"
+                  width={80}
+                >
+                  Company:
+                </Typography>
+                <TextField
+                  id="company"
+                  type="text"
+                  variant="standard"
+                  value={company}
+                  InputProps={{
+                    disableUnderline: !isEditMode,
+                    readOnly: !isEditMode,
+                  }}
+                  onChange={(e) => {
+                    setCompany(e.target.value);
+                  }}
+                />
+              </Stack>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </>
+  );
+}
+
+function Test() {
+  const { data, isError, isLoading } = useGetAllUser();
+
+  if (isError) return <Box> Error Occurred</Box>;
+  console.log(data);
+
+  return (
+    <Box sx={{ backgroundColor: "blue", width: 1 }}>
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <TableContainer
+          component={Paper}
+          sx={{ overflow: "visible", width: 1, p: 0, m: 0 }}
+        >
+          <Table sx={{ width: 1, p: 0, m: 0 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                <TableCell>Avatar</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>UserType</TableCell>
+                {/* <TableCell>Email</TableCell> */}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data &&
+                data.map((row: User, index) => <Row key={index} row={row} />)}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </Box>
   );
 }
 
-export default ManageUser;
+export default Test;

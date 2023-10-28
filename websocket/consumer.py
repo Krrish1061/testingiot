@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.db.models import F, OuterRef, Subquery
 from django.utils import timezone
-
+from django.contrib.auth.models import AnonymousUser
 from company.models import Company
 from sensor_data.models import AdminUserSensorData, CompanySensorData
 
@@ -18,6 +18,8 @@ User = get_user_model()
 class SensorDataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
+        if isinstance(user, AnonymousUser):
+            await self.close()
         self.is_superadmin = user.type == UserType.SUPERADMIN
 
         if not self.is_superadmin:

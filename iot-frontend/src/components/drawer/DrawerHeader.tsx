@@ -1,13 +1,12 @@
 import Box from "@mui/material/Box";
 import useDrawerStore from "../../store/drawerStore";
-import Avatar from "@mui/material/Avatar";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import useAuthStore from "../../store/authStore";
-import Face2Icon from "@mui/icons-material/Face2";
 import Logo from "/logo.png";
 import styled from "@mui/material/styles/styled";
 import Divider from "@mui/material/Divider";
+import ImageAvatar from "../ImageAvatar";
 
 export const SideBarHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -21,19 +20,17 @@ export const SideBarHeader = styled("div")(({ theme }) => ({
 const DrawerHeader = () => {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
   const user = useAuthStore((state) => state.user);
-
   const avatarSize = isDrawerOpen ? 100 : 50;
-  const iconFontSize = isDrawerOpen ? 80 : 40;
 
   return (
     <>
       <Box>
         <SideBarHeader>
-          <Avatar
-            alt="Thoplo Machine Logo"
-            variant="rounded"
-            src={Logo}
-            sx={{ width: 50, height: 50 }}
+          <ImageAvatar
+            altText="Thoplo Machine Logo"
+            imgUrl={Logo}
+            width={50}
+            height={50}
           />
           {isDrawerOpen ? (
             <Typography noWrap variant="h6" component="h1">
@@ -48,14 +45,12 @@ const DrawerHeader = () => {
           spacing={1}
           marginTop={1}
         >
-          <Avatar
-            sx={{
-              width: avatarSize,
-              height: avatarSize,
-            }}
-          >
-            <Face2Icon color="primary" sx={{ fontSize: iconFontSize }} />
-          </Avatar>
+          <ImageAvatar
+            imgUrl={user?.profile?.profile_picture}
+            altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+            width={avatarSize}
+            height={avatarSize}
+          />
           {isDrawerOpen && (
             <Box textAlign="center">
               <Typography>{user?.username}</Typography>

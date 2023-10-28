@@ -10,6 +10,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 
 function ProtectedAppLayout() {
   const { mutate, isError, isSuccess } = useRefreshToken();
+
   useEffect(() => {
     mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -23,7 +24,7 @@ function ProtectedAppLayout() {
         sx={{
           // height: window.innerHeight,
           height: "100dvh",
-          minWidth: 350,
+          minWidth: 320,
         }}
         disableGutters
       >

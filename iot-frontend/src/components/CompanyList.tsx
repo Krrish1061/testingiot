@@ -6,7 +6,9 @@ import ListItemText from "@mui/material/ListItemText";
 import Box from "@mui/material/Box";
 import useCompanies from "../hooks/useCompanies";
 import Typography from "@mui/material/Typography";
+import { Link as RouterLink } from "react-router-dom";
 
+// pass the linkto props or implement tab
 const CompanyList = () => {
   const { data, error } = useCompanies();
   if (error) return <Typography>{error.message}</Typography>;
@@ -22,7 +24,11 @@ const CompanyList = () => {
                 key={index}
                 divider={index !== data.length - 1}
               >
-                <ListItemButton disableGutters>
+                <ListItemButton
+                  disableGutters
+                  component={RouterLink}
+                  to="/company"
+                >
                   <ListItemText primary={company.name} />
                 </ListItemButton>
               </ListItem>

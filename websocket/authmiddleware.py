@@ -1,18 +1,15 @@
 """
 General web socket Middlewares
 """
-from urllib.parse import parse_qs
 
+from urllib.parse import parse_qs
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
 from django.utils import timezone
-from rest_framework import status
-from rest_framework.response import Response
 
-from utils.error_message import ERROR_INVALID_TOKEN, ERROR_NO_TOKEN_PROVIDED
 
 from .models import WebSocketToken
 
@@ -42,23 +39,29 @@ class JwtAuthMiddleware(BaseMiddleware):
         # Get the token from query params
         token_query_string = parse_qs(scope["query_string"].decode("utf8"))
         token = token_query_string.get("token", [None])[0]
+
         if token:
             # get the token object from the database
-            token_obj = get_token(token)
+            token_obj = await get_token(token)
             if token_obj:
                 # set the user
-                scope["user"] = await token_obj.user
+                scope["user"] = token_obj.user
                 return await super().__call__(scope, receive, send)
-            else:
-                return Response(
-                    ERROR_INVALID_TOKEN,
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
 
-        else:
-            return Response(
-                ERROR_NO_TOKEN_PROVIDED, status=status.HTTP_401_UNAUTHORIZED
-            )
+        # to disconnect the websocket connection a bit slow
+        return None
+
+    # another approach is to accept connection as annoomous user
+    # and close it immediately in consumer connect method with message and errorcode
+
+    # this closes immediately but may be there is better approach
+    #  await send(
+    #         {
+    #             "type": "websocket.close",
+    #             "code": 4000,  # You can use a custom close code
+    #             "reason": "Authentication failed",
+    #         }
+    #     )
 
 
 def JwtAuthMiddlewareStack(inner):

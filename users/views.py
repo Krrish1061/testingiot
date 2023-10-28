@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import Group
@@ -73,6 +74,7 @@ def is_user_limit_reached(user):
 
 def create_update_useradditionalfield_instance(user, requested_user):
     # creating UserAdditionalField instance for the newly created user
+
     # only for admin user which is not associated with the company
     if not user.is_associated_with_company and user.type == UserType.ADMIN:
         UserAdditionalField.objects.create(
@@ -177,7 +179,7 @@ def get_user(username):
     if user is None:
         try:
             user = (
-                User.objects.select_related("company", "user_extra_field")
+                User.objects.select_related("company", "user_extra_field", "profile")
                 .prefetch_related("groups")
                 .get(username=username)
             )
@@ -226,6 +228,7 @@ def add_user(request, username):
                 groups__name=GroupName.COMPANY_SUPERADMIN_GROUP,
             ).exists()
             if not group:
+                # add the company user to the superadmin group -- only the first admin user of the company created by superadmin user
                 company_superadmin_group = Group.objects.get(
                     name=GroupName.COMPANY_SUPERADMIN_GROUP
                 )
@@ -252,7 +255,7 @@ def user_list_all(request, username):
         if users is None:
             # list of all the users in the application
             users = (
-                User.objects.select_related("company", "user_extra_field")
+                User.objects.select_related("company", "user_extra_field", "profile")
                 .prefetch_related("groups")
                 .all()
             )
@@ -503,7 +506,7 @@ def login_user(request):
             key=settings.SIMPLE_JWT["AUTH_COOKIE"],
             value=token.get("refresh"),
             domain=settings.SIMPLE_JWT["AUTH_COOKIE_DOMAIN"],
-            expires=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
+            expires=(datetime.now() + settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"]),
             secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
             httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
             samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
@@ -520,16 +523,20 @@ def login_user(request):
         )
 
 
-# @csrf_protect
+@csrf_protect
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_user(request, username):
     requested_user = request.user
     if not check_username(requested_user, username):
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
-    refresh_token = request.COOKIES.get("refresh_token")
-    token = RefreshToken(refresh_token)
-    token.blacklist()
+
+    try:
+        refresh_token = request.get_signed_cookie("refresh_token")
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+    except:
+        pass
     response = Response("logout sucessfully", status=status.HTTP_200_OK)
     response.delete_cookie(
         settings.SIMPLE_JWT["AUTH_COOKIE"],

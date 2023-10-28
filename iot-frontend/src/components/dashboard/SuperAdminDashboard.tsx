@@ -14,7 +14,7 @@ function SuperAdminDashboard() {
   return (
     <Box sx={{ display: "flex" }}>
       <NavBar />
-      {isMobile ? <MobileDrawer /> : <DesktopDrawer />}
+      <Box>{isMobile ? <MobileDrawer /> : <DesktopDrawer />}</Box>
       <Box component="main" sx={{ flexGrow: 1, p: 2, overflow: "auto" }}>
         <SideBarHeader />
         <Outlet />

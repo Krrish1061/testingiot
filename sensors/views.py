@@ -52,23 +52,20 @@ def get_sensor_list():
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_sensor_all(request):
-    if User.objects.filter(
-        pk=request.user.id, groups__name=GroupName.SUPERADMIN_GROUP
-    ).exists():
-        sensors = Cache.get_all(
-            cache_key=SENSOR_LIST_CACHE_KEY, app_name=SENSOR_LIST_CACHE_KEY_APP_NAME
+    sensors = Cache.get_all(
+        cache_key=SENSOR_LIST_CACHE_KEY, app_name=SENSOR_LIST_CACHE_KEY_APP_NAME
+    )
+
+    if sensors is None:
+        sensors = Sensor.objects.all()
+        Cache.set_all(
+            cache_key=SENSOR_LIST_CACHE_KEY,
+            app_name=SENSOR_LIST_CACHE_KEY_APP_NAME,
+            data=sensors,
         )
 
-        if sensors is None:
-            sensors = Sensor.objects.all()
-            Cache.set_all(
-                cache_key=SENSOR_LIST_CACHE_KEY,
-                app_name=SENSOR_LIST_CACHE_KEY_APP_NAME,
-                data=sensors,
-            )
-
-        serializer = SensorSerializer(sensors, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    serializer = SensorSerializer(sensors, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

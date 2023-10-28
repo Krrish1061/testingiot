@@ -15,7 +15,7 @@ from utils.error_message import (
     error_setting_invalid_user_type_message,
 )
 
-from .models import User, UserProfile
+from .models import User, UserProfile, UserAdditionalField
 from company.models import Company
 
 
@@ -41,9 +41,38 @@ class GroupSerializer(serializers.ModelSerializer):
         return instance.name
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            # "user",
+            "first_name",
+            "last_name",
+            "profile_picture",
+            "facebook_profile",
+            "linkedin_profile",
+            "phone_number",
+            "date_of_birth",
+            "is_username_modified",
+        ]
+        read_only_fields = ("user",)
+
+
+class UserAdditionalFieldSerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()
+
+    class Meta:
+        model = UserAdditionalField
+        fields = ["created_by", "user_limit", "user_count"]
+
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     groups = GroupSerializer(many=True, read_only=True)
+    extra_fields = UserAdditionalFieldSerializer(
+        read_only=True, source="user_extra_field"
+    )
+    profile = UserProfileSerializer(read_only=True)
 
     class Meta:
         model = User
@@ -58,6 +87,8 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "password",
             "date_joined",
+            "extra_fields",
+            "profile",
         ]
         read_only_fields = (
             "is_associated_with_company",
@@ -257,19 +288,3 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         user.set_password(password)
         return user
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = [
-            "user",
-            "first_name",
-            "last_name",
-            "profile_picture",
-            "facebook_profile",
-            "linkedin_profile",
-            "phone_number",
-            "date_of_birth",
-        ]
-        read_only_fields = ("user",)

@@ -6,9 +6,9 @@ type AuthUser = Partial<User> &
 
 interface AuthStore {
   user: AuthUser | null;
-  setUser: (user: AuthUser) => void;
+  setUser: (user: AuthUser | null) => void;
   token: string | null;
-  setToken: (token: string) => void;
+  setToken: (token: string | null) => void;
 }
 
 const useAuthStore = create<AuthStore>((set) => ({

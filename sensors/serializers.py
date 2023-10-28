@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from caching.cache import Cache
 from company.models import Company
-from users.models import AdminUser, User
+from users.models import User
 from utils.constants import UserType
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
@@ -31,7 +31,7 @@ from .models import Sensor, CompanySensor, AdminUserSensor
 class SensorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sensor
-        fields = ["name", "value_type", "unit", "symbol"]
+        fields = ["name", "unit", "symbol", "created_at", "max_value", "min_value"]
 
 
 class CompanySensorSerializer(serializers.ModelSerializer):

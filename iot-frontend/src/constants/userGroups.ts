@@ -1,4 +1,4 @@
-const GroupNames = {
+const UserGroups = {
   superAdminGroup: "super_admin",
   adminGroup: "admin",
   moderatorGroup: "moderator",
@@ -6,4 +6,4 @@ const GroupNames = {
   companySuperAdminGroup: "company_super_admin",
 };
 
-export default GroupNames;
+export default UserGroups;
