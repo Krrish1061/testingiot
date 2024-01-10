@@ -58,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         VIEWER = "VIEWER", "viewer"
 
     base_type = UserTypes.VIEWER
+
     company = models.ForeignKey(
         Company,
         on_delete=models.PROTECT,
@@ -67,6 +68,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(verbose_name="email address", max_length=255, unique=True)
+    is_email_verified = models.BooleanField(default=False, blank=True)
     username = models.CharField(
         verbose_name="Username",
         max_length=20,
@@ -77,22 +79,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[alphanumeric_validator],
         error_messages={"unique": ERROR_NO_UNIQUE_USERNAME},
     )
-    # not needed
-    phone_number = models.CharField(
-        max_length=10,
-        validators=[
-            RegexValidator(
-                regex=r"^[0-9]{10}$",
-                message=ERROR_PHONE_NUMBER,
-            ),
-        ],
-        blank=True,
-        null=True,
-    )
-
     is_associated_with_company = models.BooleanField(default=False, blank=True)
     is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now, editable=False)
     api_key = models.CharField(
         verbose_name="Authentication Api key",
@@ -110,6 +99,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=False,
     )
+    created_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        related_name="user_created_by",
+        blank=True,
+        null=True,
+    )
+    user_limit = models.PositiveSmallIntegerField(blank=True, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -216,46 +213,46 @@ class ViewerUser(User):
 
 
 #  change name of the class
-class UserAdditionalField(models.Model):
-    """
-    Model to define user extra field.
+# class UserAdditionalField(models.Model):
+#     """
+#     Model to define user extra field.
 
-    This model represents a one-to-one relationship with the User model, allowing
-    to define extra field for user. Each user can be associated
-    with their user creation limit, a count of how many users they have created.
+#     This model represents a one-to-one relationship with the User model, allowing
+#     to define extra field for user. Each user can be associated
+#     with their user creation limit, a count of how many users they have created.
 
-    Fields:
-        user (User): The user associated with this creation limit.
-        created_by (User): The user who created the user define in user field.
-                           Can be null if created automatically or not applicable.
-        limit (int): The maximum number of users the associated user can create.
-                     Default value is 5.
-        count (int): The current count of users created by the associated user.
-                     Default value is 0.
-    """
+#     Fields:
+#         user (User): The user associated with this creation limit.
+#         created_by (User): The user who created the user define in user field.
+#                            Can be null if created automatically or not applicable.
+#         limit (int): The maximum number of users the associated user can create.
+#                      Default value is 5.
+#         count (int): The current count of users created by the associated user.
+#                      Default value is 0.
+#     """
 
-    # change related name field
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="user_extra_field",
-        null=True,
-        blank=True,
-    )
-    created_by = models.ForeignKey(
-        User,
-        #  change to do nothing so that error does not occur when admin user is deleted
-        on_delete=models.SET_NULL,
-        related_name="created_user_list",
-        blank=True,
-        null=True,
-    )
-    user_limit = models.PositiveSmallIntegerField(default=0)
-    user_count = models.PositiveSmallIntegerField(default=0)
+#     # change related name field
+#     user = models.OneToOneField(
+#         User,
+#         on_delete=models.CASCADE,
+#         related_name="user_extra_field",
+#         null=True,
+#         blank=True,
+#     )
+#     created_by = models.ForeignKey(
+#         User,
+#         #  change to do nothing so that error does not occur when admin user is deleted
+#         on_delete=models.SET_NULL,
+#         related_name="created_user_list",
+#         blank=True,
+#         null=True,
+#     )
+#     user_limit = models.PositiveSmallIntegerField(default=0)
+#     user_count = models.PositiveSmallIntegerField(default=0)
 
-    def __str__(self):
-        """Returns the string representation of the model"""
-        return f"UserAdditionalField of {self.user}"
+#     def __str__(self):
+#         """Returns the string representation of the model"""
+#         return f"UserAdditionalField of {self.user}"
 
 
 class UserProfile(models.Model):
@@ -282,8 +279,6 @@ class UserProfile(models.Model):
         # Add other fields as needed
     """
 
-    # allow superadmin to delete user photo
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     first_name = models.CharField("first name", max_length=150, blank=True)
     last_name = models.CharField("last name", max_length=150, blank=True)
@@ -308,9 +303,13 @@ class UserProfile(models.Model):
         null=True,
     )
     date_of_birth = models.DateField(blank=True, null=True)
+    address = models.CharField(max_length=500, blank=True, null=True)
     is_username_modified = models.BooleanField(default=False, blank=True)
+    email_change_to = models.EmailField(
+        verbose_name="email address", max_length=255, null=True, blank=True
+    )
     # Add other fields as needed
 
     def __str__(self):
         """Returns the string representation of the UserProfile model."""
-        return f"Profile of {self.user.email}"
+        return f"Profile of {self.user.username}"

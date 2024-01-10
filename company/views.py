@@ -1,68 +1,37 @@
-from django.contrib.auth import get_user_model
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from caching.cache import Cache
-from caching.cache_key import (
-    COMPANY_LIST_CACHE_KEY,
-    COMPANY_LIST_CACHE_KEY_APP_NAME,
-    get_company_profile_cache_key,
-)
-from utils.constants import GroupName, UserType
+from company.cache import CompanyCache
+from users.cache import UserCache
+from utils.commom_functions import get_groups_tuple
+from utils.constants import GroupName
 from utils.error_message import (
     ERROR_INVALID_URL,
     ERROR_PERMISSION_DENIED,
     error_protected_delete_message,
 )
 
-from .models import Company
+
 from .serializers import CompanyProfileSerializer, CompanySerializer
 from .utils import is_slugId_ofSameInstance
 
-User = get_user_model()
-
-
-def get_company_profile(company):
-    cache_key = get_company_profile_cache_key(company.slug)
-    company_profile = Cache.get(cache_key)
-    if company_profile:
-        return company_profile
-    else:
-        company_profile = company.profile
-        Cache.set(cache_key, company_profile)
-        return company_profile
-
-
-def is_user_authorized(user, company_id):
-    """Checks to see if user is authorized for GET request response"""
-    if user.type == UserType.SUPERADMIN:
-        return True
-    if user.is_associated_with_company and user.company.id == company_id:
-        return True
-    return False
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def company_list_all(request):
-    if User.objects.filter(
-        pk=request.user.id, groups__name=GroupName.SUPERADMIN_GROUP
-    ).exists():
-        companies = Cache.get_all(
-            cache_key=COMPANY_LIST_CACHE_KEY, app_name=COMPANY_LIST_CACHE_KEY_APP_NAME
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        companies = CompanyCache.get_all_company()
+        serializer = CompanySerializer(
+            companies, many=True, context={"request": request}
         )
-        if companies is None:
-            companies = Company.objects.all()
-            Cache.set_all(
-                cache_key=COMPANY_LIST_CACHE_KEY,
-                app_name=COMPANY_LIST_CACHE_KEY_APP_NAME,
-                data=companies,
-            )
-
-        serializer = CompanySerializer(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(
@@ -73,51 +42,51 @@ def company_list_all(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_company(request):
-    if User.objects.filter(
-        pk=request.user.id, groups__name=GroupName.SUPERADMIN_GROUP
-    ).exists():
-        serializer = CompanySerializer(data=request.data)
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        serializer = CompanySerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         company = serializer.save()
-        Cache.set_to_list(
-            cache_key=COMPANY_LIST_CACHE_KEY,
-            app_name=COMPANY_LIST_CACHE_KEY_APP_NAME,
-            data=company,
-        )
+        CompanyCache.set_company(company)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
 
 
 @api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def company(request, id, company_slug):
-    # checking if company slug and id from the id-object is same or not
-    is_url_valid, company = is_slugId_ofSameInstance(company_slug, id)
+def company(request, company_slug):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    # checking if company slug and id from the user belong to same company or not
+    is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
+
     if not is_url_valid:
         # raise exception error and catch 404 error in server and render 404 page
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
+    company = CompanyCache.get_company(company_slug)
     if request.method == "GET":
-        if not is_user_authorized(request.user, company.id):
-            return Response(
-                {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
-            )
-        serializer = CompanySerializer(company)
+        serializer = CompanySerializer(company, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    if User.objects.filter(
-        pk=request.user.id, groups__name=GroupName.SUPERADMIN_GROUP
-    ).exists():
+    if GroupName.SUPERADMIN_GROUP in user_groups:
         if request.method == "PATCH":
-            serializer = CompanySerializer(company, data=request.data, partial=True)
+            serializer = CompanySerializer(
+                company, data=request.data, partial=True, context={"request": request}
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            Cache.delete_from_list(COMPANY_LIST_CACHE_KEY, company.id)
+            CompanyCache.delete_company(company.id)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "DELETE":
             try:
                 company.delete()
-                Cache.delete_from_list(COMPANY_LIST_CACHE_KEY, company.id)
+                CompanyCache.delete_company(company.id)
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects
@@ -139,34 +108,82 @@ def company(request, id, company_slug):
 
 @api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
-def company_profile(request, company_slug, id):
-    is_url_valid, company = is_slugId_ofSameInstance(company_slug, id)
+def company_profile(request, company_slug):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+
+    is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
     if not is_url_valid:
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
-    if is_user_authorized(request.user, company.id):
-        company_profile = get_company_profile(company)
+    if any(
+        group_name in user_groups
+        for group_name in (
+            GroupName.COMPANY_SUPERADMIN_GROUP,
+            GroupName.SUPERADMIN_GROUP,
+        )
+    ):
+        company_profile = CompanyCache.get_company_profile(company_slug)
 
         if request.method == "GET":
-            serializer = CompanyProfileSerializer(company_profile)
+            serializer = CompanyProfileSerializer(
+                company_profile, context={"request": request}
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "PATCH":
-            if request.user.type in (UserType.ADMIN, UserType.SUPERADMIN):
-                serializer = CompanyProfileSerializer(
-                    company_profile, data=request.data, partial=True
-                )
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-                Cache.delete(get_company_profile_cache_key(company.slug))
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {"error": ERROR_PERMISSION_DENIED},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            serializer = CompanyProfileSerializer(
+                company_profile,
+                data=request.data,
+                partial=True,
+                context={"request": request},
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            CompanyCache.delete_company_profile(company_profile)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     else:
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
         )
+
+
+@api_view(["POST"])
+def company_change_email(request, company_slug):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+
+    is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
+    if not is_url_valid:
+        # raise exception error and catch 404 error in server and render 404 page
+        return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
+
+    company = CompanyCache.get_company(company_slug)
+    new_email = request.data.get("new_email")
+
+    try:
+        validate_email(new_email)
+    except ValidationError:
+        return Response(
+            {"error": "Invalid Email address"}, status=status.HTTP_404_NOT_FOUND
+        )
+    if new_email == company.email:
+        return Response(
+            {"error": "Email address is already associated with your account"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    company_profile = company.profile
+    company_profile.email_change_to = new_email
+    company_profile.save(update_fields=["email_change_to"])
+
+    # calling celery task to send email
+    # sending_update_email.delay(requested_user.id, user_profile.first_name)
+
+    return Response(
+        {
+            "message": f"Thanks! we've sent you an email containing further instructions for changing your Email Address."
+        },
+        status=status.HTTP_200_OK,
+    )

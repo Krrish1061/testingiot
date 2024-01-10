@@ -7,7 +7,6 @@ from django.utils import timezone
 from utils.error_message import ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY
 
 
-# set maximum limit and minimum limit for sensor
 class Sensor(models.Model):
     """
     Model representing a sensor.
@@ -25,9 +24,9 @@ class Sensor(models.Model):
     name = models.CharField(max_length=255, unique=True)
     unit = models.CharField(max_length=150, null=True, blank=True)
     symbol = models.CharField(max_length=10, null=True, blank=True)
+    max_value = models.IntegerField(blank=True, null=True)
+    min_value = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
-    max_value = models.PositiveSmallIntegerField(blank=True, null=True)
-    min_value = models.PositiveSmallIntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.name

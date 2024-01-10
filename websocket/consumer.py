@@ -121,7 +121,8 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                     .values("timestamp")[:1]
                 ),
             )
-            sensors_data = defaultdict(list)
+
+            sensors_data = defaultdict(dict)
             for data in admin_user_sensor_data_qs:
                 iot_device_id = data.pop("iot_device_id")
                 data["timestamp"] = (
@@ -129,7 +130,11 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                     .astimezone(timezone.get_default_timezone())
                     .strftime("%Y-%m-%d %H:%M:%S")
                 )
-                sensors_data[iot_device_id].append(data)
+                sensor_name = data.pop("user_sensor__sensor__name")
+                sensor_value = data.pop("value")
+                data[sensor_name] = sensor_value
+                sensors_data[iot_device_id].update(data)
+
             return sensors_data
 
         elif company:

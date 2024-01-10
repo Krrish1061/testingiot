@@ -8,11 +8,10 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "name",
-        "phone_number",
         "slug",
         "email",
-        "address",
         "user_limit",
+        "api_key",
     )
 
 
@@ -22,6 +21,7 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         "id",
         "company",
         "logo",
+        "address",
         "phone_number",
         "description",
     )

@@ -1,11 +1,14 @@
-import { Link } from "react-router-dom";
+import DesktopManageSensors from "../components/sensor/datagrid/DesktopManageSensors";
+import { Theme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import MobileManageSensors from "../components/sensor/mobileManageSensor/MobileManageSensors";
 
 function ManageSensors() {
-  return (
-    <div>
-      ManageSensors <Link to="/test1">cat</Link>
-    </div>
+  const smallScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.down("md")
   );
+  if (smallScreen) return <MobileManageSensors />;
+  else return <DesktopManageSensors />;
 }
 
 export default ManageSensors;

@@ -3,8 +3,9 @@ import Avatar from "@mui/material/Avatar";
 interface Props {
   altText: string;
   imgUrl: string | null | undefined;
-  width?: number | string;
-  height?: number | string;
+  width?: number | string | object;
+  height?: number | string | object;
+  variant?: "circular" | "rounded" | "square";
 }
 
 function stringToColor(string: string) {
@@ -29,25 +30,35 @@ function stringToColor(string: string) {
 
 function stringAvatar(
   name: string,
-  width: string | number | undefined,
-  height: string | number | undefined
+  width: string | number | object | undefined,
+  height: string | number | object | undefined
 ) {
+  const textName =
+    name.split(" ").length > 1
+      ? `${name.split(" ")[0][0].toUpperCase()}${name
+          .split(" ")[1][0]
+          .toUpperCase()}`
+      : `${name.split(" ")[0][0].toUpperCase()}${name
+          .split(" ")[0][1]
+          .toUpperCase()}`;
+
   return {
     sx: {
       bgcolor: stringToColor(name),
       width: width,
       height: height,
     },
-    children: `${name.split(" ")[0][0]}${name.split(" ")[1][0]}`,
+    children: textName,
   };
 }
 
-function ImageAvatar({ imgUrl, width, height, altText }: Props) {
+function ImageAvatar({ imgUrl, width, height, altText, variant }: Props) {
   if (imgUrl) {
     return (
       <Avatar
         alt={altText}
         src={imgUrl}
+        variant={variant ? variant : "circular"}
         sx={{ width: width, height: height }}
       />
     );

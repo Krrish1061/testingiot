@@ -2,29 +2,51 @@ from rest_framework import serializers
 from .models import Company, CompanyProfile
 
 
+class CompanyProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyProfile
+        fields = [
+            "logo",
+            "phone_number",
+            "address",
+            "description",
+        ]
+
+
 class CompanySerializer(serializers.ModelSerializer):
+    profile = CompanyProfileSerializer(read_only=True)
+
     class Meta:
         model = Company
         fields = [
             "id",
             "name",
             "email",
-            "phone_number",
             "slug",
-            "address",
             "user_limit",
             "created_at",
+            "profile",
         ]
-        read_only_fields = ("slug", "created_at")
+        read_only_fields = ("id", "slug", "created_at", "profile")
 
+    # def validate(self, attrs):
+    #     request = self.context["request"]
+    #     if request.method == "PATCH":
+    #         email = attrs.get("email")
+    #         if email:
+    #             raise serializers.ValidationError(
+    #                 {
+    #                     "error": f"{ERROR_PERMISSION_DENIED} You cannot Update email address",
+    #                 },
+    #             )
+    #     return attrs
 
-class CompanyProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompanyProfile
-        fields = [
-            "company",
-            "logo",
-            "contact_phone",
-            "description",
-        ]
-        read_only_fields = ("company",)
+    def update(self, instance, validated_data):
+        name = validated_data.get("name")
+        user_limit = validated_data.get("user_limit")
+        if name != instance.name:
+            instance.name = name
+        if user_limit != instance.user_limit:
+            instance.user_limit = user_limit
+        instance.save()
+        return instance

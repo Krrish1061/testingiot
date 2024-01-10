@@ -11,7 +11,6 @@ class Command(BaseCommand):
         parser.add_argument("partition_id", type=int)
 
     def handle(self, company_name, partition_id, *args, **options):
-        print(company_name)
         with connection.cursor() as cursor:
             cursor.execute(
                 f"ALTER TABLE sensor_data_sensordata REORGANIZE PARTITION p_max INTO (PARTITION p_{company_name} VALUES IN ({partition_id}), PARTITION p_max VALUES IN (10000));"

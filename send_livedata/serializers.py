@@ -18,7 +18,7 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
             "id",
             "company",
             "user",
-            "endpoint",
+            "endpoints",
         ]
         extra_kwargs = {
             "company": {
@@ -42,6 +42,11 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
             if attrs["user"].type != UserType.ADMIN:
                 raise serializers.ValidationError(
                     {"error": ERROR_ONLY_ADMIN_USER_PERMITTED}
+                )
+
+            if not isinstance(attrs["endpoints"], list):
+                raise serializers.ValidationError(
+                    {"error": "Endpoints should be list of the Urls"}
                 )
         return attrs
 

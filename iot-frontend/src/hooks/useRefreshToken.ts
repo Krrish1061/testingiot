@@ -7,6 +7,7 @@ import { enqueueSnackbar } from "notistack";
 import CsrfError from "../errors/csrfError";
 import { useLocation, useNavigate } from "react-router-dom";
 import jwtDecode, { JwtPayload } from "jwt-decode";
+import UserTypes from "../constants/userTypes";
 
 interface Token {
   access: string;
@@ -24,6 +25,10 @@ const useRefreshToken = () => {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
+  const setIsUserSuperAdmin = useAuthStore(
+    (state) => state.setIsUserSuperAdmin
+  );
+
   const token = useAuthStore((state) => state.token);
   const refreshToken = async () => {
     const csrfToken = await getCsrf();
@@ -50,6 +55,9 @@ const useRefreshToken = () => {
           type: accessToken.type,
           groups: accessToken.groups,
         });
+        if (accessToken.type === UserTypes.superAdmin) {
+          setIsUserSuperAdmin(true);
+        }
       }
       setToken(newtoken);
     },

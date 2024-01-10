@@ -72,7 +72,7 @@ ROOT_URLCONF = "iot.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -155,6 +155,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static/"
 # STATICFILES_DIRS = [BASE_DIR / "iot-frontend/dist/assets"]
+STATICFILES_DIRS = [BASE_DIR / "staticfiles/"]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media/"
@@ -186,7 +187,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": True,
+    "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
     "VERIFYING_KEY": "",
     "AUDIENCE": None,
@@ -268,3 +269,18 @@ CACHES = {
         # },
     }
 }
+
+
+# this setting is used for both email verification and password reset. Timeout is changed later check users.utilis.TokenGenerator
+PASSWORD_RESET_TIMEOUT = 259200  # value in second for 3 days
+
+
+# Email setting
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "krrrish1061@gmail.com"
+EMAIL_HOST_PASSWORD = "vxut ryqh mbmm vxfe"
+EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = True
+# DEFAULT_FROM_EMAIL = 'your_default_from_email_address'

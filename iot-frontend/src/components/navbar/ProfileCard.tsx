@@ -7,22 +7,15 @@ import ImageAvatar from "../ImageAvatar";
 
 function ProfileCard() {
   const user = useAuthStore((state) => state.user);
+
   return (
-    <Card
-      elevation={0}
-      sx={{
-        width: 250,
-        paddingTop: 2,
-        marginBottom: -1,
-      }}
-    >
+    <Card elevation={0}>
       <CardContent
         sx={{
-          margin: 0,
-          padding: 0,
           display: "flex",
-          justifyContent: "space-evenly",
+          justifyContent: "center",
           alignItems: "center",
+          gap: 2,
         }}
       >
         <ImageAvatar
@@ -36,7 +29,7 @@ function ProfileCard() {
           <Typography
             component="h1"
             variant="h6"
-            fontSize={16}
+            fontSize={14}
             noWrap
             textAlign="center"
           >
@@ -45,7 +38,7 @@ function ProfileCard() {
           <Typography
             component="h1"
             variant="h6"
-            fontSize={16}
+            fontSize={14}
             noWrap
             textAlign="center"
           >
@@ -54,7 +47,7 @@ function ProfileCard() {
           <Typography
             component="h1"
             variant="h6"
-            fontSize={16}
+            fontSize={14}
             noWrap
             textAlign="center"
           >

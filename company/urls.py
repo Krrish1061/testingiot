@@ -6,10 +6,15 @@ from . import views
 urlpatterns = [
     path("", views.add_company, name="add-company"),
     path("all/", views.company_list_all, name="company-list-all"),
-    path("<slug:company_slug>/<int:id>/", views.company, name="company-detail"),
+    path("<slug:company_slug>/", views.company, name="company-detail"),
     path(
-        "<slug:company_slug>/<int:id>/profile/",
+        "<slug:company_slug>/profile/",
         views.company_profile,
         name="company-profile",
+    ),
+    path(
+        "<slug:company_slug>/change-email/",
+        views.company_change_email,
+        name="company-change-email",
     ),
 ]

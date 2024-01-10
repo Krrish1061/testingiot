@@ -2,10 +2,13 @@ from django.core.cache import cache
 
 
 class Cache:
-    CACHE_TTL = 120  # 300 seconds
+    CACHE_TTL = 120  # value in seconds
 
     def cache_key_list_created_with_single_element(app_name):
         return f"{app_name}_list_created_with_single_element"
+
+    def generate_cache_key(self, app_name):
+        return f"{app_name}_fetch_list"
 
     @staticmethod
     def get_all(cache_key: str, app_name: str) -> object | None:
@@ -68,22 +71,17 @@ class Cache:
         cached_data = cache.get(cache_key)
         print("inside get_company_by_slug cache class=", cached_data)
         if cached_data:
+            print("cat")
+            for data in cached_data:
+                print("company---", data, data.id, type(slug), type(data.slug))
+                if data.slug == slug:
+                    print("--------------------cat---------------------")
+                    return data
             result = next(
-                (data for data in cached_data if data.slug == slug),
+                (company for company in cached_data if company.slug == slug),
                 None,
             )
-            return result
-        return None
-
-    @staticmethod
-    def get_user_by_username(cache_key: str, username: str) -> object | None:
-        cached_data = cache.get(cache_key)
-        print("inside get_user_by_username cache class=", cached_data)
-        if cached_data:
-            result = next(
-                (data for data in cached_data if data.username == username),
-                None,
-            )
+            print("inside cache result =", result)
             return result
         return None
 
@@ -122,7 +120,6 @@ class Cache:
     @staticmethod
     def get(cache_key: str) -> object | None:
         cached_data = cache.get(cache_key)
-        # print("inside get cache class=", cached_data)
         return cached_data if cached_data else None
 
     @staticmethod

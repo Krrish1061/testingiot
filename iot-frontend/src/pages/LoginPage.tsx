@@ -12,13 +12,14 @@ import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { Link as RouterLink } from "react-router-dom";
 import { z } from "zod";
 import useLogin from "../hooks/useLogin";
 import Logo from "/logo.png";
+import TextField from "@mui/material/TextField";
 
 const schema = z.object({
   username: z
@@ -105,7 +106,8 @@ const LoginPage = () => {
                   required
                   fullWidth
                   error={!!errors.username}
-                  helperText={errors.username && errors.username.message}
+                  helperText={errors.username?.message}
+                  autoComplete="username email"
                 />
               </Box>
               <Box marginBottom={3}>
@@ -118,7 +120,11 @@ const LoginPage = () => {
                   >
                     Password:
                   </Typography>
-                  <Link href="#" variant="body1" underline="hover">
+                  <Link
+                    to="/forget-password"
+                    component={RouterLink}
+                    underline="hover"
+                  >
                     Forget password?
                   </Link>
                 </Stack>
@@ -145,7 +151,8 @@ const LoginPage = () => {
                   required
                   fullWidth
                   error={!!errors.password}
-                  helperText={errors.password && errors.password.message}
+                  helperText={errors.password?.message}
+                  autoComplete="current-password"
                 />
               </Box>
 

@@ -1,40 +1,45 @@
-import BorderColorIcon from "@mui/icons-material/BorderColor";
-import LogoutIcon from "@mui/icons-material/Logout";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import ClickAwayListener from "@mui/material/ClickAwayListener";
-import Divider from "@mui/material/Divider";
-import Grow from "@mui/material/Grow";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
+import ImageAvatar from "../ImageAvatar";
+import useAuthStore from "../../store/authStore";
 import MenuItem from "@mui/material/MenuItem";
-import MenuList from "@mui/material/MenuList";
-import Paper from "@mui/material/Paper";
-import Popper from "@mui/material/Popper";
-import Typography from "@mui/material/Typography";
-import { useRef, useState } from "react";
 import ProfileCard from "./ProfileCard";
+import Divider from "@mui/material/Divider";
+import { useTheme } from "@mui/material/styles";
+import { useState, useRef, useContext } from "react";
+import Typography from "@mui/material/Typography";
+import NavButton from "./NavButton";
+import Popper from "@mui/material/Popper";
+import Box from "@mui/material/Box";
+import Grow from "@mui/material/Grow";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Paper from "@mui/material/Paper";
+import MenuList from "@mui/material/MenuList";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Logout from "@mui/icons-material/Logout";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import { useNavigate } from "react-router-dom";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { ColorModeContext } from "../../theme";
 import useLogout from "../../hooks/useLogout";
 import CircularProgress from "@mui/material/CircularProgress";
-import useAuthStore from "../../store/authStore";
-import ImageAvatar from "../ImageAvatar";
-
-// import styled from "@mui/material/styles/styled";
-// const NavButton = styled(Button)(({ theme }) => ({
-//   borderColor: theme.palette.common.white,
-//   color: theme.palette.primary.contrastText,
-//   "&:hover": {
-//     backgroundColor: theme.palette.primary.dark,
-//     borderColor: theme.palette.common.white,
-//   },
-// }));
 
 function NavUserButton() {
-  const [open, setOpen] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const theme = useTheme();
+  const colorMode = useContext(ColorModeContext);
+  const navigate = useNavigate();
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const { mutate, isLoading } = useLogout();
+  const user = useAuthStore((state) => state.user);
+  const [open, setOpen] = useState(false);
+  const { mutateAsync, isLoading } = useLogout();
+
+  function handleListKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      setOpen(false);
+    } else if (event.key === "Escape") {
+      setOpen(false);
+    }
+  }
 
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
@@ -51,71 +56,73 @@ function NavUserButton() {
     setOpen(false);
   };
 
-  const handleLogout = () => {
-    mutate();
+  const handleViewProfile = (event: Event | React.SyntheticEvent) => {
+    handleClose(event);
+    navigate("/profile");
   };
 
-  function handleListKeyDown(event: React.KeyboardEvent) {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      setOpen(false);
-    } else if (event.key === "Escape") {
-      setOpen(false);
-    }
-  }
+  const handleColorModeToggle = (event: Event | React.SyntheticEvent) => {
+    colorMode.toggleColorMode();
+    handleClose(event);
+  };
+
+  const handleLogout = async () => {
+    await mutateAsync();
+  };
 
   return (
     <>
-      <Button
+      <NavButton
+        variant="outlined"
+        disableElevation
+        isAvatar={true}
         ref={anchorRef}
-        id="composition-button"
-        aria-controls={open ? "composition-menu" : undefined}
+        onClick={handleToggle}
+        aria-controls={open ? "menu" : undefined}
         aria-expanded={open ? "true" : undefined}
         aria-haspopup="true"
-        onClick={handleToggle}
-        disableElevation
-        variant="outlined"
       >
         <ImageAvatar
           imgUrl={user?.profile?.profile_picture}
           altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
-          height={30}
-          width={30}
+          height={{
+            xs: 50,
+            md: 30,
+          }}
+          width={{
+            xs: 50,
+            md: 30,
+          }}
         />
-        {/* // marginRight: 2, */}
-        {/* display typography component only on larger screen sizes */}
         <Typography
-          component="h1"
-          variant="h6"
-          fontSize={16}
-          noWrap
-          marginLeft={2}
-          textAlign="center"
+          display={{
+            xs: "none",
+            md: "inherit",
+          }}
         >
-          {/* first name only truncate the name if exceeds */}
           {user?.profile?.first_name}
         </Typography>
-      </Button>
+      </NavButton>
       <Popper
         open={open}
         anchorEl={anchorRef.current}
         role={undefined}
         placement="bottom-start"
         transition
-        sx={{ zIndex: 1200 }}
+        sx={{ zIndex: 1300 }}
       >
         {({ TransitionProps }) => (
           <Grow
             {...TransitionProps}
             style={{
-              transformOrigin: "left top",
+              transformOrigin: "right top",
             }}
           >
-            <Paper sx={{ marginTop: 1 }}>
+            <Paper elevation={12}>
               <ClickAwayListener onClickAway={handleClose}>
                 <Box>
                   <MenuList
-                    id="composition-menu"
+                    id="menu"
                     autoFocus={open}
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
@@ -126,27 +133,31 @@ function NavUserButton() {
                       },
                     }}
                   >
-                    <Divider
-                      variant="middle"
-                      sx={{ borderBottomWidth: "2px" }}
-                    />
-                    <MenuItem onClick={handleClose}>
+                    <Divider sx={{ borderBottomWidth: "2px" }} />
+
+                    <MenuItem onClick={handleColorModeToggle}>
                       <ListItemIcon>
-                        <BorderColorIcon />
+                        {theme.palette.mode === "dark" ? (
+                          <Brightness7Icon fontSize="small" />
+                        ) : (
+                          <Brightness4Icon fontSize="small" />
+                        )}
                       </ListItemIcon>
-                      <ListItemText primary="Edit Profile" />
+                      {theme.palette.mode.charAt(0).toUpperCase() +
+                        theme.palette.mode.substring(1)}{" "}
+                      Mode
                     </MenuItem>
-                    <MenuItem onClick={handleClose}>
+                    <MenuItem onClick={handleViewProfile}>
                       <ListItemIcon>
                         <PersonOutlineIcon />
                       </ListItemIcon>
-                      <ListItemText primary="View Profile" />
+                      View Profile
                     </MenuItem>
                     <MenuItem disabled={isLoading} onClick={handleLogout}>
                       <ListItemIcon>
-                        <LogoutIcon />
+                        <Logout />
                       </ListItemIcon>
-                      <ListItemText primary="Logout" />
+                      Logout
                       {isLoading && (
                         <CircularProgress
                           color="primary"

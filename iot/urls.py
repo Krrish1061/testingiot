@@ -21,6 +21,8 @@ from django.urls import path, include
 
 # from django.views.generic import TemplateView
 
+
+# "domain/api/savedata" for saving the data in the devices.
 urlpatterns = [
     # path("", TemplateView.as_view(template_name="base.html")),
     path("admin/", admin.site.urls),
@@ -32,8 +34,8 @@ urlpatterns = [
     path("websocket/", include("websocket.urls")),
     path("api/", include("api.urls")),
     path("send-data-to/", include("send_livedata.urls")),
-    path("", include("users.auth_urls")),
-    path("<str:username>/", include("users.urls")),
+    path("", include("users.urls.auth_urls")),
+    path("<str:username>/", include("users.urls.urls")),
 ]
 
 if settings.DEBUG:

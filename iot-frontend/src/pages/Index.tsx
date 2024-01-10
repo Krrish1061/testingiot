@@ -4,33 +4,33 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import useWebSocketStore from "../store/webSocketStore";
-import useGetWebSocketToken from "../hooks/useGetWebSocketToken";
-import { useEffect } from "react";
+// import useGetWebSocketToken from "../hooks/useGetWebSocketToken";
+// import { useEffect } from "react";
 import LiveDataCardContainer from "../components/LiveDataCardContainer";
 
 function Index() {
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
-  const connectWebSocket = useWebSocketStore((state) => state.connectWebSocket);
-  const websocket = useWebSocketStore((state) => state.websocket);
-  const {
-    data: webSocketToken,
-    mutateAsync: getWebSocketToken,
-    isSuccess,
-  } = useGetWebSocketToken();
+  // const connectWebSocket = useWebSocketStore((state) => state.connectWebSocket);
+  // const websocket = useWebSocketStore((state) => state.websocket);
+  // const {
+  //   data: webSocketToken,
+  //   mutateAsync: getWebSocketToken,
+  //   isSuccess,
+  // } = useGetWebSocketToken();
 
-  useEffect(() => {
-    // Connect to WebSocket when component mounts
-    const endpoint = "ws://127.0.0.1:8000/ws/iot/pubsub/";
-    if (!websocket && isSuccess) {
-      connectWebSocket(endpoint + "?token=" + webSocketToken.token);
-    }
-    if (!websocket && !isSuccess) {
-      (async () => await getWebSocketToken())();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [websocket, isSuccess]);
+  // useEffect(() => {
+  //   // Connect to WebSocket when component mounts
+  //   const endpoint = "ws://127.0.0.1:8000/ws/iot/pubsub/";
+  //   if (!websocket && isSuccess) {
+  //     connectWebSocket(endpoint + "?token=" + webSocketToken.token);
+  //   }
+  //   if (!websocket && !isSuccess) {
+  //     (async () => await getWebSocketToken())();
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [websocket, isSuccess]);
 
   const handleClick = (data: string) => {
     sendWebSocketMessage({
@@ -56,8 +56,9 @@ function Index() {
           size="medium"
           startIcon={<DownloadIcon />}
           onClick={() => handleClick("thoplo-machine-pvt-ltd")}
+          color="secondary"
         >
-          <Typography noWrap> DOWNLOAD DATA</Typography>
+          <Typography noWrap>DOWNLOAD DATA</Typography>
         </Button>
       </Stack>
       {/* {liveData && Object.entries(liveData).map(([iot_device_id, data], index))} */}

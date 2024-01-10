@@ -47,6 +47,7 @@ def send_livedata_list_all(request):
     if User.objects.filter(
         pk=request.user.id, groups__name=GroupName.SUPERADMIN_GROUP
     ).exists():
+        # might cause problem i.e might not return all the values due to cache
         send_livedata = Cache.get_all(
             cache_key=SEND_LIVE_DATA_LIST_CACHE_KEY,
             app_name=SEND_LIVE_DATA_LIST_CACHE_KEY_APP_NAME,

@@ -118,13 +118,21 @@ def sensor(request, name):
             serializer = SensorSerializer(sensor, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            Cache.delete_from_list(SENSOR_LIST_CACHE_KEY, sensor.id)
+            Cache.delete_from_list(
+                cache_key=SENSOR_LIST_CACHE_KEY,
+                app_name=SENSOR_LIST_CACHE_KEY_APP_NAME,
+                id=sensor.id,
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "DELETE":
             try:
                 sensor.delete()
-                Cache.delete_from_list(SENSOR_LIST_CACHE_KEY, sensor.id)
+                Cache.delete_from_list(
+                    cache_key=SENSOR_LIST_CACHE_KEY,
+                    app_name=SENSOR_LIST_CACHE_KEY_APP_NAME,
+                    id=sensor.id,
+                )
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects

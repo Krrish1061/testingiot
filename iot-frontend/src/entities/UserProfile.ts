@@ -5,8 +5,9 @@ interface UserProfile {
   facebook_profile: string | null;
   linkedin_profile: string | null;
   phone_number: number | null;
-  data_of_birth: Date | null;
+  date_of_birth: Date | null;
   is_username_modified: boolean;
+  address: string | null;
 }
 
 export default UserProfile;

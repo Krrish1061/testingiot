@@ -21,6 +21,7 @@ function useEditUser() {
   return useMutation<User, AxiosError, User>({
     mutationFn: editUser,
     onSuccess: () => {
+      // update the user or user list
       enqueueSnackbar("User sucessfully Edited", { variant: "success" });
     },
     onError: () => {

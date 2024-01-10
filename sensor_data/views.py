@@ -198,6 +198,8 @@ def save_sensor_data(request):
             serializer.save()
 
         field_sensor_name_dict = get_field_sensor_name_dict(company_sensors)
+
+        print("in view save data for company", company, company.id, company.name)
         # call celery for sending live data to an api end point
         send_live_data_to.delay(
             user_id=None,

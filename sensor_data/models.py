@@ -46,7 +46,7 @@ class CompanySensorData(models.Model):
 
 class AdminUserSensorData(models.Model):
     """
-    Model representing sensor data.
+    Model representing sensor data. Storing data for the Individual customer.
     later create a partition on the basis on timestamp
 
     Fields:

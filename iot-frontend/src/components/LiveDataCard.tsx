@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
-import useGetAllSensors from "../hooks/useGetAllSensors";
+import useGetAllSensors from "../hooks/sensor/useGetAllSensors";
 
 interface Props {
   sensorName: string;
@@ -15,7 +15,7 @@ function LiveDataCard({ sensorName, data }: Props) {
   const { data: sensors } = useGetAllSensors();
 
   return (
-    <Card elevation={0} sx={{ backgroundColor: "gold", minWidth: 300 }}>
+    <Card elevation={0}>
       <CardContent
         sx={{
           display: "flex",

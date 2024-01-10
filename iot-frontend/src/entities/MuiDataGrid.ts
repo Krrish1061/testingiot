@@ -1,4 +1,5 @@
 import {
+  // GridRowId,
   GridRowModel,
   GridRowModesModel,
   GridValidRowModel,
@@ -14,6 +15,8 @@ export interface PromiseArguments {
 interface MuiDataGrid<T> {
   rows: (T & { isNew?: boolean })[];
   setRows: (rows: (T & { isNew?: boolean })[]) => void;
+  deleteRow: GridRowModel | null;
+  setDeleteRow: (row: GridRowModel | null) => void;
   rowModesModel: GridRowModesModel;
   setRowModesModel: (rowModesModel: GridRowModesModel) => void;
   promiseArguments: PromiseArguments | null;

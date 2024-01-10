@@ -42,7 +42,7 @@ class EmailorUsernameModelBackend(BaseBackend):
     def get_user(self, user_id):
         try:
             return (
-                User.objects.select_related("company", "user_extra_field")
+                User.objects.select_related("company", "created_by")
                 .prefetch_related("groups")
                 .get(pk=user_id)
             )

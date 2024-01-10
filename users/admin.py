@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserAdditionalField, UserProfile
+from .models import User, UserProfile
 from .forms import UserChangeForm, UserCreationForm
 
 
@@ -22,9 +22,11 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "is_active",
         "is_superuser",
+        "created_by",
+        "user_limit",
         "api_key",
     ]
-    list_filter = ["email", "is_staff", "is_active", "type"]
+    list_filter = ["email", "is_staff", "is_active", "type", "created_by"]
     fieldsets = (
         (None, {"fields": ("email", "password", "username")}),
         (
@@ -33,6 +35,8 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "company",
                     "is_associated_with_company",
+                    "created_by",
+                    "user_limit",
                 )
             },
         ),
@@ -63,6 +67,8 @@ class UserAdmin(BaseUserAdmin):
                     "type",
                     "company",
                     "is_associated_with_company",
+                    "created_by",
+                    "user_limit",
                     "is_staff",
                     "is_active",
                     "groups",
@@ -83,15 +89,15 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
-@admin.register(UserAdditionalField)
-class UserAdditionalFieldAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "user",
-        "created_by",
-        "user_count",
-        "user_limit",
-    )
+# @admin.register(UserAdditionalField)
+# class UserAdditionalFieldAdmin(admin.ModelAdmin):
+#     list_display = (
+#         "id",
+#         "user",
+#         "created_by",
+#         "user_count",
+#         "user_limit",
+#     )
 
 
 @admin.register(UserProfile)
@@ -105,4 +111,6 @@ class UserProfileAdmin(admin.ModelAdmin):
         "linkedin_profile",
         "phone_number",
         "date_of_birth",
+        "address",
+        "email_change_to",
     )

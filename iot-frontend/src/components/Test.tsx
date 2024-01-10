@@ -32,11 +32,11 @@ interface Props {
 function Row({ row }: Props) {
   const [open, setOpen] = useState(false);
   const [company, setCompany] = useState<string>(row.company || "N/A");
-  const [email, setEmail] = useState<string>(row.email);
+  const [email, setEmail] = useState<string | undefined>(row.email);
   const [isEditMode, setIsEditMode] = useState(false);
   return (
     <>
-      <TableRow>
+      <TableRow onClick={() => setOpen(!open)}>
         <TableCell>
           <IconButton
             aria-label="expand row"
@@ -48,7 +48,7 @@ function Row({ row }: Props) {
         </TableCell>
         <TableCell component="th" scope="row">
           <ImageAvatar
-            imgUrl={row.profile.profile_picture}
+            imgUrl={row.profile?.profile_picture}
             altText={`${row.profile?.first_name} ${row?.profile?.last_name}`}
           />
         </TableCell>
@@ -61,7 +61,7 @@ function Row({ row }: Props) {
             <Box sx={{ margin: 0.5, width: 1 }}>
               <Stack direction="row" justifyContent="space-between">
                 <Typography variant="h6" gutterBottom component="h2">
-                  {row.profile.first_name} {row.profile.last_name}
+                  {row.profile?.first_name} {row.profile?.last_name}
                 </Typography>
                 <Box>
                   {!isEditMode ? (
@@ -161,34 +161,31 @@ function Test() {
   const { data, isError, isLoading } = useGetAllUser();
 
   if (isError) return <Box> Error Occurred</Box>;
+  if (isLoading) return <LoadingSpinner />;
   console.log(data);
 
   return (
     <Box sx={{ backgroundColor: "blue", width: 1 }}>
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : (
-        <TableContainer
-          component={Paper}
-          sx={{ overflow: "visible", width: 1, p: 0, m: 0 }}
-        >
-          <Table sx={{ width: 1, p: 0, m: 0 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell />
-                <TableCell>Avatar</TableCell>
-                <TableCell>Username</TableCell>
-                <TableCell>UserType</TableCell>
-                {/* <TableCell>Email</TableCell> */}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data &&
-                data.map((row: User, index) => <Row key={index} row={row} />)}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <TableContainer
+        component={Paper}
+        sx={{ overflow: "visible", width: 1, p: 0, m: 0 }}
+      >
+        <Table sx={{ width: 1, p: 0, m: 0 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell />
+              <TableCell>Avatar</TableCell>
+              <TableCell>Username</TableCell>
+              <TableCell>UserType</TableCell>
+              {/* <TableCell>Email</TableCell> */}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data &&
+              data.map((row: User, index) => <Row key={index} row={row} />)}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }

@@ -11,6 +11,7 @@ const openedMixin = (theme: Theme): CSSObject => ({
     display: "none",
   },
   width: drawerWidth,
+
   transition: theme.transitions.create("width", {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
@@ -47,7 +48,6 @@ const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => ({
   width: drawerWidth,
-  backgroundColor: theme.palette.primary.main,
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",

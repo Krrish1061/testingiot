@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import useWebSocketStore, { Data } from "../store/webSocketStore";
-import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import LiveDataCard from "./LiveDataCard";
 
@@ -12,8 +11,8 @@ function LiveDataCardContainer() {
       {liveData &&
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         Object.entries(liveData).map(([_key, value]: [string, Data], index) => (
-          <Paper key={index} sx={{ marginBottom: 2, padding: 1 }}>
-            <Typography variant="h5" component="h1">
+          <Box m={2} p={2} key={index}>
+            <Typography variant="h5" component="h1" gutterBottom>
               Room {index + 1}
             </Typography>
             <Grid
@@ -42,7 +41,7 @@ function LiveDataCardContainer() {
             <Typography noWrap textAlign="center">
               Last Updated: {value.timestamp}
             </Typography>
-          </Paper>
+          </Box>
         ))}
     </Box>
   );

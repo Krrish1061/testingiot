@@ -31,7 +31,17 @@ from .models import Sensor, CompanySensor, AdminUserSensor
 class SensorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sensor
-        fields = ["name", "unit", "symbol", "created_at", "max_value", "min_value"]
+        fields = [
+            "id",
+            "name",
+            "unit",
+            "symbol",
+            "created_at",
+            "max_value",
+            "min_value",
+        ]
+
+        read_only_fields = ("id", "created_at")
 
 
 class CompanySensorSerializer(serializers.ModelSerializer):

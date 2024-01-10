@@ -12,7 +12,6 @@ import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import Zoom from "@mui/material/Zoom";
 import { Link as RouterLink } from "react-router-dom";
 import useDrawerStore from "../../store/drawerStore";
-import CompanyList from "../CompanyList";
 
 const DrawerTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
@@ -36,6 +35,7 @@ interface DrawerListItemProps {
   autoFocus?: boolean;
   isDropdown?: boolean;
   linkto?: string;
+  dropDownNode?: ReactNode;
 }
 
 const DrawerListItem = ({
@@ -44,6 +44,7 @@ const DrawerListItem = ({
   autoFocus = false,
   isDropdown = false,
   linkto,
+  dropDownNode,
 }: DrawerListItemProps) => {
   const [dropdownState, setDropdownState] = useState(false);
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
@@ -88,12 +89,12 @@ const DrawerListItem = ({
             </ListItem>
 
             <Collapse in={dropdownState} unmountOnExit sx={{ paddingLeft: 5 }}>
-              <CompanyList />
+              {dropDownNode}
             </Collapse>
           </>
         ) : (
           <DrawerTooltip
-            title={<CompanyList />}
+            title={dropDownNode}
             arrow
             placement="right"
             TransitionComponent={Zoom}

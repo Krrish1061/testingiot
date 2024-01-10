@@ -4,6 +4,7 @@ from django.forms import ValidationError
 from company.models import Company
 from users.models import AdminUser
 from utils.error_message import ERROR_INVALID_ASSIGNMENT
+from .validators import validate_urls
 
 
 # Create your models here.
@@ -22,7 +23,8 @@ class SendLiveDataList(models.Model):
         null=True,
         blank=True,
     )
-    endpoint = models.CharField(max_length=255, blank=True, null=True)
+    # storing list of urls/api-endpoints as json
+    endpoints = models.JSONField(validators=[validate_urls])
 
     def __str__(self):
         if self.company:
