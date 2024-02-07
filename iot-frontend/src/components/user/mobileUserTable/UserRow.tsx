@@ -8,8 +8,8 @@ import useAuthStore from "../../../store/authStore";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Box from "@mui/material/Box";
-import useEditUser from "../../../hooks/useEditUser";
-import useDeleteUser from "../../../hooks/useDeleteUser";
+import useEditUser from "../../../hooks/users/useEditUser";
+import useDeleteUser from "../../../hooks/users/useDeleteUser";
 import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
 import MobileActions from "../../mobileTable/MobileActions";
@@ -95,7 +95,7 @@ function UserRow({ row }: Props) {
         <TableCell>{row.type}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+        <TableCell sx={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box
               sx={{

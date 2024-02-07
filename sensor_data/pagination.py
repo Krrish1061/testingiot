@@ -1,6 +1,5 @@
 from collections import defaultdict
 from math import ceil
-
 from django.core.paginator import Page, Paginator
 from django.utils.functional import cached_property
 from rest_framework.utils.urls import remove_query_param, replace_query_param
@@ -16,16 +15,18 @@ class SensorDataPaginator(Paginator):
         self,
         object_list,
         per_page,
-        is_associated_with_company,
         sensor_names,
+        iot_device_list,
         orphans=0,
         allow_empty_first_page=True,
+        list_data_by_sensor=False,
     ):
         if per_page > self.max_page_size:
             per_page = self.max_page_size
         super().__init__(object_list, per_page, orphans, allow_empty_first_page)
         self.sensor_names = sensor_names
-        self.is_associated_with_company = is_associated_with_company
+        self.iot_device_list = iot_device_list
+        self.list_data_by_sensor = list_data_by_sensor
 
     def get_sensors(self, request):
         try:
@@ -48,28 +49,50 @@ class SensorDataPaginator(Paginator):
         if top >= self.count:
             top = self.count
 
-        sensors_data = defaultdict(list)
         sensors = self.get_sensors(request)
+        if self.list_data_by_sensor:
+            sensors_data = defaultdict(list)
 
-        # improve later
-        if self.is_associated_with_company:
+            # 1 - by executing the list once and then applying the filtering condition
+            # 2 - by finding correct query statement
+
             for sensor in sensors:
                 sensors_data[sensor].append(
-                    self.object_list.filter(company_sensor__sensor__name=sensor)
+                    self.object_list.filter(device_sensor__sensor__name=sensor)
                 )
+
+            sensor_data = {
+                sensor: querysets[0][bottom:top]
+                for sensor, querysets in sensors_data.items()
+                if querysets and querysets[0][bottom:top]
+            }
+
+            # call the super class method instead of defining it here
+            return self._get_page(sensor_data, number, self)
         else:
-            for sensor in sensors:
-                sensors_data[sensor].append(
-                    self.object_list.filter(user_sensor__sensor__name=sensor)
-                )
+            # sensors_data = defaultdict(lambda: defaultdict(list))
 
-        sensor_data = {
-            sensor: querysets[0][bottom:top] if querysets else None
-            for sensor, querysets in sensors_data.items()
-        }
+            sensors_data = {
+                iot_device: {
+                    sensor: [
+                        self.object_list.filter(
+                            device_sensor__sensor__name=sensor, iot_device=iot_device
+                        ).values("value", "timestamp")
+                    ]
+                    for sensor in sensors
+                }
+                for iot_device in self.iot_device_list
+            }
 
-        # call the super class method instead of defining it here
-        return self._get_page(sensor_data, number, self)
+            sensor_data = defaultdict(lambda: defaultdict(list))
+            for iot_device, sensor_dict in sensors_data.items():
+                for sensor, querysets in sensor_dict.items():
+                    new_querysets = querysets[0][bottom:top]
+                    if new_querysets:
+                        sensor_data[iot_device][sensor] = querysets[0][bottom:top]
+
+            # call the super class method instead of defining it here
+            return self._get_page(sensor_data, number, self)
 
     def _get_page(self, *args, **kwargs):
         """

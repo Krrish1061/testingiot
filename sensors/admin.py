@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sensor, CompanySensor, AdminUserSensor
+from .models import Sensor
 
 
 # Register your models here.
@@ -10,24 +10,7 @@ class SensorAdmin(admin.ModelAdmin):
         "name",
         "unit",
         "symbol",
-    )
-
-
-@admin.register(CompanySensor)
-class CompanySensorAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "company",
-        "sensor",
-        "field_name",
-    )
-
-
-@admin.register(AdminUserSensor)
-class AdminUserSensorAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "user",
-        "sensor",
-        "field_name",
+        "max_limit",
+        "min_limit",
+        "is_value_boolean",
     )

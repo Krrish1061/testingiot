@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import NavBar from "../navbar/NavBar";
 import { Outlet } from "react-router-dom";
 import { SideBarHeader } from "../drawer/DrawerHeader";
-import useConnectWebSocket from "../../hooks/useConnectWebSocket";
+import useConnectWebSocket from "../../hooks/webSocket/useConnectWebSocket";
 
 function ModeratorDashboard() {
   useConnectWebSocket();

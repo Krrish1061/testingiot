@@ -9,7 +9,7 @@ import CancelIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import useAuthStore from "../../store/authStore";
 import { useEffect, useState } from "react";
-import useChangeUsername from "../../hooks/useChangeUsername";
+import useChangeUsername from "../../hooks/users/useChangeUsername";
 import CircularProgress from "@mui/material/CircularProgress";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";

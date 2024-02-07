@@ -10,8 +10,8 @@ from django.contrib.auth import get_user_model
 from django.db import close_old_connections
 from django.utils import timezone
 
-
-from .models import WebSocketToken
+from users.cache import UserCache
+from websocket.cache import WebSocketCache
 
 User = get_user_model()
 
@@ -19,14 +19,11 @@ User = get_user_model()
 @database_sync_to_async
 def get_token(token):
     """Gets the Token Object associated with the provided Token"""
-    try:
-        token = WebSocketToken.objects.select_related("user").get(token=token)
-        # checking expiration of the token
-        if token.expires_at < timezone.now():
-            return None
-        return token
-    except WebSocketToken.DoesNotExist:
-        return None
+    websocket_token = WebSocketCache.get_websocket_by_token_key(token)
+    if websocket_token and websocket_token.expires_at >= timezone.now():
+        user = UserCache.get_user(websocket_token.user.username)
+        return (websocket_token.token, user)
+    return (None, None)
 
 
 class JwtAuthMiddleware(BaseMiddleware):
@@ -39,16 +36,16 @@ class JwtAuthMiddleware(BaseMiddleware):
         # Get the token from query params
         token_query_string = parse_qs(scope["query_string"].decode("utf8"))
         token = token_query_string.get("token", [None])[0]
-
         if token:
             # get the token object from the database
-            token_obj = await get_token(token)
+            token_obj, user = await get_token(token)
             if token_obj:
                 # set the user
-                scope["user"] = token_obj.user
+                scope["user"] = user
                 return await super().__call__(scope, receive, send)
 
         # to disconnect the websocket connection a bit slow
+        # probably need to throw channels.exceptions.StopConsumer exception check docs Closing Consumers
         return None
 
     # another approach is to accept connection as annoomous user

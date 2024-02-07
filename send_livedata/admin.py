@@ -10,5 +10,5 @@ class SendLiveDataListAdmin(admin.ModelAdmin):
         "id",
         "company",
         "user",
-        "endpoints",
+        "endpoint",
     )

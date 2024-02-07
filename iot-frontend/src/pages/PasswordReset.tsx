@@ -17,7 +17,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import usePasswordReset from "../hooks/usePasswordReset";
+import usePasswordReset from "../hooks/auth/usePasswordReset";
 import TextField from "@mui/material/TextField";
 
 const schema = z

@@ -23,8 +23,10 @@ class SendLiveDataList(models.Model):
         null=True,
         blank=True,
     )
-    # storing list of urls/api-endpoints as json
-    endpoints = models.JSONField(validators=[validate_urls])
+
+    endpoint = models.CharField(
+        max_length=255, blank=True, null=True, validators=[validate_urls]
+    )
 
     def __str__(self):
         if self.company:

@@ -14,7 +14,7 @@ import ImageAvatar from "../ImageAvatar";
 import IconButton from "@mui/material/IconButton";
 import Badge from "@mui/material/Badge";
 import EditIcon from "@mui/icons-material/Edit";
-import useUploadProfileImage from "../../hooks/useUploadProfileImage";
+import useUploadProfileImage from "../../hooks/users/useUploadProfileImage";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import VisuallyHiddenInput from "../styledComponents/VisuallyHiddenInput";

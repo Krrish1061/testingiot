@@ -45,7 +45,7 @@ const DrawerList = () => {
             icon={<ApartmentIcon />}
             text="Company"
             isDropdown={isUserSuperAdmin ? true : false}
-            linkto={isUserCompanySuperAdmin ? "/company-profile" : "/company"}
+            linkto={isUserCompanySuperAdmin ? "/company-profile" : undefined}
             dropDownNode={<CompanyList />}
           />
 

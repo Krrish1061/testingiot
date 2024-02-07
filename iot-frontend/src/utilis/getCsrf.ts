@@ -11,7 +11,7 @@ async function getCsrf() {
   if (csrfToken) return csrfToken;
 
   const response = await axiosPrivate
-    .get<csrf>("/csrf/")
+    .get<csrf>("account/csrf/")
     .then((res) => res.data.csrfToken)
     .catch(() => {
       // catch network error

@@ -18,8 +18,7 @@ function useEditSensor() {
     onSuccess: () => {
       enqueueSnackbar("Sensor sucessfully Edited", { variant: "success" });
     },
-    onError: (error: AxiosError) => {
-      console.log(error);
+    onError: (_error: AxiosError) => {
       // reverting to the old rows here sensor is the sensor to be deleted
       enqueueSnackbar("Sensor modification failed", { variant: "error" });
     },

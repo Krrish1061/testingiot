@@ -41,7 +41,6 @@ function AddCompanyForm({ open, setOpen }: Props) {
   });
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-    console.log("onSubmit", data);
     mutate(data);
     reset();
     setOpen(false);

@@ -4,12 +4,18 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { Dispatch, SetStateAction, SyntheticEvent } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  SyntheticEvent,
+  useEffect,
+  useState,
+} from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
-import useAddUser from "../../hooks/useAddUser";
+import useAddUser from "../../hooks/users/useAddUser";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
 import DialogActions from "@mui/material/DialogActions";
@@ -18,20 +24,14 @@ import InputLabel from "@mui/material/InputLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import UserTypes from "../../constants/userTypes";
+import Stack from "@mui/material/Stack";
 
 interface Props {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   isUserSuperAdmin: boolean;
-
   isUserCompanySuperAdmin: boolean;
 }
-
-// export interface AddUserFormData {
-//   email: string;
-//   company?: string | null;
-//   type: "ADMIN" | "MODERATOR" | "VIEWER";
-// }
 
 const schema = z.object({
   email: z
@@ -40,6 +40,15 @@ const schema = z.object({
     .email("Invalid email address"),
   company: z.string().nullish(),
   type: z.enum(["ADMIN", "MODERATOR", "VIEWER"]),
+  user_limit: z.coerce
+    .string()
+    .transform((value) =>
+      value === "" || value === "null" ? null : Number(value)
+    )
+    .nullish()
+    .refine((val) => val === null || !isNaN(Number(val)), {
+      message: "Invalid Number",
+    }),
 });
 
 type IFormInputs = z.infer<typeof schema>;
@@ -58,14 +67,23 @@ const AddUserForm = ({
     handleSubmit,
     formState: { errors },
     control,
+    watch,
     reset,
+    setValue,
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      user_limit: null,
+    },
   });
+
+  const typeValue = watch("type");
+  const companyValue = watch("company");
+
+  const [showUserLimit, setShowUserLimit] = useState(false);
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
     addUser.mutate(data);
-    console.log("onSubmit", data);
     reset();
     setOpen(false);
   };
@@ -78,13 +96,28 @@ const AddUserForm = ({
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (showUserLimit && (!!companyValue || typeValue !== UserTypes.admin)) {
+      setShowUserLimit(false);
+      setValue("user_limit", null);
+    } else if (
+      !showUserLimit &&
+      !companyValue &&
+      typeValue === UserTypes.admin
+    ) {
+      setShowUserLimit(true);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeValue, companyValue]);
+
   return (
     <Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
         sx: {
-          width: 350, // Adjust the width as needed
+          width: 350,
         },
       }}
     >
@@ -124,7 +157,6 @@ const AddUserForm = ({
                 render={({ field }) => (
                   <Autocomplete
                     {...field}
-                    disablePortal
                     id="company"
                     options={data ?? []}
                     getOptionLabel={(option) => option.name}
@@ -145,29 +177,66 @@ const AddUserForm = ({
               />
             </Box>
           )}
-          <Box marginBottom={2}>
-            <InputLabel htmlFor="user-type" required sx={{ color: "inherit" }}>
-              User Type:
-            </InputLabel>
-            <FormControl
-              variant="outlined"
-              sx={{ marginTop: 1, minWidth: 120 }}
-            >
-              <Select
-                defaultValue={UserTypes.viewer}
-                inputProps={{
-                  ...register("type"),
-                  id: "user-type",
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            marginBottom={2}
+            spacing={2}
+          >
+            <Box>
+              <InputLabel
+                htmlFor="user-type"
+                required
+                sx={{ color: "inherit" }}
+              >
+                User Type:
+              </InputLabel>
+              <FormControl
+                variant="outlined"
+                sx={{
+                  marginTop: 1,
+                  minWidth: 120,
+                  width: { xs: 1, sm: "inherit" },
                 }}
               >
-                <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
-                <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
-                {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
-                  <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
-                )}
-              </Select>
-            </FormControl>
-          </Box>
+                <Select
+                  defaultValue={UserTypes.viewer}
+                  inputProps={{
+                    ...register("type"),
+                    id: "user-type",
+                  }}
+                >
+                  <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
+                  <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
+                  {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
+                    <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+            </Box>
+            {isUserSuperAdmin && showUserLimit && (
+              <Box>
+                <Typography
+                  component={InputLabel}
+                  htmlFor="user_limit"
+                  gutterBottom
+                  color="inherit"
+                >
+                  User Limit:
+                </Typography>
+                <TextField
+                  inputProps={{
+                    ...register("user_limit"),
+                  }}
+                  id="user_limit"
+                  type="text"
+                  fullWidth
+                  error={!!errors.user_limit}
+                  helperText={errors.user_limit && errors.user_limit.message}
+                  autoComplete="off"
+                />
+              </Box>
+            )}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={(event) => handleClose(event, "cancel")}>

@@ -8,8 +8,9 @@ interface IFormInputs {
   name: string;
   unit: string;
   symbol?: string | null;
-  max_value?: number | null;
-  min_value?: number | null;
+  is_value_boolean: boolean;
+  max_limit?: number | null;
+  min_limit?: number | null;
 }
 
 interface IError {

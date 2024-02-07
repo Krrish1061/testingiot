@@ -1,24 +1,26 @@
 from celery import shared_task
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
-from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 from django.utils.encoding import force_bytes
+from django.utils.html import strip_tags
 from django.utils.http import urlsafe_base64_encode
-from .utilis import activation_token_for_email, activation_token_for_password_reset
-from django.contrib.auth import get_user_model
+from decouple import config
+from users.cache import UserCache
 
-User = get_user_model()
+from .utilis import activation_token_for_email, activation_token_for_password_reset
 
 # implement the url in one place so that i don't need to change it in multiple place
 
+base_url = config("FRONTEND_BASE_URL")
+
 
 @shared_task
-def sending_verify_email(user_id: int):
-    """Celery Task to Send verify email to user"""
+def sending_verify_email(username: str):
+    """Celery Task to Send verify email to the new user"""
     # get the user
-    user = User.objects.get(pk=user_id)
+    user = UserCache.get_user(username)
 
     # generating the one time token for the user
     confirmation_token = activation_token_for_email.make_token(user)
@@ -30,7 +32,7 @@ def sending_verify_email(user_id: int):
     html_message = render_to_string(
         "email/email_verify.html",
         {
-            "verification_url": f"http://127.0.0.1:5173/verify-email/{username}/{confirmation_token}",
+            "verification_url": f"{base_url}/verify-email/{username}/{confirmation_token}",
         },
     )
 
@@ -48,10 +50,10 @@ def sending_verify_email(user_id: int):
 
 
 @shared_task
-def sending_confirmation_email(user_id: int):
+def sending_confirmation_email(username: str):
     """Celery Task to Send confirmation email to user"""
     # get the user
-    user = User.objects.get(pk=user_id)
+    user = UserCache.get_user(username)
 
     # generating the one time token for the user
     confirmation_token = activation_token_for_email.make_token(user)
@@ -63,7 +65,7 @@ def sending_confirmation_email(user_id: int):
     html_message = render_to_string(
         "email/set_account_password_email.html",
         {
-            "verification_url": f"http://127.0.0.1:5173/set-password/{username}/{confirmation_token}",
+            "verification_url": f"{base_url}/set-password/{username}/{confirmation_token}",
         },
     )
 
@@ -85,7 +87,9 @@ def sending_password_reset_email(email: str):
     """Celery Task to send password reset email to user"""
     # get the user
     try:
-        user = User.objects.get(email=email)
+        user = UserCache.get_user_by_email(username)
+        if user is None:
+            raise ObjectDoesNotExist
 
         # generating the one time token for the user
         confirmation_token = activation_token_for_password_reset.make_token(user)
@@ -100,7 +104,7 @@ def sending_password_reset_email(email: str):
             "email/password_reset_email.html",
             {
                 "first_name": first_name,
-                "password_reset_url": f"http://127.0.0.1:5173/password-reset/{username}/{confirmation_token}",
+                "password_reset_url": f"{base_url}/password-reset/{username}/{confirmation_token}",
             },
         )
 
@@ -116,7 +120,7 @@ def sending_password_reset_email(email: str):
             fail_silently=False,
         )
 
-    except Exception:
+    except ObjectDoesNotExist:
         pass
 
 
@@ -156,7 +160,7 @@ def sending_account_is_active_email(email: str):
     html_message = render_to_string(
         "email/account_active_email.html",
         {
-            "login_url": f"http://127.0.0.1:5173",
+            "login_url": base_url,
         },
     )
 
@@ -174,11 +178,11 @@ def sending_account_is_active_email(email: str):
 
 
 @shared_task
-def sending_update_email(user_id: int, first_name: str):
+def sending_update_email(username: str, first_name: str):
     """Celery Task to Send mail to the user for updating their email"""
 
     # get the user
-    user = User.objects.get(pk=user_id)
+    user = UserCache.get_user_by_email(username)
 
     # generating the one time token for the user
     confirmation_token = activation_token_for_email.make_token(user)
@@ -191,7 +195,7 @@ def sending_update_email(user_id: int, first_name: str):
         "email/change_email.html",
         {
             "first_name": first_name,
-            "verification_url": f"http://127.0.0.1:5173/change-email/{username}/{confirmation_token}",
+            "verification_url": f"{base_url}/change-email/{username}/{confirmation_token}",
         },
     )
 

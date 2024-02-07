@@ -10,7 +10,6 @@ import { Link as RouterLink } from "react-router-dom";
 
 // pass the linkto props or implement tab
 const CompanyList = () => {
-  console.log("inside companies list");
   const { data, error } = useGetAllCompany();
   if (error) return <Typography>{error.message}</Typography>;
 
@@ -28,7 +27,7 @@ const CompanyList = () => {
                 <ListItemButton
                   disableGutters
                   component={RouterLink}
-                  to="/company"
+                  to={`/company/${company.slug}`}
                 >
                   <ListItemText primary={company.name} />
                 </ListItemButton>

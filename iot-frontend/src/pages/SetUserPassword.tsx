@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import InputLabel from "@mui/material/InputLabel";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import useSetPassword from "../hooks/useSetPassword";
+import useSetPassword from "../hooks/auth/useSetPassword";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,7 +66,6 @@ function SetUserPassword() {
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     mutate(data);
-    console.log(data);
   };
 
   return (

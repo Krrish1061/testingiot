@@ -1,8 +1,8 @@
 interface SendMessage {
   type: string;
-  group_name: string;
+  company_slug?: string | undefined;
+  username?: string | undefined;
   group_type: string;
-  user_id?: number;
 }
 
 export default SendMessage;

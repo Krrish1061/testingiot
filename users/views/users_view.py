@@ -1,14 +1,15 @@
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import ProtectedError
 from django.views.decorators.csrf import csrf_protect
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from users.cache import UserCache
 from users.serializers import UserProfileSerializer, UserSerializer
 from users.task import sending_verify_email
-from users.cache import UserCache
 from users.utilis import check_username
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
@@ -23,7 +24,6 @@ from utils.error_message import (
     ERROR_USER_LIMIT_REACHED,
     error_protected_delete_message,
 )
-
 
 User = get_user_model()
 
@@ -143,7 +143,7 @@ def add_user(request, username):
         new_user = serializer.save()
 
         # call celery task to send email after saving the user
-        sending_verify_email.delay(user.id)
+        sending_verify_email.delay(new_user.username)
 
         create_company_super_admin(new_user, user_groups)
         # check to see if company group is added or not
@@ -208,7 +208,7 @@ def user(request, username):
         group_name in user_groups
         for group_name in (GroupName.ADMIN_GROUP, GroupName.SUPERADMIN_GROUP)
     ):
-        editing_user_username = request.query_params.get("edit")
+        editing_user_username = request.query_params.get("user")
 
         if not editing_user_username:
             return Response(

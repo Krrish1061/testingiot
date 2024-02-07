@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import useUpdateProfile from "../../hooks/useUpdateProfile";
+import useUpdateProfile from "../../hooks/users/useUpdateProfile";
 import dayjs from "dayjs";
 
 // change these to match inputs in backend

@@ -14,6 +14,8 @@ interface LiveData {
 interface WebSocketStoreState {
   websocket: WebSocket | null;
   liveData: LiveData | null;
+  connectionState: "connecting" | "open" | "closing" | "closed";
+  setliveDataToNull: () => void;
   connectWebSocket: (endpoint: string) => void;
   closeWebSocket: () => void;
   sendWebSocketMessage: (message: SendMessage) => void;
@@ -22,15 +24,26 @@ interface WebSocketStoreState {
 const useWebSocketStore = create<WebSocketStoreState>((set) => ({
   websocket: null,
   liveData: null,
+  connectionState: "closed",
+
+  setliveDataToNull: () => set({ liveData: null }),
 
   connectWebSocket: (endpoint: string) => {
     webSocketService.connect(endpoint);
-    set({ websocket: webSocketService.websocket });
+    // set({ websocket: webSocketService.websocket });
+
+    webSocketService.websocket!.onopen = () => {
+      set({ websocket: webSocketService.websocket, connectionState: "open" });
+    };
 
     webSocketService.websocket!.onmessage = (event) => {
       const data = JSON.parse(event.data as string) as LiveData;
-      console.log("websocket", data);
-      set({ liveData: data });
+      set((state) => {
+        return {
+          ...state,
+          liveData: state.liveData ? { ...state.liveData, ...data } : data,
+        };
+      });
     };
   },
 

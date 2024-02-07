@@ -8,7 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import useVerifyUpdateEmail from "../hooks/useVerifyUpdateEmaill";
+import useVerifyUpdateEmail from "../hooks/auth/useVerifyUpdateEmaill";
 
 function UpdateEmail() {
   const { mutate, isSuccess, isError, error, isLoading } =

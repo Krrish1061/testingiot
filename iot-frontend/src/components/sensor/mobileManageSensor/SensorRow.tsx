@@ -22,8 +22,8 @@ function SensorRow({ row }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [maxLimit, setMaxLimit] = useState(row.max_value);
-  const [minLimit, setMinLimit] = useState(row.min_value);
+  const [maxLimit, setMaxLimit] = useState(row.max_limit);
+  const [minLimit, setMinLimit] = useState(row.min_limit);
   const { mutateAsync: editSensor } = useEditSensor();
   const { mutate: deleteSensor } = useDeleteSensor();
 
@@ -32,7 +32,7 @@ function SensorRow({ row }: Props) {
   };
 
   const handleDialogYesButton = () => {
-    editSensor({ ...row, max_value: maxLimit, min_value: minLimit });
+    editSensor({ ...row, max_limit: maxLimit, min_limit: minLimit });
     setDialogOpen(false);
     setIsEditMode(false);
   };
@@ -40,13 +40,14 @@ function SensorRow({ row }: Props) {
   const handleDialogDeleteNoButton = () => {
     setDeleteDialogOpen(false);
   };
+
   const handleDialogDeleteButton = () => {
     deleteSensor(row);
     setDeleteDialogOpen(false);
   };
 
   const handleSaveClick = () => {
-    if (row.max_value !== maxLimit || row.min_value !== minLimit)
+    if (row.max_limit !== maxLimit || row.min_limit !== minLimit)
       setDialogOpen(true);
     else setIsEditMode(false);
   };
@@ -55,8 +56,8 @@ function SensorRow({ row }: Props) {
   const handleEditClick = () => setIsEditMode(true);
   const handleCancelClick = () => {
     setIsEditMode(false);
-    setMaxLimit(row.max_value);
-    setMinLimit(row.min_value);
+    setMaxLimit(row.max_limit);
+    setMinLimit(row.min_limit);
   };
 
   const handleMaxLimitChange = (event: ChangeEvent<HTMLInputElement>) => {

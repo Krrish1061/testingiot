@@ -50,7 +50,7 @@ function CompanyProfile() {
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
     mutate(data);
-    console.log(data);
+
     setIsEditMode(false);
   };
 

@@ -5,10 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from company.cache import CompanyCache
+from company.models import Company
 from users.cache import UserCache
-from utils.commom_functions import get_groups_tuple
+from utils.commom_functions import generate_api_key, get_groups_tuple
 from utils.constants import GroupName
 from utils.error_message import (
+    ERROR_API_KEY_EXISTS,
+    ERROR_COMPANY_NOT_FOUND,
     ERROR_INVALID_URL,
     ERROR_PERMISSION_DENIED,
     error_protected_delete_message,
@@ -69,6 +72,11 @@ def company(request, company_slug):
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
     company = CompanyCache.get_company(company_slug)
+    if company is None:
+        return Response(
+            {"error": "Company Does not Exist"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
     if request.method == "GET":
         serializer = CompanySerializer(company, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -94,8 +102,7 @@ def company(request, company_slug):
                     company, len(related_objects)
                 )
                 return Response(
-                    {"error": error_message},
-                    status=status.HTTP_404_NOT_FOUND,
+                    {"error": error_message}, status=status.HTTP_404_NOT_FOUND
                 )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -142,6 +149,52 @@ def company_profile(request, company_slug):
             serializer.save()
             CompanyCache.delete_company_profile(company_profile)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+# @csrf_protect
+@api_view(["POST", "GET"])
+@permission_classes([IsAuthenticated])
+def generate_user_api_key(request):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        company_slug = request.query_params.get("company")
+        if not company_slug:
+            return Response(
+                {"error": "No company provided in query params"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        company = CompanyCache.get_company(company_slug)
+
+        if request.method == "POST":
+            api_key = company.api_key if company.api_key else ""
+            if api_key:
+                return Response(
+                    {"error": f"{ERROR_PERMISSION_DENIED} {ERROR_API_KEY_EXISTS}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            while Company.objects.filter(api_key=api_key).exists() or api_key == "":
+                api_key = generate_api_key()
+            company.api_key = api_key
+            company.save(update_fields=["api_key"])
+            return Response({"api_key": api_key}, status=status.HTTP_200_OK)
+        elif request.method == "GET":
+            try:
+                api_key = Company.objects.get(slug=company_slug).api_key
+            except Company.DoesNotExist:
+                return Response(
+                    {"error": ERROR_COMPANY_NOT_FOUND},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            return Response({"api_key": api_key}, status=status.HTTP_200_OK)
 
     else:
         return Response(

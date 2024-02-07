@@ -17,10 +17,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
@@ -31,7 +27,6 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOST", cast=lambda hosts: hosts.split(","
 
 
 # Application definition
-
 INSTALLED_APPS = [
     "channels",
     "django.contrib.admin",
@@ -72,7 +67,7 @@ ROOT_URLCONF = "iot.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "templates", BASE_DIR / "iot-frontend/dist"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -93,13 +88,13 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [("127.0.0.1", 6379)],
+            "group_expiry": 10800,
         },
     },
 }
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -151,18 +146,15 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static/"
-# STATICFILES_DIRS = [BASE_DIR / "iot-frontend/dist/assets"]
-STATICFILES_DIRS = [BASE_DIR / "staticfiles/"]
+STATICFILES_DIRS = [BASE_DIR / "staticfiles/", BASE_DIR / "iot-frontend/dist/"]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
@@ -172,16 +164,18 @@ INTERNAL_IPS = [
 
 
 #  Rest framework setting
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     )
 }
 
+# Whitenoise MIME types configuration
+# WHITENOISE_MIMETYPES = {
+#     ".js": "application/javascript",
+# }
 
 #  Simple jwt settings
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
@@ -204,11 +198,8 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
     "JTI_CLAIM": "jti",
-    # "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
-    # "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
-    # Cookies Field
     # custom
     "AUTH_COOKIE": "refresh_token",  # Cookie name. Enables cookies if value is set.
     "AUTH_COOKIE_DOMAIN": None,  # A string like "example.com", or None for standard domain cookie.
@@ -222,8 +213,7 @@ SIMPLE_JWT = {
 # Cors problem
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",  # Add your frontend's origin here
+    config("FRONTEND_BASE_URL"),  # Add your frontend's origin here
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
@@ -236,11 +226,10 @@ CORS_ALLOW_HEADERS = [
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5173",
+    config("FRONTEND_BASE_URL"),
 ]
 
 SESSION_COOKIE_HTTPONLY = False
-
 # CSRF_COOKIE_SECURE = True
 # CSRF_COOKIE_HTTPONLY = True
 # SESSION_COOKIE_SAMESITE = None
@@ -263,13 +252,12 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
         "KEY_PREFIX": "iot",
-        "TIMEOUT": 300  # value in seconds
+        "TIMEOUT": 300,  # value in seconds
         # "OPTIONS": {
         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
         # },
     }
 }
-
 
 # this setting is used for both email verification and password reset. Timeout is changed later check users.utilis.TokenGenerator
 PASSWORD_RESET_TIMEOUT = 259200  # value in second for 3 days
@@ -277,10 +265,10 @@ PASSWORD_RESET_TIMEOUT = 259200  # value in second for 3 days
 
 # Email setting
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "krrrish1061@gmail.com"
-EMAIL_HOST_PASSWORD = "vxut ryqh mbmm vxfe"
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
 # DEFAULT_FROM_EMAIL = 'your_default_from_email_address'

@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { ColorModeContext } from "../../theme";
-import useLogout from "../../hooks/useLogout";
+import useLogout from "../../hooks/auth/useLogout";
 import CircularProgress from "@mui/material/CircularProgress";
 
 function NavUserButton() {

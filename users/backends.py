@@ -1,7 +1,7 @@
 from django.contrib.auth.backends import BaseBackend
 from django.db.models import Q
 
-from .exceptions import InactiveUserException
+from .exceptions import InActiveUserException
 from .models import User
 
 
@@ -36,7 +36,7 @@ class EmailorUsernameModelBackend(BaseBackend):
         """
         is_active = getattr(user, "is_active")
         if not is_active:
-            raise InactiveUserException()
+            raise InActiveUserException()
         return is_active
 
     def get_user(self, user_id):

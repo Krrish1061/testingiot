@@ -1,7 +1,7 @@
 import User from "../../entities/User";
 import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
-import useDeleteUser from "../useDeleteUser";
-import useEditUser from "../useEditUser";
+import useDeleteUser from "../users/useDeleteUser";
+import useEditUser from "../users/useEditUser";
 import useDataGrid from "./useDataGrid";
 
 function useUserDataGrid() {

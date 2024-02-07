@@ -281,6 +281,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     first_name = models.CharField("first name", max_length=150, blank=True)
+    middle_name = models.CharField("middle name", max_length=150, blank=True)
     last_name = models.CharField("last name", max_length=150, blank=True)
     # generates thumbnail and use that thumbnail
     profile_picture = models.ImageField(
@@ -313,3 +314,12 @@ class UserProfile(models.Model):
     def __str__(self):
         """Returns the string representation of the UserProfile model."""
         return f"Profile of {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        if self.first_name:
+            self.first_name = self.first_name.lower()
+        if self.middle_name:
+            self.middle_name = self.middle_name.lower()
+        if self.last_name:
+            self.last_name = self.last_name.lower()
+        return super().save(*args, **kwargs)

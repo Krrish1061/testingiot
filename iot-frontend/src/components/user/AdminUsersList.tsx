@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import useGetAllUser from "../../hooks/useGetAllUser";
+import useGetAllUser from "../../hooks/users/useGetAllUser";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -11,13 +11,13 @@ import { useMemo } from "react";
 
 function getAdminUsers(users: User[] | undefined) {
   if (!users) return null;
+  // check for groups
   return users.filter(
     (user) => !user.is_associated_with_company && user.type === UserTypes.admin
   );
 }
 
 function AdminUsersList() {
-  console.log("AdminUsersList");
   const { data, isError, isLoading } = useGetAllUser();
   const adminUsersList = useMemo(() => getAdminUsers(data), [data]);
 
@@ -33,7 +33,11 @@ function AdminUsersList() {
           key={index}
           divider={index !== adminUsersList.length - 1}
         >
-          <ListItemButton disableGutters component={RouterLink} to="/company">
+          <ListItemButton
+            disableGutters
+            component={RouterLink}
+            to={`/user/${adminUser.username}`}
+          >
             <ListItemText
               primary={`${adminUser.profile?.first_name} ${adminUser.profile?.last_name}`}
             />

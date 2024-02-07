@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from company.cache import CompanyCache
+from users.cache import UserCache
 from utils.constants import UserType
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
@@ -18,7 +20,7 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
             "id",
             "company",
             "user",
-            "endpoints",
+            "endpoint",
         ]
         extra_kwargs = {
             "company": {
@@ -43,11 +45,6 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"error": ERROR_ONLY_ADMIN_USER_PERMITTED}
                 )
-
-            if not isinstance(attrs["endpoints"], list):
-                raise serializers.ValidationError(
-                    {"error": "Endpoints should be list of the Urls"}
-                )
         return attrs
 
     def to_representation(self, instance):
@@ -60,8 +57,26 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
             # removing company field from response
             representation.pop("company")
         if company:
-            representation["company"] = company.name
+            representation["company"] = company.slug
             # removing user field from response
             representation.pop("user")
 
         return representation
+
+    def to_internal_value(self, data):
+        # Replace the company slug with the corresponding Company instance
+        company_slug = data.get("company")
+        if company_slug:
+            company_instance = CompanyCache.get_company(company_slug)
+            if company_instance is None:
+                raise serializers.ValidationError({"error": "Company not found."})
+            data["company"] = company_instance.id
+
+        username = data.get("user")
+        if username:
+            user_instance = UserCache.get_user(username)
+            if user_instance is None:
+                raise serializers.ValidationError({"error": "User not found."})
+            data["user"] = user_instance.id
+
+        return super().to_internal_value(data)

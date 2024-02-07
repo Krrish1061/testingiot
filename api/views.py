@@ -2,18 +2,13 @@ from datetime import timedelta
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-)
-from sensor_data.models import (
-    CompanySensorData,
-    CompanySensor,
-    AdminUserSensorData,
-    AdminUserSensor,
-)
-from sensor_data.pagination import SensorDataPaginator
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
+from iot_devices.cache import IotDeviceCache
+
+from sensor_data.models import SensorData
+from sensor_data.pagination import SensorDataPaginator
+from sensors.cache import SensorCache
 from users.auth import ApiKeyAuthentication
 
 
@@ -22,55 +17,41 @@ from users.auth import ApiKeyAuthentication
 @authentication_classes([ApiKeyAuthentication])
 def get_sensor_data(request):
     user = request.user
-    is_associated_with_company = True if user.is_associated_with_company else False
-    if is_associated_with_company:
-        company_sensor = (
-            CompanySensor.objects.select_related("sensor")
-            .filter(company=request.user.company)
-            .values("id", "sensor__name")
-        )
 
-        sensor_names = {sensor__name["sensor__name"] for sensor__name in company_sensor}
-        one_month_ago = timezone.now() - timedelta(days=30)
+    sensor_list = (
+        SensorCache.get_all_company_sensor(user.company)
+        if user.is_associated_with_company
+        else SensorCache.get_all_user_sensor(user)
+    )
+    iot_device_list = (
+        IotDeviceCache.get_all_company_iot_devices(user.company)
+        if user.is_associated_with_company
+        else IotDeviceCache.get_all_user_iot_devices(user)
+    )
 
-        sensor_data_qs = (
-            CompanySensorData.objects.select_related("iot_device", "company_sensor")
-            .filter(company_sensor__id__in=company_sensor.values("id"))
-            .values("iot_device_id", "value", "timestamp")
-            .filter(timestamp__gte=one_month_ago)
-            .order_by("-timestamp")
-        )
+    one_month_ago = timezone.now() - timedelta(days=30)
 
-    else:
-        admin_user_sensor = (
-            AdminUserSensor.objects.select_related("sensor")
-            .filter(user=request.user)
-            .values("id", "sensor__name")
-        )
-
-        sensor_names = {
-            sensor__name["sensor__name"] for sensor__name in admin_user_sensor
-        }
-        one_month_ago = timezone.now() - timedelta(days=30)
-
-        sensor_data_qs = (
-            AdminUserSensorData.objects.select_related("iot_device", "user_sensor")
-            .filter(user_sensor__id__in=admin_user_sensor.values("id"))
-            .values("iot_device_id", "value", "timestamp")
-            .filter(timestamp__gte=one_month_ago)
-            .order_by("-timestamp")
-        )
+    sensor_data_qs = (
+        SensorData.objects.select_related("iot_device", "device_sensor")
+        .filter(iot_device__id__in=iot_device_list)
+        .values("iot_device_id", "value", "timestamp")
+        .filter(timestamp__gte=one_month_ago)
+        .order_by("-timestamp")
+    )
 
     try:
         page_size = int(request.query_params["page_size"])
     except (KeyError, ValueError):
         page_size = 25
 
+    list_data_by_sensor = request.query_params.get("list_by", None)
+
     paginator = SensorDataPaginator(
         sensor_data_qs,
         page_size,
-        sensor_names=sensor_names,
-        is_associated_with_company=is_associated_with_company,
+        sensor_names=sensor_list,
+        iot_device_list=iot_device_list,
+        list_data_by_sensor=(list_data_by_sensor == "sensor"),
     )
 
     try:

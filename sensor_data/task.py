@@ -2,26 +2,26 @@ import requests
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
-
-from send_livedata.models import SendLiveDataList
-
+from send_livedata.cache import SendLiveDataCache
+from websocket.cache import ConnectedConsumersCache
 from .utilis import prepare_sensor_data
+from django.utils import timezone
 
 
 @shared_task
-def send_live_data_to(user_id, company_id, field_sensor_name_dict, data, iot_device_id):
+def send_live_data_to(
+    user_id, company_slug, field_sensor_name_dict, data, iot_device_id
+):
     """Sending data to the third party api endpoint"""
 
-    try:
-        send_livedata_to_obj = (
-            SendLiveDataList.objects.get(user=user_id)
-            if user_id
-            else SendLiveDataList.objects.get(company=company_id)
-        )
-    except SendLiveDataList.DoesNotExist:
-        send_livedata_to_obj = None
+    send_livedata_to = (
+        SendLiveDataCache.get_send_livedata_by_user(user_id)
+        if user_id
+        else SendLiveDataCache.get_send_livedata_by_company(company_slug)
+    )
 
-    if send_livedata_to_obj:
+    if send_livedata_to:
+        # only proceed if url exist
         sensor_data = prepare_sensor_data(
             field_sensor_name_dict,
             data,
@@ -29,26 +29,23 @@ def send_live_data_to(user_id, company_id, field_sensor_name_dict, data, iot_dev
             data["timestamp"],
         )
 
-        sensor_data["user_email"] = (
-            send_livedata_to_obj.user.email
-            if user_id
-            else send_livedata_to_obj.company.email
+        # it is not good practice for sharing email
+        # use Device Id
+        sensor_data["email"] = (
+            send_livedata_to.user.email if user_id else send_livedata_to.company.email
         )
 
-        # url = "https://coldstorenepal.com/api/root/sensor/get-data"
-        # url = "https://tserver.devchandant.com/api/root/sensor/get-data"
-        url = send_livedata_to_obj.endpoint
-        for url in send_livedata_to_obj.endpoints:
+        url = send_livedata_to.endpoint
+        if url:
             try:
                 requests.post(url=url, json=sensor_data)
             except Exception:
-                # continue to the next url in the list
-                continue
+                pass
 
 
 @shared_task
 def send_data_to_websocket(
-    user_id, company_slug, field_sensor_name_dict, data, iot_device_id
+    username, company_slug, field_sensor_name_dict, data, iot_device_id
 ):
     # make sure this processing only happen when actual websocket connection is established
     # simply move this logic inside send_data function in consumers.py
@@ -57,30 +54,21 @@ def send_data_to_websocket(
     connects to the send_data function in the consumer.py
 
     """
-    print("in send_data_to_websocket")
     channel_layer = get_channel_layer()
 
     # defining the group name for admin user or company
-    group_name = company_slug if not company_slug else f"admin-user-{user_id}"
+    group_name = company_slug if company_slug else username
 
-    sensor_data = prepare_sensor_data(
-        field_sensor_name_dict,
-        data,
-        iot_device_id,
-        data["timestamp"],
-    )
-
-    # sensor_data = {
-    #     "field_sensor_name_dict": field_sensor_name_dict,
-    #     "data": data,
-    #     "iot_device_id": iot_device_id,
-    # }
+    localized_timestamp = data["timestamp"].astimezone(timezone.get_default_timezone())
+    data["timestamp"] = localized_timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
     # connects to the Consumers.py and calls send_data function in websocket app
     async_to_sync(channel_layer.group_send)(
         group_name,
         {
             "type": "send_data",
-            "data": sensor_data,
+            "data": data,
+            "device_id": iot_device_id,
+            "field_sensor_name_dict": field_sensor_name_dict,
         },
     )

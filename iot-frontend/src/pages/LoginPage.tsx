@@ -17,7 +17,7 @@ import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Link as RouterLink } from "react-router-dom";
 import { z } from "zod";
-import useLogin from "../hooks/useLogin";
+import useLogin from "../hooks/auth/useLogin";
 import Logo from "/logo.png";
 import TextField from "@mui/material/TextField";
 

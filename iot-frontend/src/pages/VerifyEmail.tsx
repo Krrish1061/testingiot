@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import useVerifyEmail from "../hooks/useVerifyEmail";
+import useVerifyEmail from "../hooks/auth/useVerifyEmail";
 import Card from "@mui/material/Card";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";

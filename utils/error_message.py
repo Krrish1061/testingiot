@@ -10,6 +10,7 @@ ERROR_PHONE_NUMBER = "Phone number must only contain exactly 10 Numeric digits."
 ERROR_REFRESH_TOKEN_NOT_FOUND = "Refresh token not found"
 ERROR_INVALID_TOKEN = "Token is invalid or expired"
 
+
 def error_protected_delete_message(obj, length: int):
     return f"Cannot delete {obj}. It is referenced by {length} other objects."
 
@@ -113,12 +114,16 @@ ERROR_EMPTY_ADMIN_USER_SENSOR_LIST = (
 )
 
 
-def error_assigned_sensor(name, field):
-    return f"Sensor {name} is already assign to {field}"
+def empty_dict(name: str):
+    return f"No value is provided in the '{name}' dictionary"
+
+
+def error_assigned_sensor(name: str, field: str):
+    return f"{name.capitalize()} sensor is assign to {field}"
 
 
 #  sensordata app
-ERROR_NO_VALUE = "Request data is empty"
+ERROR_NO_VALUE = "No sensor data is provided"
 ERROR_NO_SENSOR_ASSOCIATED_WITH_ADMIN_USER = (
     "No sensor is associated with the Admin user"
 )

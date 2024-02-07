@@ -34,6 +34,10 @@ class Company(models.Model):
             models.Index(fields=["slug"]),
         ]
 
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()
+        return super().save(*args, **kwargs)
+
 
 class CompanyProfile(models.Model):
     """

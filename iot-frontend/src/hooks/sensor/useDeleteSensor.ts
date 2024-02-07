@@ -19,8 +19,7 @@ function useDeleteSensor() {
     onSuccess: () => {
       enqueueSnackbar("Sensor sucessfully Deleted", { variant: "success" });
     },
-    onError: (error: AxiosError, sensor) => {
-      console.log(error);
+    onError: (_error: AxiosError, sensor) => {
       // reverting to the old rows here sensor is the sensor to be deleted
       setRows([...rows, sensor]);
       enqueueSnackbar("Sensor Deletion failed", { variant: "error" });

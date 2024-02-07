@@ -6,7 +6,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import useGetAllUser from "../hooks/useGetAllUser";
+import useGetAllUser from "../hooks/users/useGetAllUser";
 import User from "../entities/User";
 import { useState } from "react";
 import IconButton from "@mui/material/IconButton";
@@ -162,7 +162,6 @@ function Test() {
 
   if (isError) return <Box> Error Occurred</Box>;
   if (isLoading) return <LoadingSpinner />;
-  console.log(data);
 
   return (
     <Box sx={{ backgroundColor: "blue", width: 1 }}>

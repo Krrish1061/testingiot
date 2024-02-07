@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import { useEffect } from "react";
-import useGetAllUser from "../../../hooks/useGetAllUser";
+import useGetAllUser from "../../../hooks/users/useGetAllUser";
 import useAuthStore from "../../../store/authStore";
 import useUserDataGrid from "../../../hooks/muiDataGrid/useUserDataGrid";
 import useUserDataGridStore from "../../../store/datagrid/userDataGridStore";

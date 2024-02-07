@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import jwtDecode, { JwtPayload } from "jwt-decode";
 import { useEffect } from "react";
-import useRefreshToken from "../hooks/useRefreshToken";
+import useRefreshToken from "../hooks/auth/useRefreshToken";
 import useAuthStore from "../store/authStore";
 import getCsrf from "../utilis/getCsrf";
 import axiosInstance from "./axios";

@@ -12,12 +12,12 @@ from users.task import (
     sending_confirmation_mail_for_email_update,
     sending_update_email,
 )
-from users.utilis import check_username, generate_api_key
+from users.utilis import check_username
 from django.utils.http import urlsafe_base64_decode
 from users.utilis import activation_token_for_email
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from utils.commom_functions import get_groups_tuple
+from utils.commom_functions import generate_api_key, get_groups_tuple
 from utils.constants import GroupName
 from utils.error_message import (
     ERROR_404_USER_NOT_FOUND,
@@ -44,7 +44,9 @@ def generate_user_api_key(request, username):
     if not check_username(request.user, username):
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
-    if GroupName.SUPERADMIN_GROUP in get_groups_tuple(request.user):
+    requested_user = UserCache.get_user(request.user)
+
+    if GroupName.SUPERADMIN_GROUP in get_groups_tuple(requested_user):
         required_username = request.query_params.get("user")
         if not required_username:
             return Response(
@@ -177,7 +179,7 @@ def verify_email(request, username, token):
         user.is_email_verified = True
         user.save()
         # send email for confirmation and to set your password if they forget
-        sending_confirmation_email.delay(user.id)
+        sending_confirmation_email.delay(user.username)
         UserCache.delete_user(user.id)
         return Response(
             {"message": "Email verification successful"}, status=status.HTTP_200_OK
@@ -254,7 +256,7 @@ def change_email(request, username):
     UserCache.delete_user(user.id)
 
     # calling celery task to send email
-    sending_update_email.delay(user.id, user_profile.first_name)
+    sending_update_email.delay(user.username, user_profile.first_name)
 
     return Response(
         {

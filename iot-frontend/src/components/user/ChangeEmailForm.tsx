@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useChangeEmail from "../../hooks/useChangeEmail";
+import useChangeEmail from "../../hooks/users/useChangeEmail";
 import CircularProgress from "@mui/material/CircularProgress";
 
 const schema = z.object({

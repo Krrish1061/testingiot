@@ -33,7 +33,6 @@ function DesktopManageSensors() {
 
   useEffect(() => {
     if (isSuccess && rows.length === 0) {
-      console.log(data);
       setRows(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

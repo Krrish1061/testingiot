@@ -17,5 +17,5 @@ class WebSocketToken(models.Model):
     def save(self, *args, **kwargs):
         if not self.expires_at:
             # set the expire time for token
-            self.expires_at = timezone.now() + timezone.timedelta(minutes=2)
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=5)
         super().save(*args, **kwargs)

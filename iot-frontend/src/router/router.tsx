@@ -1,26 +1,25 @@
 import { createBrowserRouter } from "react-router-dom";
+import App from "../App";
 import IsUserAuthenticated from "../components/IsUserAuthenticated";
-import ProtectedAppLayout from "../layout/ProtectedAppLayout";
 import Dashboard from "../components/dashboard/Dashboard";
-import LoginPage from "../pages/LoginPage";
+import RenderCompanyDashboard from "../components/dashboard/RenderCompanyDashboard";
+import UserGroups from "../constants/userGroups";
+import PrivateRoute from "../layout/PrivateRoute";
+import ProtectedAppLayout from "../layout/ProtectedAppLayout";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import Index from "../pages/Index";
-import ManageUser from "../pages/ManageUser";
-import Test from "../components/Test";
+import LoginPage from "../pages/LoginPage";
+import ManageCompany from "../pages/ManageCompany";
 import ManageIotDevices from "../pages/ManageIotDevices";
 import ManageSensors from "../pages/ManageSensors";
-import CompanyIndex from "../components/CompanyIndex";
-import App from "../App";
-import ForgotPasswordPage from "../pages/ForgotPasswordPage";
-import VerifyEmail from "../pages/VerifyEmail";
-import SetUserPassword from "../pages/SetUserPassword";
+import ManageUser from "../pages/ManageUser";
 import PasswordReset from "../pages/PasswordReset";
-import ViewProfile from "../pages/ViewProfile";
+import SetUserPassword from "../pages/SetUserPassword";
 import UpdateEmail from "../pages/UpdateEmail";
-import PrivateRoute from "../layout/PrivateRoute";
-import UserGroups from "../constants/userGroups";
+import VerifyEmail from "../pages/VerifyEmail";
 import ViewCompanyProfile from "../pages/ViewCompanyProfile";
-import MobileManageUsers from "../components/user/mobileUserTable/MobileManageUsers";
-import ManageCompany from "../pages/ManageCompany";
+import ViewProfile from "../pages/ViewProfile";
+import RenderUserDashboard from "../components/dashboard/RenderUserDashboard";
 
 // pages 404 unauthorized
 
@@ -43,6 +42,14 @@ const router = createBrowserRouter([
                 children: [
                   { path: "/iot-devices", element: <ManageIotDevices /> },
                   { path: "/sensors", element: <ManageSensors /> },
+                  {
+                    path: "/company/:companySlug",
+                    element: <RenderCompanyDashboard />,
+                  },
+                  {
+                    path: "/user/:username",
+                    element: <RenderUserDashboard />,
+                  },
                 ],
               },
               {
@@ -67,22 +74,17 @@ const router = createBrowserRouter([
                 ),
               },
               { path: "/profile", element: <ViewProfile /> },
-              { path: "/company", element: <CompanyIndex /> },
+
               // for superadmin and company super admin
               {
                 path: "/company-profile",
                 element: <ViewCompanyProfile />,
               },
-              { path: "/test", element: <Test /> },
-              { path: "/test1", element: <MobileManageUsers /> },
             ],
           },
           {
             element: <IsUserAuthenticated />,
-            children: [
-              { path: "/login", element: <LoginPage /> },
-              { path: "/aforget-password", element: <ForgotPasswordPage /> },
-            ],
+            children: [{ path: "/login", element: <LoginPage /> }],
           },
         ],
       },

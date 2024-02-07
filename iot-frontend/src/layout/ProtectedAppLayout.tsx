@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import useRefreshToken from "../hooks/useRefreshToken";
+import useRefreshToken from "../hooks/auth/useRefreshToken";
 import LoadingSpinner from "../components/LoadingSpinner";
-import useGetUser from "../hooks/useGetUser";
+import useGetUser from "../hooks/users/useGetUser";
 
 function ProtectedAppLayout() {
   const {

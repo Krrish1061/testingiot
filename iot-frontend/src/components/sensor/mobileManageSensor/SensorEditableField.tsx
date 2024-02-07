@@ -14,7 +14,7 @@ interface Props {
   handleMinLimitChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-function UserEditableField({
+function SensorEditableField({
   isEditMode,
   name,
   maxLimit,
@@ -88,4 +88,4 @@ function UserEditableField({
   );
 }
 
-export default UserEditableField;
+export default SensorEditableField;

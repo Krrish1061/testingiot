@@ -159,11 +159,12 @@ function UserColumns({ users }: Props) {
         sortable: false,
         filterable: false,
         valueGetter: (params: GridValueGetterParams<User>) =>
-          params.row.extra_fields?.created_by,
+          params.row.created_by,
         renderCell: (params: GridRenderCellParams<User>) => {
           const createdUser = users?.find(
             (user) => user.username === params.value
           );
+
           if (createdUser) {
             return (
               <ImageAvatar

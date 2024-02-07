@@ -19,6 +19,7 @@ import {
 } from "react";
 import AddCompanyForm from "../company/AddCompanyForm";
 import AddSensorForm from "../sensor/AddSensorForm";
+import IotDeviceDialog from "../iotDevice/IotDeviceDialog";
 
 interface Props {
   open: boolean;
@@ -30,6 +31,7 @@ interface Props {
 function AddPopper({ open, setOpen, anchorRef, handleClickUserButton }: Props) {
   const [companyForm, setCompanyForm] = useState(false);
   const [sensorForm, setSensorForm] = useState(false);
+  const [iotDeviceForm, setIotDeviceForm] = useState(false);
 
   function handleListKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Tab") {
@@ -58,6 +60,11 @@ function AddPopper({ open, setOpen, anchorRef, handleClickUserButton }: Props) {
 
   const handleSensorButton = (event: Event | SyntheticEvent) => {
     setSensorForm(true);
+    handleClose(event);
+  };
+
+  const handleIotDeviceButton = (event: Event | SyntheticEvent) => {
+    setIotDeviceForm(true);
     handleClose(event);
   };
 
@@ -104,7 +111,7 @@ function AddPopper({ open, setOpen, anchorRef, handleClickUserButton }: Props) {
                       </ListItemIcon>
                       Company
                     </MenuItem>
-                    <MenuItem onClick={handleClose}>
+                    <MenuItem onClick={handleIotDeviceButton}>
                       <ListItemIcon>
                         <DevicesIcon />
                       </ListItemIcon>
@@ -125,6 +132,7 @@ function AddPopper({ open, setOpen, anchorRef, handleClickUserButton }: Props) {
       </Popper>
       <AddCompanyForm open={companyForm} setOpen={setCompanyForm} />
       <AddSensorForm open={sensorForm} setOpen={setSensorForm} />
+      <IotDeviceDialog open={iotDeviceForm} setOpen={setIotDeviceForm} />
     </>
   );
 }

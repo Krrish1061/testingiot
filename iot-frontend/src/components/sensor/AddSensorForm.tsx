@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import { Dispatch, SetStateAction, SyntheticEvent } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Button from "@mui/material/Button";
@@ -13,19 +13,46 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import useAddSensor from "../../hooks/sensor/useAddSensor";
+import Checkbox from "@mui/material/Checkbox";
 
 interface Props {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-const schema = z.object({
-  name: z.string().min(1, "This field is required"),
-  unit: z.string().min(1, "This field is required"),
-  symbol: z.string().nullish(),
-  max_value: z.coerce.number().nullish(),
-  min_value: z.coerce.number().nullish(),
-});
+const schema = z
+  .object({
+    name: z.string().min(1, "This field is required"),
+    unit: z.string().min(1, "This field is required"),
+    symbol: z.string().nullish(),
+    is_value_boolean: z.boolean(),
+    max_limit: z.coerce
+      .string()
+      .transform((value) => (value === "" ? null : Number(value)))
+      .nullish()
+      .refine((val) => !isNaN(val as number), { message: "Invalid Number" }),
+    min_limit: z.coerce
+      .string()
+      .transform((value) => (value === "" ? null : Number(value)))
+      .nullish()
+      .refine((val) => !isNaN(val as number), { message: "Invalid Number" }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.max_limit && data.min_limit && data.max_limit <= data.min_limit) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "The maximum limit must be greater than the minimum limit, and vice versa.",
+        path: ["max_limit"],
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "The maximum limit must be greater than the minimum limit, and vice versa.",
+        path: ["min_limit"],
+      });
+    }
+  });
 
 type IFormInputs = z.infer<typeof schema>;
 
@@ -34,14 +61,17 @@ function AddSensorForm({ open, setOpen }: Props) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     reset,
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      is_value_boolean: false,
+    },
   });
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-    console.log("onSubmit", data);
     mutate(data);
     reset();
     setOpen(false);
@@ -90,8 +120,12 @@ function AddSensorForm({ open, setOpen }: Props) {
             />
           </Box>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Box marginBottom={2}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            marginBottom={2}
+            spacing={2}
+          >
+            <Box>
               <Typography
                 component={InputLabel}
                 htmlFor="unit"
@@ -112,7 +146,7 @@ function AddSensorForm({ open, setOpen }: Props) {
                 autoComplete="on"
               />
             </Box>
-            <Box marginBottom={2}>
+            <Box>
               <Typography
                 component={InputLabel}
                 htmlFor="symbol"
@@ -132,8 +166,12 @@ function AddSensorForm({ open, setOpen }: Props) {
               />
             </Box>
           </Stack>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Box marginBottom={2}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            marginBottom={2}
+            spacing={2}
+          >
+            <Box>
               <Typography
                 component={InputLabel}
                 htmlFor="max_value"
@@ -144,17 +182,15 @@ function AddSensorForm({ open, setOpen }: Props) {
               </Typography>
               <TextField
                 inputProps={{
-                  ...register("max_value"),
+                  ...register("max_limit"),
                 }}
                 id="max_value"
                 type="number"
                 fullWidth
-                error={!!errors.max_value}
-                helperText={errors.max_value && errors.max_value.message}
                 autoComplete="off"
               />
             </Box>
-            <Box marginBottom={2}>
+            <Box>
               <Typography
                 component={InputLabel}
                 htmlFor="min_value"
@@ -165,17 +201,43 @@ function AddSensorForm({ open, setOpen }: Props) {
               </Typography>
               <TextField
                 inputProps={{
-                  ...register("min_value"),
+                  ...register("min_limit"),
                 }}
                 id="min_value"
                 type="number"
                 fullWidth
-                error={!!errors.min_value}
-                helperText={errors.min_value && errors.min_value.message}
                 autoComplete="off"
               />
             </Box>
           </Stack>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Typography
+              component={InputLabel}
+              htmlFor="is_value_boolean"
+              color="inherit"
+            >
+              Is Sensor Value Boolean:
+            </Typography>
+
+            <Controller
+              name="is_value_boolean"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="is_value_boolean"
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  checked={field.value}
+                />
+              )}
+            />
+          </Stack>
+          {errors.max_limit && errors.min_limit ? (
+            <Typography color="error" fontSize={12} paddingLeft={2}>
+              {errors.max_limit
+                ? errors.max_limit.message
+                : errors.min_limit.message}
+            </Typography>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={(event) => handleClose(event, "cancel")}>

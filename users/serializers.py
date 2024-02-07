@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import Group
+from company.cache import CompanyCache
 from users.utilis import get_group_name
 from utils.constants import GroupName, UserType
 from utils.error_message import (
@@ -155,11 +156,10 @@ class UserSerializer(serializers.ModelSerializer):
         # Replace the company slug with the corresponding Company instance
         company_slug = data.get("company")
         if company_slug:
-            try:
-                company_instance = Company.objects.get(slug=company_slug)
-                data["company"] = company_instance.pk
-            except Company.DoesNotExist:
+            company_instance = CompanyCache.get_company(company_slug)
+            if company_instance is None:
                 raise serializers.ValidationError({"error": "Company not found."})
+            data["company"] = company_instance.id
 
         return super().to_internal_value(data)
 

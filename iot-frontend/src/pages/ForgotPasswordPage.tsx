@@ -12,7 +12,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useSendPasswordResetEmail from "../hooks/useSendPasswordResetEmail";
+import useSendPasswordResetEmail from "../hooks/auth/useSendPasswordResetEmail";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
