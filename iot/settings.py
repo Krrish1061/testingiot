@@ -28,6 +28,7 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOST", cast=lambda hosts: hosts.split(","
 
 # Application definition
 INSTALLED_APPS = [
+    "daphne",
     "channels",
     "django.contrib.admin",
     "django.contrib.auth",
