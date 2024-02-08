@@ -8,10 +8,7 @@ class WebSocketService {
     this.websocket = new WebSocket(endpoint);
 
     this.websocket.onopen = () => {
-      console.log(
-        "WebSocket connection established",
-        this.websocket?.readyState
-      );
+      console.log("WebSocket connection established");
     };
 
     this.websocket.onmessage = (event) => {
