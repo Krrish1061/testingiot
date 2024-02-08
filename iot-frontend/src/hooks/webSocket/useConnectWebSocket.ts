@@ -27,7 +27,7 @@ function useConnectWebSocket() {
     isSuccess,
   } = useGetWebSocketToken();
 
-  const websocketEndpoint = "ws://127.0.0.1:8000/ws/iot/pubsub/";
+  const websocketEndpoint = import.meta.env.VITE_WEBSOCKET_ENDPOINT;
 
   useEffect(() => {
     if (!websocket && isSuccess) {

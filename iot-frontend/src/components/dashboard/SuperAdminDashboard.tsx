@@ -5,6 +5,8 @@ function SuperAdminDashboard() {
   // const theme = useTheme();
   // use this hook in higher order component to reset the drawer
   // const isMobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
+  const key = import.meta.env.VITE_WEBSOCKET_ENDPOINT;
+  console.log("superadmin ", key);
   return (
     // <Box sx={{ display: "flex", width: 1 }}>
     //   <NavBar />
