@@ -1,8 +1,7 @@
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import Typography from "@mui/material/Typography";
 import IotDeviceSensor from "../../entities/IotDeviceSensor";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import CancelIcon from "@mui/icons-material/Close";
@@ -34,11 +33,6 @@ interface Props {
   iotDeviceId: number;
   iotDeviceSensors: IotDeviceSensor[];
 }
-
-// things to do
-// 1. memorize the requiredformat and function and define hook for them
-// 2. while updating check if the data is modified or not send request only when data is modified
-// 3. improve the code and consideration for mobile devices and finally ui improvement.
 
 const requiredFormat = (deviceSensors: IotDeviceSensor[]) => {
   const result: IFormInputs = {};
@@ -72,11 +66,17 @@ const getMissingKeys = (fields: IFormInputs, newFields: IFormInputs | null) => {
 };
 
 function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
+  const initalData = useMemo(
+    () => requiredFormat(iotDeviceSensors),
+    [iotDeviceSensors]
+  );
+
   const {
     mutate: addDeviceSensors,
     isLoading: addLoading,
     isSuccess: addSuccess,
   } = useAddIotDeviceSensors(iotDeviceId);
+
   const {
     mutate: editDeviceSensors,
     isLoading: editLoading,
@@ -92,9 +92,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddMode, setIsAddMode] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const [fields, setFields] = useState<IFormInputs>(
-    requiredFormat(iotDeviceSensors)
-  );
+  const [fields, setFields] = useState<IFormInputs>(initalData);
   const [newFields, setNewFields] = useState<IFormInputs | null>(null);
   const [errors, setErrors] = useState<ZodIssue[] | null>(null);
   const [deleteFieldName, setDeleteFieldName] = useState<string[] | null>(null);
@@ -224,11 +222,18 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
     }
   };
 
+  const handleCancelClickButton = () => {
+    setFields(initalData);
+    setIsEditMode(false);
+    setIsDeleteMode(false);
+    setIsAddMode(false);
+    setNewFields(null);
+    setErrors(null);
+    setDeleteFieldName(null);
+  };
+
   return (
-    <Paper elevation={0} sx={{ padding: 1 }}>
-      <Typography component="h1" variant="h6" textAlign="center" gutterBottom>
-        Sensor's associated with Iot-Device {iotDeviceId}
-      </Typography>
+    <>
       <Box>
         {!isEditMode && !isAddMode && !isDeleteMode ? (
           <Stack
@@ -304,14 +309,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
               type="reset"
               size="small"
               disabled={addLoading || editLoading || deleteLoading}
-              onClick={() => {
-                setIsEditMode(false);
-                setIsDeleteMode(false);
-                setIsAddMode(false);
-                setNewFields(null);
-                setErrors(null);
-                setDeleteFieldName(null);
-              }}
+              onClick={handleCancelClickButton}
               startIcon={<CancelIcon />}
             >
               Cancel
@@ -320,7 +318,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
         )}
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} elevation={0}>
         <Table sx={{ minWidth: 320 }} aria-label="Device Sensor table">
           <TableHead>
             <TableRow>
@@ -334,35 +332,100 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.entries(fields).map(([fieldName, value], index) => (
-              <>
-                <TableRow
-                  key={index}
-                  sx={{
-                    "&:last-child td, &:last-child th": { border: 0 },
-                    "& > *": {
-                      borderBottom: isEditMode && errors ? "unset" : undefined,
-                    },
-                  }}
-                >
-                  <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell>{fieldName}</TableCell>
+            {Object.entries(fields).map(
+              ([fieldName, { sensor_name, max_limit, min_limit }], index) => (
+                <Fragment key={fieldName}>
+                  <TableRow
+                    sx={{
+                      "&:last-child td, &:last-child th": { border: 0 },
+                      "& > *": {
+                        borderBottom:
+                          isEditMode && errors ? "unset" : undefined,
+                      },
+                    }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {index + 1}
+                    </TableCell>
+                    <TableCell>{fieldName}</TableCell>
 
-                  {!isEditMode ? (
-                    <>
-                      <TableCell>{value.sensor_name}</TableCell>
-                      <TableCell>{value.max_limit ?? "-"}</TableCell>
-                      <TableCell>{value.min_limit ?? "-"}</TableCell>
-                    </>
-                  ) : (
-                    <>
+                    {!isEditMode ? (
+                      <>
+                        <TableCell>{sensor_name}</TableCell>
+                        <TableCell>{max_limit ?? "-"}</TableCell>
+                        <TableCell>{min_limit ?? "-"}</TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>
+                          <SensorAutoComplete
+                            id={`sensor${index + 1}`}
+                            fieldName={fieldName}
+                            sensorName={sensor_name}
+                            handleSensorFieldChange={handleSensorFieldChange}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MaxMinField
+                            id={`max_limit${index + 1}`}
+                            fieldName={fieldName}
+                            name="max_limit"
+                            value={max_limit}
+                            handleMaxMinFieldChange={handleMaxMinFieldChange}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MaxMinField
+                            id={`min_limit${index + 1}`}
+                            fieldName={fieldName}
+                            name="min_limit"
+                            value={min_limit}
+                            handleMaxMinFieldChange={handleMaxMinFieldChange}
+                          />
+                        </TableCell>
+                      </>
+                    )}
+
+                    {isAddMode && <TableCell>-</TableCell>}
+                    {isDeleteMode && (
+                      <TableCell>
+                        <CheckBox
+                          handleCheckBoxChange={handleCheckBoxChange}
+                          fieldName={fieldName}
+                        />
+                      </TableCell>
+                    )}
+                  </TableRow>
+                  <ErrorTableRow
+                    errors={errors}
+                    fieldName={fieldName}
+                    isAddMode={isAddMode}
+                    isEditMode={isEditMode}
+                    newFields={null}
+                  />
+                </Fragment>
+              )
+            )}
+            {!!newFields &&
+              Object.entries(newFields).map(
+                ([fieldName, { sensor_name, max_limit, min_limit }], index) => (
+                  <Fragment key={fieldName}>
+                    <TableRow
+                      sx={{
+                        "& > *": {
+                          borderBottom: newFields && "unset",
+                        },
+                      }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {iotDeviceSensors.length + index + 1}
+                      </TableCell>
+                      <TableCell>{fieldName}</TableCell>
                       <TableCell>
                         <SensorAutoComplete
                           id={`sensor${index + 1}`}
                           fieldName={fieldName}
-                          sensorName={value.sensor_name}
+                          sensorName={sensor_name}
                           handleSensorFieldChange={handleSensorFieldChange}
                         />
                       </TableCell>
@@ -371,7 +434,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
                           id={`max_limit${index + 1}`}
                           fieldName={fieldName}
                           name="max_limit"
-                          value={value.max_limit}
+                          value={max_limit}
                           handleMaxMinFieldChange={handleMaxMinFieldChange}
                         />
                       </TableCell>
@@ -380,107 +443,44 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
                           id={`min_limit${index + 1}`}
                           fieldName={fieldName}
                           name="min_limit"
-                          value={value.min_limit}
+                          value={min_limit}
                           handleMaxMinFieldChange={handleMaxMinFieldChange}
                         />
                       </TableCell>
-                    </>
-                  )}
+                      {isAddMode && (
+                        <TableCell>
+                          <Stack direction="row" spacing={0}>
+                            {getObjectKeys(newFields).length > 1 && (
+                              <IconButton
+                                onClick={() => handleDeleteField(fieldName)}
+                              >
+                                <DeleteIcon color="error" />
+                              </IconButton>
+                            )}
+                            {index === getObjectKeys(newFields).length - 1 && (
+                              <IconButton onClick={handleAddField}>
+                                <AddIcon />
+                              </IconButton>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      )}
+                    </TableRow>
 
-                  {isAddMode && <TableCell>-</TableCell>}
-                  {isDeleteMode && (
-                    <TableCell>
-                      <CheckBox
-                        handleCheckBoxChange={handleCheckBoxChange}
-                        fieldName={fieldName}
-                      />
-                    </TableCell>
-                  )}
-                </TableRow>
-                <ErrorTableRow
-                  key={fieldName}
-                  errors={errors}
-                  fieldName={fieldName}
-                  isAddMode={isAddMode}
-                  isEditMode={isEditMode}
-                  newFields={null}
-                />
-              </>
-            ))}
-            {!!newFields &&
-              Object.entries(newFields).map(([fieldName, value], index) => (
-                <>
-                  <TableRow
-                    key={index}
-                    sx={{
-                      "& > *": {
-                        borderBottom: newFields && "unset",
-                      },
-                    }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {iotDeviceSensors.length + index + 1}
-                    </TableCell>
-                    <TableCell>{fieldName}</TableCell>
-                    <TableCell>
-                      <SensorAutoComplete
-                        id={`sensor${index + 1}`}
-                        fieldName={fieldName}
-                        sensorName={value.sensor_name}
-                        handleSensorFieldChange={handleSensorFieldChange}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <MaxMinField
-                        id={`max_limit${index + 1}`}
-                        fieldName={fieldName}
-                        name="max_limit"
-                        value={value.max_limit}
-                        handleMaxMinFieldChange={handleMaxMinFieldChange}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <MaxMinField
-                        id={`min_limit${index + 1}`}
-                        fieldName={fieldName}
-                        name="min_limit"
-                        value={value.min_limit}
-                        handleMaxMinFieldChange={handleMaxMinFieldChange}
-                      />
-                    </TableCell>
-                    {isAddMode && (
-                      <TableCell>
-                        <Stack direction="row" spacing={0}>
-                          {getObjectKeys(newFields).length > 1 && (
-                            <IconButton
-                              onClick={() => handleDeleteField(fieldName)}
-                            >
-                              <DeleteIcon color="error" />
-                            </IconButton>
-                          )}
-                          {index === getObjectKeys(newFields).length - 1 && (
-                            <IconButton onClick={handleAddField}>
-                              <AddIcon />
-                            </IconButton>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    )}
-                  </TableRow>
-
-                  <ErrorTableRow
-                    errors={errors}
-                    fieldName={fieldName}
-                    isAddMode={isAddMode}
-                    isEditMode={isEditMode}
-                    newFields={newFields}
-                  />
-                </>
-              ))}
+                    <ErrorTableRow
+                      errors={errors}
+                      fieldName={fieldName}
+                      isAddMode={isAddMode}
+                      isEditMode={isEditMode}
+                      newFields={newFields}
+                    />
+                  </Fragment>
+                )
+              )}
           </TableBody>
         </Table>
       </TableContainer>
-    </Paper>
+    </>
   );
 }
 

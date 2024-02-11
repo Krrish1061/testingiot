@@ -2,15 +2,15 @@ import { create } from "zustand";
 
 interface DrawerStore {
   isDrawerOpen: boolean;
-  setIsDrawerOpen: () => void;
-  resetToDefault: () => void;
+  toggleDrawerOpen: () => void;
+  setDrawerOpen: (drawerState: boolean) => void;
 }
 
 const useDrawerStore = create<DrawerStore>((set) => ({
-  isDrawerOpen: true,
-  setIsDrawerOpen: () =>
+  isDrawerOpen: false,
+  toggleDrawerOpen: () =>
     set((store) => ({ isDrawerOpen: !store.isDrawerOpen })),
-  resetToDefault: () => set(() => ({ isDrawerOpen: false })),
+  setDrawerOpen: (drawerState) => set(() => ({ isDrawerOpen: drawerState })),
 }));
 
 export default useDrawerStore;

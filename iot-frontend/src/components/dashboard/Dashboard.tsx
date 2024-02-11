@@ -11,16 +11,16 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { SideBarHeader } from "../drawer/DrawerHeader";
 import Box from "@mui/material/Box";
 import NavBar from "../navbar/NavBar";
-import MobileDrawer from "../drawer/MobileDrawer";
 import DesktopDrawer from "../drawer/DesktopDrawer";
 import { Outlet } from "react-router-dom";
 import useConnectWebSocket from "../../hooks/webSocket/useConnectWebSocket";
 import useDrawerStore from "../../store/drawerStore";
+import SwipeableMobileDrawer from "../drawer/MobileDrawer";
 
 function Dashboard() {
   const theme = useTheme();
   const user = useAuthStore((state) => state.user);
-  const resetToDefault = useDrawerStore((state) => state.resetToDefault);
+  const setDrawerOpen = useDrawerStore((state) => state.setDrawerOpen);
 
   const closeWebSocket = useWebSocketStore((state) => state.closeWebSocket);
   // connect to the websocket
@@ -33,20 +33,21 @@ function Dashboard() {
   const isAdminOrSuperAdmin = isSuperAdminUser || isAdminUser;
 
   useEffect(() => {
-    if (isMobile) {
-      resetToDefault();
+    if (!isMobile) {
+      setDrawerOpen(true);
     }
     return () => {
       // Close WebSocket when component unmounts
       closeWebSocket();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMobile]);
 
   return (
     <Box sx={{ display: "flex", width: 1 }}>
       <NavBar />
-      {isAdminOrSuperAdmin && (isMobile ? <MobileDrawer /> : <DesktopDrawer />)}
+      {isAdminOrSuperAdmin &&
+        (isMobile ? <SwipeableMobileDrawer /> : <DesktopDrawer />)}
       <Box
         component="main"
         sx={{

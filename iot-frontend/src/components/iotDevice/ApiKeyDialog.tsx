@@ -43,11 +43,11 @@ function ApiKeyDialog({ open, apiKey, deviceId, onClose }: Props) {
         >
           <Typography>API-KEY:</Typography>
           <Typography>{apiKey}</Typography>
-          <Tooltip arrow placement="top" title="copy to clipboard">
-            <IconButton size="small" onClick={CopyToClipboardButton}>
+          <IconButton size="small" onClick={CopyToClipboardButton}>
+            <Tooltip arrow placement="top" title="copy to clipboard">
               <ContentCopyIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+            </Tooltip>
+          </IconButton>
         </Stack>
         <Button
           sx={{

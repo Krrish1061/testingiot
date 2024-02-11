@@ -8,9 +8,9 @@ const iOS =
   typeof navigator !== "undefined" &&
   /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-export default function SwipeableTemporaryDrawer() {
+function SwipeableMobileDrawer() {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
-  const setIsDrawerOpen = useDrawerStore((state) => state.setIsDrawerOpen);
+  const toggleDrawerOpen = useDrawerStore((state) => state.toggleDrawerOpen);
 
   return (
     <SwipeableDrawer
@@ -18,8 +18,8 @@ export default function SwipeableTemporaryDrawer() {
       disableDiscovery={iOS}
       anchor="left"
       open={isDrawerOpen}
-      onClose={setIsDrawerOpen}
-      onOpen={setIsDrawerOpen}
+      onClose={toggleDrawerOpen}
+      onOpen={toggleDrawerOpen}
       ModalProps={{
         keepMounted: true,
       }}
@@ -41,3 +41,5 @@ export default function SwipeableTemporaryDrawer() {
     </SwipeableDrawer>
   );
 }
+
+export default SwipeableMobileDrawer;

@@ -3,6 +3,8 @@ from iot_devices.models import IotDevice, IotDeviceSensor
 from company.cache import CompanyCache
 import hashlib
 
+from users.cache import UserCache
+
 
 class IotDeviceCaching(Cache):
     app_name = "iot_devices"
@@ -117,11 +119,14 @@ class IotDeviceCaching(Cache):
         cache_key = self.__generate_cache_key_from_api_key(iot_device.api_key)
         self.delete(cache_key)
 
-    def get_all_user_iot_devices(self, user):
+    def get_all_user_iot_devices(self, user=None, username=None):
         """Return the list of all the iot devices that admin user owns"""
-        cache_key = self.__get__user_device_cache_key(user.username)
+        username = user.username if user else username
+        cache_key = self.__get__user_device_cache_key(username)
         user_devices = self.get(cache_key)
         if user_devices is None:
+            if user is None:
+                user = UserCache.get_user(username)
             user_devices = user.iot_device.values_list("id", flat=True)
             self.set(cache_key=cache_key, data=user_devices)
         return user_devices

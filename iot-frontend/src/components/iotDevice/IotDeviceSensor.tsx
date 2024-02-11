@@ -1,45 +1,50 @@
-// import { useParams } from "react-router-dom";
 import useGetIotDeviceSensor from "../../hooks/iotDevice/useGetIotDeviceSensor";
 import IIotDeviceSensor from "../../entities/IotDeviceSensor";
-
-import Grid from "@mui/material/Grid";
 import UpdateIotDeviceSensor from "./UpdateIotDeviceSensor";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Typography from "@mui/material/Typography";
 
-interface Props {
-  companySlug: string | undefined;
+interface IProps {
+  companySlug?: string;
+  username?: string;
 }
 
-function IotDeviceSensor({ companySlug }: Props) {
-  // const { companySlug } = useParams();
+function IotDeviceSensor(Props: IProps) {
   const {
     data: iotDeviceSensors,
-    // isSuccess,
     isError,
     isLoading,
-  } = useGetIotDeviceSensor(companySlug);
+  } = useGetIotDeviceSensor(Props);
   if (isError) return <div>Error occured</div>;
   if (isLoading) return <div>Loading</div>;
 
   return (
     <>
-      <Grid
-        container
-        spacing={2}
-        marginTop={1}
-        columns={{ xs: 4, sm: 8, md: 12 }}
-        // sx={{ bgcolor: "yellow" }}
-      >
-        {Object.entries(iotDeviceSensors).map(
-          ([key, value]: [string, IIotDeviceSensor[]], index) => (
-            <Grid item xs={4} sm={8} md={6} key={index}>
+      {Object.entries(iotDeviceSensors).map(
+        ([key, value]: [string, IIotDeviceSensor[]], index) => (
+          <Accordion key={index} defaultExpanded={index === 0 ? true : false}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls={`iot-device-sensor${index}`}
+              id={`iot-device-sensor${index}`}
+              sx={{ paddingBottom: 0, marginBottom: 0 }}
+            >
+              <Typography component="h1" variant="h6" textAlign="center">
+                Sensor's associated with Iot-Device {key}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ paddingTop: 0, marginTop: 0 }}>
               <UpdateIotDeviceSensor
                 iotDeviceId={parseInt(key)}
                 iotDeviceSensors={value}
               />
-            </Grid>
-          )
-        )}
-      </Grid>
+            </AccordionDetails>
+          </Accordion>
+        )
+      )}
     </>
   );
 }

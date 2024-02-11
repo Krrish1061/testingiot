@@ -18,7 +18,7 @@ urlpatterns = [
         name="device-sensor",
     ),
     path(
-        "<slug:company_slug>/all/device-sensors/",
+        "device-sensors/all/",
         views.get_all_device_sensor,
         name="company-device-sensor-list-all",
     ),

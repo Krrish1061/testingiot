@@ -64,7 +64,7 @@ function NavBar() {
   const user = useAuthStore((state) => state.user);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
-  const setIsDrawerOpen = useDrawerStore((state) => state.setIsDrawerOpen);
+  const toggleDrawerOpen = useDrawerStore((state) => state.toggleDrawerOpen);
   const [openUserForm, setOpenUserForm] = useState(false);
   const [openAddPopper, setOpenAddPopper] = useState(false);
   const isUserSuperAdmin =
@@ -75,7 +75,7 @@ function NavBar() {
   const isDrawerDisplayed = isUserSuperAdmin || isUserAdmin;
 
   const handleDrawerOpen = () => {
-    setIsDrawerOpen();
+    toggleDrawerOpen();
   };
 
   const handleClickUserButton = () => {

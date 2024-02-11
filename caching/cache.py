@@ -1,10 +1,9 @@
 from django.core.cache import cache
-from abc import ABC, abstractmethod
-from itertools import chain
+from abc import ABC
 
 
 class Cache(ABC):
-    CACHE_TTL = 120  # value in seconds
+    CACHE_TTL = 604800  # value in seconds = 1week
 
     # later do it in __init__ method
     def __generate_cache_key(app_name):

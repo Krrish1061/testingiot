@@ -16,25 +16,30 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ApiKeyDialog from "./ApiKeyDialog";
 
 interface Props {
-  companySlug: string | undefined;
+  companySlug?: string;
+  username?: string;
 }
 
 function OwnedIotDevices(
-  iotDevices: IotDevice[] | undefined,
-  companySlug: string | undefined
-) {
-  const ownedIotDevices = useMemo(
-    () =>
-      iotDevices
-        ? iotDevices.filter((iot_device) => iot_device.company === companySlug)
-        : null,
-    [iotDevices, companySlug]
-  );
+  iotDevices: IotDevice[] = [],
+  companySlug?: string,
+  username?: string
+): IotDevice[] | null {
+  let ownedIotDevices: IotDevice[] | null = null;
+  if (companySlug) {
+    ownedIotDevices = iotDevices.filter(
+      (iot_device) => iot_device.company === companySlug
+    );
+  } else if (username) {
+    ownedIotDevices = iotDevices.filter(
+      (iot_device) => iot_device.user === username
+    );
+  }
 
   return ownedIotDevices;
 }
 
-function IotDeviceApiSetting({ companySlug }: Props) {
+function IotDeviceApiSetting({ companySlug, username }: Props) {
   const [open, setOpen] = useState(false);
   const { data: iotDevices, isLoading, isError } = useGetAllIotDevice();
   const [deviceId, setDeviceId] = useState<number | null>(null);
@@ -44,7 +49,10 @@ function IotDeviceApiSetting({ companySlug }: Props) {
     isFetching: apiKeyIsFetching,
   } = useGetIotDeviceApiKey(deviceId);
 
-  const ownedIotDevices = OwnedIotDevices(iotDevices, companySlug);
+  const ownedIotDevices = useMemo(
+    () => OwnedIotDevices(iotDevices, companySlug, username),
+    [companySlug, username, iotDevices]
+  );
 
   useEffect(() => {
     if (apiKeySuccess) {

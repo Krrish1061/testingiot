@@ -225,7 +225,10 @@ def user(request, username):
 
         if request.method == "PATCH":
             serializer = UserSerializer(
-                user, data=request.data, context={"request": request}, partial=True
+                user,
+                data=request.data,
+                context={"request": request, "user_groups": user_groups},
+                partial=True,
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()

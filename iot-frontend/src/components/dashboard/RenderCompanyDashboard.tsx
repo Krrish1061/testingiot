@@ -1,4 +1,4 @@
-import { ReactNode, SyntheticEvent, useEffect, useState } from "react";
+import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import useWebSocketStore from "../../store/webSocketStore";
 
@@ -23,8 +23,8 @@ function TabPanel(props: TabPanelProps) {
     <Box
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`company-overview-${index}`}
+      aria-labelledby={`company-overview-${index}`}
       {...other}
     >
       {value === index && children}
@@ -34,8 +34,8 @@ function TabPanel(props: TabPanelProps) {
 
 function a11yProps(index: number) {
   return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
+    id: `company-overview-${index}`,
+    "aria-controls": `company-overview-${index}`,
   };
 }
 
@@ -50,7 +50,10 @@ function RenderCompanyDashboard() {
     (state) => state.setliveDataToNull
   );
   const { data } = useGetAllCompany();
-  const currentCompany = data?.find((value) => value.slug === companySlug);
+  const currentCompany = useMemo(
+    () => data?.find((value) => value.slug === companySlug),
+    [data, companySlug]
+  );
 
   const [value, setValue] = useState(0);
 

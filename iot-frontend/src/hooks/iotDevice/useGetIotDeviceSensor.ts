@@ -7,16 +7,30 @@ interface DeviceSensors {
   [iot_device_id: number]: IotDeviceSensor[];
 }
 
-function useGetIotDeviceSensor(company_slug: string = "") {
+interface Props {
+  companySlug?: string;
+  username?: string;
+}
+
+function useGetIotDeviceSensor({ companySlug, username }: Props) {
   const axiosInstance = useAxios();
 
   const getIotDeviceSensor = () =>
     axiosInstance
-      .get<DeviceSensors>(`iot-device/${company_slug}/all/device-sensors/`)
+      .get<DeviceSensors>("iot-device/device-sensors/all", {
+        params: {
+          company: companySlug,
+          user: username,
+        },
+      })
       .then((res) => res.data);
 
   return useQuery<DeviceSensors, AxiosError>({
-    queryKey: [`${company_slug}-device-sensors`],
+    queryKey: [
+      companySlug
+        ? `${companySlug}-device-sensors`
+        : `${username}-device-sensors`,
+    ],
     queryFn: getIotDeviceSensor,
   });
 }

@@ -196,19 +196,28 @@ def device_sensor(request, device_id):
 
 @api_view(["POST", "GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def get_all_device_sensor(request, company_slug):
+def get_all_device_sensor(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     if GroupName.SUPERADMIN_GROUP in user_groups:
-        iot_devices = IotDeviceCache.get_all_company_iot_devices(
-            company_slug=company_slug
+        company_slug = request.query_params.get("company")
+        username = request.query_params.get("user")
+        if not company_slug and not username:
+            return Response(
+                {"error": "No company or User specified "},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        iot_devices = (
+            IotDeviceCache.get_all_company_iot_devices(company_slug=company_slug)
+            if company_slug
+            else IotDeviceCache.get_all_user_iot_devices(username=username)
         )
-        company_device_sensors = {}
+        iot_device_sensors = {}
         for device_id in iot_devices:
             device_sensors = IotDeviceCache.get_all_device_sensors(device_id)
             serializer = IotDeviceSensorSerializer(device_sensors, many=True)
-            company_device_sensors[device_id] = serializer.data
-        return Response(company_device_sensors, status=status.HTTP_200_OK)
+            iot_device_sensors[device_id] = serializer.data
+        return Response(iot_device_sensors, status=status.HTTP_200_OK)
     else:
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN

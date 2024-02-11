@@ -39,7 +39,11 @@ function AdminUsersList() {
             to={`/user/${adminUser.username}`}
           >
             <ListItemText
-              primary={`${adminUser.profile?.first_name} ${adminUser.profile?.last_name}`}
+              primary={
+                adminUser.profile?.first_name
+                  ? `${adminUser.profile?.first_name} ${adminUser.profile?.last_name}`
+                  : adminUser.username
+              }
             />
           </ListItemButton>
         </ListItem>
