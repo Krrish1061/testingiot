@@ -13,12 +13,12 @@ function useEditSensor() {
       .then((res) => res.data);
   };
 
-  return useMutation({
+  return useMutation<Sensor, AxiosError, Sensor>({
     mutationFn: editSensor,
     onSuccess: () => {
       enqueueSnackbar("Sensor sucessfully Edited", { variant: "success" });
     },
-    onError: (_error: AxiosError) => {
+    onError: () => {
       // reverting to the old rows here sensor is the sensor to be deleted
       enqueueSnackbar("Sensor modification failed", { variant: "error" });
     },

@@ -4,7 +4,7 @@ import {
   GridToolbarContainer,
 } from "@mui/x-data-grid";
 
-function CustomToolbar() {
+function Toolbar() {
   return (
     <GridToolbarContainer>
       <GridToolbarColumnsButton />
@@ -13,4 +13,4 @@ function CustomToolbar() {
   );
 }
 
-export default CustomToolbar;
+export default Toolbar;

@@ -79,7 +79,9 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
                 ) ?? []
               }
               getOptionLabel={(option) =>
-                `${option.profile?.first_name} ${option.profile?.last_name}`
+                option.profile?.first_name
+                  ? `${option.profile?.first_name} ${option.profile?.last_name}`
+                  : option.username
               }
               value={
                 UserList?.find((item) => field.value === item.username) || null

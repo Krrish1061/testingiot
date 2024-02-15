@@ -20,6 +20,7 @@ import VerifyEmail from "../pages/VerifyEmail";
 import ViewCompanyProfile from "../pages/ViewCompanyProfile";
 import ViewProfile from "../pages/ViewProfile";
 import RenderUserDashboard from "../components/dashboard/RenderUserDashboard";
+import SendLiveData from "../pages/SendLiveData";
 
 // pages 404 unauthorized
 
@@ -50,6 +51,14 @@ const router = createBrowserRouter([
                     path: "/user/:username",
                     element: <RenderUserDashboard />,
                   },
+                  {
+                    path: "/manage-companies",
+                    element: <ManageCompany />,
+                  },
+                  {
+                    path: "/send-liveData",
+                    element: <SendLiveData />,
+                  },
                 ],
               },
               {
@@ -64,15 +73,7 @@ const router = createBrowserRouter([
                   />
                 ),
               },
-              {
-                path: "/manage-companies",
-                element: (
-                  <PrivateRoute
-                    hasPermission={[UserGroups.superAdminGroup]}
-                    children={<ManageCompany />}
-                  />
-                ),
-              },
+
               { path: "/profile", element: <ViewProfile /> },
 
               // for superadmin and company super admin

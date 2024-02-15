@@ -75,7 +75,7 @@ const GridCellExpand = memo(function GridCellExpand(
         ref={cellDiv}
         sx={{
           height: "100%",
-          width,
+          width: 1,
           display: "block",
           position: "absolute",
           top: -50,
@@ -96,13 +96,16 @@ const GridCellExpand = memo(function GridCellExpand(
         <Popper
           open={showFullCell && anchorEl !== null}
           anchorEl={anchorEl}
-          style={{ width, marginLeft: -17 }}
+          sx={{ width, marginLeft: -17 }}
         >
           <Paper
             elevation={1}
-            style={{ minHeight: wrapper.current!.offsetHeight - 3 }}
+            sx={{ minHeight: wrapper.current!.offsetHeight - 3 }}
           >
-            <Typography variant="body2" style={{ padding: 8 }}>
+            <Typography
+              variant="body2"
+              sx={{ padding: 1, wordBreak: "break-word" }}
+            >
               {value}
             </Typography>
           </Paper>

@@ -10,6 +10,7 @@ import useAuthStore from "../../store/authStore";
 import UserGroups from "../../constants/userGroups";
 import CompanyList from "../company/CompanyList";
 import AdminUsersList from "../user/AdminUsersList";
+import ShareIcon from "@mui/icons-material/Share";
 
 const DrawerList = () => {
   const user = useAuthStore((state) => state.user);
@@ -19,12 +20,7 @@ const DrawerList = () => {
   );
   return (
     <List>
-      <DrawerListItem
-        icon={<DashboardIcon />}
-        linkto="/"
-        text="Dashboard"
-        // autoFocus
-      />
+      <DrawerListItem icon={<DashboardIcon />} linkto="/" text="Dashboard" />
       <Divider component="li" />
       {isUserSuperAdmin && (
         <>
@@ -80,6 +76,12 @@ const DrawerList = () => {
             icon={<SensorsIcon />}
             linkto="/sensors"
             text="Manage Sensor"
+          />
+          <Divider component="li" />
+          <DrawerListItem
+            icon={<ShareIcon />}
+            linkto="/send-liveData"
+            text="Send LiveData"
           />
         </>
       )}

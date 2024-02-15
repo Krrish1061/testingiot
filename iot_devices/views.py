@@ -212,6 +212,7 @@ def get_all_device_sensor(request):
             if company_slug
             else IotDeviceCache.get_all_user_iot_devices(username=username)
         )
+
         iot_device_sensors = {}
         for device_id in iot_devices:
             device_sensors = IotDeviceCache.get_all_device_sensors(device_id)

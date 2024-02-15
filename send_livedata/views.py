@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from send_livedata.cache import SendLiveDataCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
@@ -19,21 +18,21 @@ from .serializers import SendLiveDataListSerializer
 # Create your views here.
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def add_send_livedata(request):
-    user = UserCache.get_user(username=request.user.username)
-    user_groups = get_groups_tuple(user)
-    if GroupName.SUPERADMIN_GROUP in user_groups:
-        serializer = SendLiveDataListSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        send_livedata = serializer.save()
-        SendLiveDataCache.set_send_livedata(send_livedata)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(
-            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
-        )
+# @api_view(["POST"])
+# @permission_classes([IsAuthenticated])
+# def add_send_livedata(request):
+#     user = UserCache.get_user(username=request.user.username)
+#     user_groups = get_groups_tuple(user)
+#     if GroupName.SUPERADMIN_GROUP in user_groups:
+#         serializer = SendLiveDataListSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         send_livedata = serializer.save()
+#         SendLiveDataCache.set_send_livedata(send_livedata)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#     else:
+#         return Response(
+#             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+#         )
 
 
 @api_view(["GET"])
@@ -52,13 +51,36 @@ def send_livedata_list_all(request):
         )
 
 
-@api_view(["GET", "PATCH", "DELETE"])
+@api_view(["POST", "GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def send_livedata(request, id):
+def send_livedata(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     if GroupName.SUPERADMIN_GROUP in user_groups:
-        send_livedata = SendLiveDataCache.get_send_livedata(id)
+
+        if request.method == "POST":
+            serializer = SendLiveDataListSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            send_livedata = serializer.save()
+            SendLiveDataCache.set_send_livedata(send_livedata)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        company_slug = request.query_params.get("company")
+        username = request.query_params.get("user")
+        if not company_slug and not username:
+            return Response(
+                {"error": "No company or User specified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_livedata = (
+            SendLiveDataCache.get_send_livedata_by_user(username)
+            if username
+            else SendLiveDataCache.get_send_livedata_by_company(company_slug)
+        )
+
+        print(send_livedata, type(send_livedata))
+
         if send_livedata is None:
             return Response(
                 {"error": ERROR_404_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND
@@ -69,18 +91,18 @@ def send_livedata(request, id):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "PATCH":
-            serializer = SendLiveDataList(
+            serializer = SendLiveDataListSerializer(
                 send_livedata, data=request.data, partial=True
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            SendLiveDataCache.delete_send_livedata(id)
+            SendLiveDataCache.delete_send_livedata(send_livedata.id)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "DELETE":
             try:
                 send_livedata.delete()
-                SendLiveDataCache.delete_send_livedata(id)
+                SendLiveDataCache.delete_send_livedata(send_livedata.id)
             except:
                 return Response(
                     {"error": ERROR_DELETE_FAILED}, status=status.HTTP_403_FORBIDDEN

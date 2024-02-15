@@ -52,6 +52,7 @@ function SensorEditableField({
             variant="outlined"
             size="small"
             onChange={handleMaxLimitChange}
+            sx={{ width: "15ch" }}
           />
         )}
       </Stack>
@@ -81,6 +82,7 @@ function SensorEditableField({
             variant="outlined"
             size="small"
             onChange={handleMinLimitChange}
+            sx={{ width: "15ch" }}
           />
         )}
       </Stack>

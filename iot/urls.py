@@ -34,7 +34,7 @@ urlpatterns = [
     path("company/", include("company.urls")),
     path("websocket/", include("websocket.urls")),
     path("api/", include("api.urls")),
-    path("send-data-to/", include("send_livedata.urls")),
+    path("send-data/", include("send_livedata.urls")),
     path("account/", include("users.urls.auth_urls")),
     path("<str:username>/", include("users.urls.urls")),
 ]

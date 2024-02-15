@@ -9,7 +9,7 @@ interface Props {
   isDisabled?: boolean;
   isEditMode: boolean;
   handleEditClick: () => void;
-  handleSaveClick: () => void;
+  handleSaveClick?: () => void;
   handleDeleteClick: () => void;
   handleCancelClick: () => void;
 }
@@ -28,8 +28,9 @@ function MobileActions({
         <IconButton
           color="primary"
           disabled={isDisabled}
+          type="submit"
           size="small"
-          onClick={handleSaveClick}
+          // onClick={handleSaveClick}
         >
           <SaveIcon fontSize="small" />
         </IconButton>

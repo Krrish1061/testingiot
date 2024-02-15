@@ -45,6 +45,7 @@ class Cache(ABC):
     def set_to_list(cache_key: str, app_name: str, data) -> None:
         cached_data = cache.get(cache_key)
         if cached_data:
+            print("cach", cached_data, type(cached_data))
             # combines the query set
             cached_data = (
                 cached_data.append(data)

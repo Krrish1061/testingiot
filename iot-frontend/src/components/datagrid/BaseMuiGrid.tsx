@@ -6,12 +6,13 @@ import {
   GridValidRowModel,
 } from "@mui/x-data-grid";
 import muiDataGridCommonFunction from "../../constants/muiDataGrid/commonFunction";
-import CustomToolbar from "./CustomToolbar";
+import Toolbar from "./Toolbar";
 import CustomPagination from "./Pagination";
 import { GridInitialStateCommunity } from "@mui/x-data-grid/models/gridStateCommunity";
 import { AxiosError } from "axios";
 import CustomNoRowsOverlay from "./CustomNoRowsOverlay";
 import LinearProgress from "@mui/material/LinearProgress";
+import { JSXElementConstructor } from "react";
 
 interface Props {
   rows: GridValidRowModel[];
@@ -20,6 +21,7 @@ interface Props {
   initialState: GridInitialStateCommunity;
   rowModesModel: GridRowModesModel;
   slotProps: GridSlotsComponentsProps;
+  customToolbar?: JSXElementConstructor<unknown>;
   processRowUpdate: (
     newRow: GridValidRowModel,
     oldRow: GridValidRowModel
@@ -35,6 +37,7 @@ function BaseMuiGrid({
   initialState,
   rowModesModel,
   slotProps,
+  customToolbar,
   processRowUpdate,
   handleRowModesModelChange,
   handleProcessRowUpdateError,
@@ -61,7 +64,7 @@ function BaseMuiGrid({
       onProcessRowUpdateError={handleProcessRowUpdateError}
       slots={{
         loadingOverlay: LinearProgress,
-        toolbar: CustomToolbar,
+        toolbar: customToolbar ? customToolbar : Toolbar,
         pagination: CustomPagination,
         noRowsOverlay: CustomNoRowsOverlay,
       }}

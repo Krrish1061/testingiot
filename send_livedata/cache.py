@@ -19,11 +19,15 @@ class SendLiveDataCaching(Cache):
             return result
         return None
 
-    def __get_send_livedata_by_user(self, user_id: int):
+    def __get_send_livedata_by_user(self, username: str):
         cached_data = self.get(self.cache_key)
         if cached_data:
             result = next(
-                (data for data in cached_data if data.user == user_id),
+                (
+                    data
+                    for data in cached_data
+                    if data.user and data.user.username == username
+                ),
                 None,
             )
             return result
@@ -33,7 +37,11 @@ class SendLiveDataCaching(Cache):
         cached_data = self.get(self.cache_key)
         if cached_data:
             result = next(
-                (data for data in cached_data if data.company.slug == company_slug),
+                (
+                    data
+                    for data in cached_data
+                    if data.company and data.company.slug == company_slug
+                ),
                 None,
             )
             return result
@@ -70,13 +78,13 @@ class SendLiveDataCaching(Cache):
                 return None
         return send_livedata
 
-    def get_send_livedata_by_user(self, user_id: int):
-        send_livedata = self.__get_send_livedata_by_user(user_id)
+    def get_send_livedata_by_user(self, username: int):
+        send_livedata = self.__get_send_livedata_by_user(username)
         if send_livedata is None:
             try:
                 send_livedata = SendLiveDataList.objects.select_related(
                     "user", "company"
-                ).get(user=user_id)
+                ).get(user__username=username)
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
@@ -94,6 +102,9 @@ class SendLiveDataCaching(Cache):
                 send_livedata = SendLiveDataList.objects.select_related(
                     "user", "company"
                 ).get(company__slug=company_slug)
+                print(
+                    "get_send_livedata_by_company", send_livedata, type(send_livedata)
+                )
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,

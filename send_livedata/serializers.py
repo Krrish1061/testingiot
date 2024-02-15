@@ -32,16 +32,19 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if ("user" in attrs) and ("company" in attrs):
+        user = attrs.get("user")
+        company = attrs.get("company")
+
+        if (user and company) or (not user and not company):
             raise serializers.ValidationError({"error": ERROR_INVALID_ASSIGNMENT})
 
-        if "user" in attrs:
-            if attrs["user"].is_associated_with_company:
+        if user:
+            if user.is_associated_with_company:
                 raise serializers.ValidationError(
                     {"error": ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY}
                 )
 
-            if attrs["user"].type != UserType.ADMIN:
+            if user.type != UserType.ADMIN:
                 raise serializers.ValidationError(
                     {"error": ERROR_ONLY_ADMIN_USER_PERMITTED}
                 )
@@ -53,7 +56,7 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
         company = instance.company
 
         if user:
-            representation["user"] = user.email
+            representation["user"] = user.username
             # removing company field from response
             representation.pop("company")
         if company:
