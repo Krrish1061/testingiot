@@ -20,6 +20,10 @@ function MobileManageSensors() {
       <Table aria-label="collapsible table">
         <TableHead>
           <TableRow>
+            <TableCell size="small" sx={{ paddingX: 0 }}></TableCell>
+            <TableCell size="small" sx={{ paddingLeft: 0, paddingRight: 1 }}>
+              S.N
+            </TableCell>
             <TableCell>Name</TableCell>
             <TableCell>Symbol</TableCell>
             <TableCell>Unit</TableCell>
@@ -27,7 +31,7 @@ function MobileManageSensors() {
         </TableHead>
         <TableBody>
           {sensors.map((sensor, index) => (
-            <SensorRow key={index} row={sensor} />
+            <SensorRow key={index} row={sensor} index={index} />
           ))}
         </TableBody>
       </Table>

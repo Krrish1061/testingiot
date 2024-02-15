@@ -1,17 +1,21 @@
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import InputLabel from "@mui/material/InputLabel";
-import { ChangeEvent } from "react";
-
 import TextField from "@mui/material/TextField";
+import { FieldErrors, UseFormRegister } from "react-hook-form";
+
+interface IFormInput {
+  max_limit?: number | null;
+  min_limit?: number | null;
+}
 
 interface Props {
   isEditMode: boolean;
+  register: UseFormRegister<IFormInput>;
+  errors: FieldErrors<IFormInput>;
   name: string;
   maxLimit: number | undefined;
   minLimit: number | undefined;
-  handleMaxLimitChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleMinLimitChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 function SensorEditableField({
@@ -19,8 +23,8 @@ function SensorEditableField({
   name,
   maxLimit,
   minLimit,
-  handleMaxLimitChange,
-  handleMinLimitChange,
+  errors,
+  register,
 }: Props) {
   const maxLimitId = `max-limit-${name}`;
   const minLimitId = `min-limit-${name}`;
@@ -46,19 +50,22 @@ function SensorEditableField({
           <Typography>{maxLimit}</Typography>
         ) : (
           <TextField
+            inputProps={{
+              ...register("max_limit"),
+            }}
             id={maxLimitId}
-            value={maxLimit === null ? "" : maxLimit}
             type="number"
             variant="outlined"
             size="small"
-            onChange={handleMaxLimitChange}
             sx={{ width: "15ch" }}
+            error={!!errors.max_limit}
+            helperText={errors.max_limit && errors.max_limit.message}
           />
         )}
       </Stack>
 
       <Stack
-        marginTop={2}
+        marginY={2}
         direction="row"
         justifyContent="flex-start"
         alignItems="center"
@@ -77,12 +84,15 @@ function SensorEditableField({
         ) : (
           <TextField
             id={minLimitId}
-            value={minLimit === null ? "" : minLimit}
+            inputProps={{
+              ...register("min_limit"),
+            }}
             type="number"
             variant="outlined"
             size="small"
-            onChange={handleMinLimitChange}
             sx={{ width: "15ch" }}
+            error={!!errors.min_limit}
+            helperText={errors.min_limit && errors.min_limit.message}
           />
         )}
       </Stack>

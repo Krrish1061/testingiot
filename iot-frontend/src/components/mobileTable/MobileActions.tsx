@@ -18,7 +18,7 @@ function MobileActions({
   isDisabled,
   isEditMode,
   handleEditClick,
-  handleSaveClick,
+  // handleSaveClick,
   handleDeleteClick,
   handleCancelClick,
 }: Props) {

@@ -102,19 +102,32 @@ function SendLiveDataRow({ row, index }: Props) {
     setDeleteDialogOpen(false);
   };
 
+  const handleRowOpenClose = () => {
+    setOpen(!open);
+    if (isEditMode) {
+      setIsEditMode(false);
+      reset();
+    }
+  };
+
   return (
     <>
       <TableRow
         sx={{ "& > *": { borderBottom: "unset" } }}
-        onClick={() => setOpen(!open)}
+        onClick={handleRowOpenClose}
       >
-        <TableCell>
+        <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
           {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </TableCell>
-        <TableCell component="th" scope="row">
+        <TableCell
+          component="th"
+          scope="row"
+          size="small"
+          sx={{ paddingLeft: 1, paddingRight: 0 }}
+        >
           {index + 1}
         </TableCell>
-        <TableCell>{companyName || "-"} </TableCell>
+        <TableCell sx={{ paddingLeft: 1 }}>{companyName || "-"} </TableCell>
         <TableCell>{userName || "-"} </TableCell>
       </TableRow>
       <TableRow>
@@ -122,10 +135,6 @@ function SendLiveDataRow({ row, index }: Props) {
           <Collapse
             in={open}
             timeout="auto"
-            unmountOnExit
-            sx={{
-              margin: 1,
-            }}
             component={isEditMode ? "form" : "div"}
             onSubmit={handleSubmit(onSubmit)}
           >
@@ -133,12 +142,12 @@ function SendLiveDataRow({ row, index }: Props) {
               direction="row"
               justifyContent="space-between"
               alignItems="center"
+              margin={1}
             >
-              <Box>
-                <Typography variant="h6" component="div">
-                  {row.user ? userName : companyName}
-                </Typography>
-              </Box>
+              <Typography variant="h6" component="div">
+                {row.user ? userName : companyName}
+              </Typography>
+
               <MobileActions
                 isEditMode={isEditMode}
                 handleEditClick={handleEditClick}
@@ -148,16 +157,19 @@ function SendLiveDataRow({ row, index }: Props) {
             </Stack>
 
             {!isEditMode ? (
-              <Box paddingLeft={5} marginTop={1}>
+              <Box paddingLeft={5}>
                 <Typography gutterBottom color="inherit" fontWeight="bold">
                   Endpoint:
                 </Typography>
-                <Typography color="inherit" sx={{ wordBreak: "break-word" }}>
+                <Typography
+                  color="inherit"
+                  sx={{ wordBreak: "break-word", marginBottom: 1 }}
+                >
                   {row.endpoint}
                 </Typography>
               </Box>
             ) : (
-              <Box paddingLeft={5} marginTop={1}>
+              <Box paddingLeft={5} marginBottom={1}>
                 <Typography
                   component={InputLabel}
                   htmlFor="endpoint"

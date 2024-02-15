@@ -1,10 +1,11 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Collapse from "@mui/material/Collapse";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import Box from "@mui/material/Box";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
 import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 import MobileActions from "../../mobileTable/MobileActions";
@@ -12,27 +13,80 @@ import Sensor from "../../../entities/Sensor";
 import SensorEditableField from "./SensorEditableField";
 import useEditSensor from "../../../hooks/sensor/useEditSensor";
 import useDeleteSensor from "../../../hooks/sensor/useDeleteSensor";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 interface Props {
   row: Sensor;
+  index: number;
 }
 
-function SensorRow({ row }: Props) {
+const schema = z
+  .object({
+    max_limit: z.coerce
+      .string()
+      .transform((value) => (value === "" ? null : Number(value)))
+      .nullish()
+      .refine((val) => !isNaN(val as number), { message: "Invalid Number" }),
+    min_limit: z.coerce
+      .string()
+      .transform((value) => (value === "" ? null : Number(value)))
+      .nullish()
+      .refine((val) => !isNaN(val as number), { message: "Invalid Number" }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.max_limit && data.min_limit && data.max_limit <= data.min_limit) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "The maximum limit must be greater than the minimum limit, and vice versa.",
+        path: ["max_limit"],
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "The maximum limit must be greater than the minimum limit, and vice versa.",
+        path: ["min_limit"],
+      });
+    }
+  });
+
+type IFormInputs = z.infer<typeof schema>;
+
+function SensorRow({ row, index }: Props) {
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [maxLimit, setMaxLimit] = useState(row.max_limit);
-  const [minLimit, setMinLimit] = useState(row.min_limit);
   const { mutateAsync: editSensor } = useEditSensor();
   const { mutate: deleteSensor } = useDeleteSensor();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    getValues,
+  } = useForm<IFormInputs>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      max_limit: row.max_limit,
+      min_limit: row.min_limit,
+    },
+  });
 
   const handleDialogNoButton = () => {
     setDialogOpen(false);
   };
 
   const handleDialogYesButton = () => {
-    editSensor({ ...row, max_limit: maxLimit, min_limit: minLimit });
+    const formData = getValues();
+    editSensor({
+      ...row,
+      max_limit: formData.max_limit || undefined,
+      min_limit: formData.min_limit || undefined,
+    });
     setDialogOpen(false);
     setIsEditMode(false);
   };
@@ -46,31 +100,24 @@ function SensorRow({ row }: Props) {
     setDeleteDialogOpen(false);
   };
 
-  const handleSaveClick = () => {
-    if (row.max_limit !== maxLimit || row.min_limit !== minLimit)
+  const handleDeleteClick = () => setDeleteDialogOpen(true);
+  const handleEditClick = () => setIsEditMode(true);
+  const handleCancelClick = () => {
+    reset();
+    setIsEditMode(false);
+  };
+
+  const onSubmit: SubmitHandler<IFormInputs> = (data) => {
+    if (row.max_limit !== data.max_limit || row.min_limit !== data.min_limit)
       setDialogOpen(true);
     else setIsEditMode(false);
   };
 
-  const handleDeleteClick = () => setDeleteDialogOpen(true);
-  const handleEditClick = () => setIsEditMode(true);
-  const handleCancelClick = () => {
-    setIsEditMode(false);
-    setMaxLimit(row.max_limit);
-    setMinLimit(row.min_limit);
-  };
-
-  const handleMaxLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = parseInt(event.target.value);
-    if (!isNaN(inputValue)) {
-      setMaxLimit(inputValue);
-    }
-  };
-
-  const handleMinLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const inputValue = parseInt(event.target.value);
-    if (!isNaN(inputValue)) {
-      setMinLimit(inputValue);
+  const handleRowOpenClose = () => {
+    setOpen(!open);
+    if (isEditMode) {
+      setIsEditMode(false);
+      reset();
     }
   };
 
@@ -78,46 +125,54 @@ function SensorRow({ row }: Props) {
     <>
       <TableRow
         sx={{ "& > *": { borderBottom: "unset" } }}
-        onClick={() => setOpen(!open)}
+        onClick={handleRowOpenClose}
       >
-        <TableCell component="th" scope="row">
+        <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
+          {open ? (
+            <KeyboardArrowUpIcon fontSize="small" />
+          ) : (
+            <KeyboardArrowDownIcon fontSize="small" />
+          )}
+        </TableCell>
+        <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
+          {index + 1}
+        </TableCell>
+
+        <TableCell component="th" scope="row" sx={{ paddingLeft: 1 }}>
           {row.name}
         </TableCell>
         <TableCell>{row.symbol || "-"} </TableCell>
         <TableCell>{row.unit || "-"} </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box
-              sx={{
-                margin: 1,
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" component="div" marginBottom={0}>
-                    {row.name.charAt(0).toUpperCase() + row.name.slice(1)}
-                  </Typography>
-                </Box>
-                <MobileActions
-                  isEditMode={isEditMode}
-                  handleEditClick={handleEditClick}
-                  handleSaveClick={handleSaveClick}
-                  handleDeleteClick={handleDeleteClick}
-                  handleCancelClick={handleCancelClick}
-                />
-              </Stack>
+        <TableCell sx={{ paddingY: 0 }} colSpan={6}>
+          <Collapse
+            in={open}
+            timeout="auto"
+            component={isEditMode ? "form" : "div"}
+            onSubmit={handleSubmit(onSubmit)}
+          >
+            <Stack direction="row" justifyContent="space-between" margin={1}>
+              <Typography variant="h6" component="div" marginBottom={0}>
+                {row.name.charAt(0).toUpperCase() + row.name.slice(1)}
+              </Typography>
 
-              <SensorEditableField
+              <MobileActions
                 isEditMode={isEditMode}
-                name={row.name}
-                maxLimit={maxLimit}
-                minLimit={minLimit}
-                handleMaxLimitChange={handleMaxLimitChange}
-                handleMinLimitChange={handleMinLimitChange}
+                handleEditClick={handleEditClick}
+                handleDeleteClick={handleDeleteClick}
+                handleCancelClick={handleCancelClick}
               />
-            </Box>
+            </Stack>
+
+            <SensorEditableField
+              isEditMode={isEditMode}
+              register={register}
+              errors={errors}
+              name={row.name}
+              maxLimit={row.max_limit}
+              minLimit={row.min_limit}
+            />
           </Collapse>
         </TableCell>
       </TableRow>
