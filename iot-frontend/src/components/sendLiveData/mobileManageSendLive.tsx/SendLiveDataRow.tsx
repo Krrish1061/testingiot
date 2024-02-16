@@ -10,7 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import SendLiveData from "../../../entities/SendLiveData";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
@@ -71,8 +71,9 @@ function SendLiveDataRow({ row, index }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditSuccessful]);
 
-  const onSubmit = () => {
-    setDialogOpen(true);
+  const onSubmit: SubmitHandler<ISendLiveDataFormInputs> = (data) => {
+    if (data.endpoint !== row.endpoint) setDialogOpen(true);
+    else setIsEditMode(false);
   };
 
   const handleDeleteClick = () => setDeleteDialogOpen(true);

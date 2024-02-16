@@ -5,7 +5,7 @@ interface Company {
   name: string;
   email: string;
   slug: string;
-  user_limit: number;
+  user_limit: number | null;
   created_at: string;
   profile?: CompanyProfile;
 }

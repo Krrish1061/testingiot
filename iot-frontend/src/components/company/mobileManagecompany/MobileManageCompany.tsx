@@ -21,6 +21,10 @@ function MobileManageCompanies() {
       <Table aria-label="collapsible table">
         <TableHead>
           <TableRow>
+            <TableCell size="small" sx={{ paddingX: 0 }}></TableCell>
+            <TableCell size="small" sx={{ paddingLeft: 0, paddingRight: 1 }}>
+              S.N
+            </TableCell>
             <TableCell>Avatar</TableCell>
             <TableCell>Name</TableCell>
             <TableCell>User Limit</TableCell>
@@ -28,7 +32,7 @@ function MobileManageCompanies() {
         </TableHead>
         <TableBody>
           {companies.map((company, index) => (
-            <CompanyRow key={index} row={company} />
+            <CompanyRow key={index} row={company} index={index} />
           ))}
         </TableBody>
       </Table>
