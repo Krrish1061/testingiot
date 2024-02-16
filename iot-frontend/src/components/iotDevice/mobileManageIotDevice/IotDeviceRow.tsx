@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import Stack from "@mui/material/Stack";
 import TableCell from "@mui/material/TableCell";
@@ -20,21 +19,37 @@ import iotDeviceschema, {
 } from "../zodSchema/IotDeviceSchema";
 import useUpdateIotDevice from "../../../hooks/iotDevice/useUpdateIotDevice";
 import useDeleteIotDevice from "../../../hooks/iotDevice/useDeleteIotDevice";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 interface Props {
   row: IotDevice;
 }
 
 function IotDeviceRow({ row }: Props) {
-  const { data: companyList } = useGetAllCompany();
-  const { data: userList } = useGetAllUser();
   const [open, setOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<IDeviceFormInputs | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutate: updateIotDevice } = useUpdateIotDevice();
   const { mutate: deleteIotDevice } = useDeleteIotDevice();
+  const { data: companyList } = useGetAllCompany();
+  const { data: userList } = useGetAllUser();
+
+  const companyName = useMemo(
+    () => companyList?.find((company) => company.slug === row.company)?.name,
+    [companyList, row]
+  );
+
+  const user = useMemo(
+    () => userList?.find((user) => user.username === row.user),
+    [userList, row]
+  );
+
+  const firstName = user?.profile?.first_name;
+  const lastName = user?.profile?.last_name;
+  const userName =
+    firstName && lastName ? `${firstName} ${lastName}` : row.user;
 
   const defaultsValues = {
     user: row.user,
@@ -49,6 +64,7 @@ function IotDeviceRow({ row }: Props) {
     reset,
     control,
     formState: { errors },
+    getValues,
   } = useForm<IDeviceFormInputs>({
     resolver: zodResolver(iotDeviceschema),
     defaultValues: defaultsValues,
@@ -62,7 +78,6 @@ function IotDeviceRow({ row }: Props) {
       row.is_active !== data.is_active
     ) {
       setDialogOpen(true);
-      setFormData(data);
     } else {
       setIsEditMode(false);
     }
@@ -70,23 +85,19 @@ function IotDeviceRow({ row }: Props) {
 
   const handleDialogNoButton = () => {
     setDialogOpen(false);
-    setFormData(null);
   };
 
   const handleDialogYesButton = () => {
-    if (formData) {
-      updateIotDevice({
-        ...row,
-        board_id: formData.board_id,
-        is_active: formData.is_active,
-        user: formData.user,
-        company: formData.company,
-      });
-    }
-
+    const formData = getValues();
+    updateIotDevice({
+      ...row,
+      board_id: formData.board_id,
+      is_active: formData.is_active,
+      user: formData.user,
+      company: formData.company,
+    });
     setDialogOpen(false);
     setIsEditMode(false);
-    setFormData(null);
   };
 
   const handleDialogDeleteNoButton = () => {
@@ -98,10 +109,6 @@ function IotDeviceRow({ row }: Props) {
     setDeleteDialogOpen(false);
   };
 
-  const handleSaveClick = () => {
-    handleSubmit(onSubmit)();
-  };
-
   const handleDeleteClick = () => setDeleteDialogOpen(true);
   const handleEditClick = () => setIsEditMode(true);
   const handleCancelClick = () => {
@@ -110,68 +117,68 @@ function IotDeviceRow({ row }: Props) {
     setDeleteDialogOpen(false);
   };
 
-  const companyName = useMemo(
-    () => companyList?.find((company) => company.slug === row.company)?.name,
-    [companyList, row]
-  );
-
-  const user = useMemo(
-    () => userList?.find((user) => user.username === row.user),
-    [userList, row]
-  );
-
-  const firstName = user?.profile?.first_name;
-  const lastName = user?.profile?.last_name;
-  const userName = firstName && lastName ? `${firstName} ${lastName}` : null;
+  const handleRowOpenClose = () => {
+    setOpen(!open);
+    if (isEditMode) {
+      setIsEditMode(false);
+      reset();
+    }
+  };
 
   return (
     <>
       <TableRow
         sx={{ "& > *": { borderBottom: "unset" } }}
-        onClick={() => setOpen(!open)}
+        onClick={handleRowOpenClose}
       >
+        <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
+          {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+        </TableCell>
+        {/* <TableCell
+          component="th"
+          scope="row"
+          size="small"
+          sx={{ paddingLeft: 1, paddingRight: 0 }}
+        >
+          {index + 1}
+        </TableCell> */}
         <TableCell component="th" scope="row">
           {row.id}
         </TableCell>
         <TableCell>{companyName || "-"} </TableCell>
-        <TableCell>{userName || row.user || "-"} </TableCell>
+        <TableCell>{userName || "-"} </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box
-              sx={{
-                margin: 1,
-              }}
-              component="form"
-              noValidate
-              onSubmit={handleSubmit(onSubmit)}
-            >
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="h6" component="div" marginBottom={0}>
-                  Iot-Device {row.id}
-                </Typography>
+        <TableCell sx={{ paddingY: 0 }} colSpan={6}>
+          <Collapse
+            in={open}
+            timeout="auto"
+            component={isEditMode ? "form" : "div"}
+            onSubmit={handleSubmit(onSubmit)}
+          >
+            <Stack direction="row" justifyContent="space-between" margin={1}>
+              <Typography variant="h6" component="div" marginBottom={0}>
+                Iot-Device {row.id}
+              </Typography>
 
-                <MobileActions
-                  isEditMode={isEditMode}
-                  handleEditClick={handleEditClick}
-                  handleSaveClick={handleSaveClick}
-                  handleDeleteClick={handleDeleteClick}
-                  handleCancelClick={handleCancelClick}
-                />
-              </Stack>
-              <IotDeviceEditableField
+              <MobileActions
                 isEditMode={isEditMode}
-                register={register}
-                iotDevice={row}
-                control={control}
-                errors={errors}
-                userList={userList}
-                companyList={companyList}
-                companyName={companyName}
-                userName={userName || row.user}
+                handleEditClick={handleEditClick}
+                handleDeleteClick={handleDeleteClick}
+                handleCancelClick={handleCancelClick}
               />
-            </Box>
+            </Stack>
+            <IotDeviceEditableField
+              isEditMode={isEditMode}
+              register={register}
+              iotDevice={row}
+              control={control}
+              errors={errors}
+              userList={userList}
+              companyList={companyList}
+              companyName={companyName}
+              userName={userName || row.user}
+            />
           </Collapse>
         </TableCell>
       </TableRow>

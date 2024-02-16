@@ -1,4 +1,5 @@
 import Autocomplete from "@mui/material/Autocomplete";
+import Checkbox from "@mui/material/Checkbox";
 import InputLabel from "@mui/material/InputLabel";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -9,12 +10,11 @@ import {
   FieldErrors,
   UseFormRegister,
 } from "react-hook-form";
-import { IDeviceFormInputs } from "../zodSchema/IotDeviceSchema";
-import Checkbox from "@mui/material/Checkbox";
 import UserGroups from "../../../constants/userGroups";
 import Company from "../../../entities/Company";
 import IotDevice from "../../../entities/IotDevice";
 import User from "../../../entities/User";
+import { IDeviceFormInputs } from "../zodSchema/IotDeviceSchema";
 
 interface Props {
   isEditMode: boolean;
@@ -46,16 +46,26 @@ function IotDeviceEditableField({
 
   return (
     <>
-      <Stack direction="row" spacing={4} marginY={2} paddingLeft={5}>
+      <Stack
+        direction="row"
+        spacing={2}
+        marginY={2}
+        paddingLeft={{ xs: 2, sm: 5 }}
+        alignItems="center"
+      >
         <Typography
           component={isEditMode ? InputLabel : "div"}
           htmlFor={userId}
-          sx={{ color: "inherit", marginRight: 3.5 }}
+          sx={{
+            color: "inherit",
+            marginRight: isEditMode ? 3 : 0,
+            overflow: "visible",
+          }}
         >
           User:
         </Typography>
         {!isEditMode ? (
-          <Typography>{userName} </Typography>
+          <Typography>{userName}</Typography>
         ) : (
           <Controller
             name="user"
@@ -63,7 +73,7 @@ function IotDeviceEditableField({
             render={({ field }) => (
               <Autocomplete
                 {...field}
-                disablePortal
+                fullWidth
                 id={userId}
                 options={
                   userList?.filter(
@@ -73,13 +83,15 @@ function IotDeviceEditableField({
                   ) ?? []
                 }
                 getOptionLabel={(option) =>
-                  `${option.profile?.first_name} ${option.profile?.last_name}`
+                  option.profile?.first_name
+                    ? `${option.profile?.first_name} ${option.profile?.last_name}`
+                    : option.username
                 }
                 value={
                   userList?.find((item) => field.value === item.username) ||
                   null
                 }
-                sx={{ width: 300 }}
+                sx={{ minWidth: 180, maxWidth: 300 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -95,11 +107,21 @@ function IotDeviceEditableField({
         )}
       </Stack>
 
-      <Stack direction="row" spacing={4} marginY={2} paddingLeft={5}>
+      <Stack
+        direction="row"
+        spacing={2}
+        marginY={2}
+        paddingLeft={{ xs: 2, sm: 5 }}
+        alignItems="center"
+      >
         <Typography
           component={isEditMode ? InputLabel : "div"}
           htmlFor={companyId}
-          sx={{ color: "inherit", marginRight: -1 }}
+          sx={{
+            color: "inherit",
+            marginRight: isEditMode ? -1 : 0,
+            overflow: "visible",
+          }}
         >
           Company:
         </Typography>
@@ -113,14 +135,14 @@ function IotDeviceEditableField({
             render={({ field }) => (
               <Autocomplete
                 {...field}
-                disablePortal
+                fullWidth
                 id={companyId}
                 options={companyList ?? []}
                 getOptionLabel={(option) => option.name}
                 value={
                   companyList?.find((item) => field.value === item.slug) || null
                 }
-                sx={{ width: 300 }}
+                sx={{ maxWidth: 300, minWidth: 180 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -138,12 +160,19 @@ function IotDeviceEditableField({
         )}
       </Stack>
 
-      <Stack direction="row" spacing={4} marginBottom={2} paddingLeft={5}>
+      <Stack
+        direction="row"
+        spacing={2}
+        marginBottom={2}
+        paddingLeft={{ xs: 2, sm: 5 }}
+        alignItems="center"
+      >
         <Typography
           component={isEditMode ? InputLabel : "div"}
           htmlFor={boardId}
           gutterBottom
           color="inherit"
+          sx={{ overflow: "visible" }}
         >
           Board Id:
         </Typography>
@@ -156,13 +185,20 @@ function IotDeviceEditableField({
             }}
             id={boardId}
             type="number"
+            fullWidth
             error={!!errors.board_id}
             helperText={errors.board_id && errors.board_id.message}
             autoComplete="off"
+            sx={{ maxWidth: 300 }}
           />
         )}
       </Stack>
-      <Stack direction="row" spacing={4} alignItems="center" paddingLeft={5}>
+      <Stack
+        direction="row"
+        spacing={4}
+        alignItems="center"
+        paddingLeft={{ xs: 2, sm: 5 }}
+      >
         <Typography
           component={isEditMode ? InputLabel : "div"}
           htmlFor={isActive}

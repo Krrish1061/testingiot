@@ -1,25 +1,25 @@
-import SendLiveData from "../../../entities/SendLiveData";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import Collapse from "@mui/material/Collapse";
-import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import InputLabel from "@mui/material/InputLabel";
-import MobileActions from "../../mobileTable/MobileActions";
-import { useEffect, useMemo, useState } from "react";
-import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
-import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import useEditSendLiveData from "../../../hooks/sendLiveData/useEditSendLiveData";
-import useDeleteSendLiveData from "../../../hooks/sendLiveData/useDeleteSendLiveData";
-import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
-import useGetAllUser from "../../../hooks/users/useGetAllUser";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
+import InputLabel from "@mui/material/InputLabel";
+import Stack from "@mui/material/Stack";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import SendLiveData from "../../../entities/SendLiveData";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
+import useDeleteSendLiveData from "../../../hooks/sendLiveData/useDeleteSendLiveData";
+import useEditSendLiveData from "../../../hooks/sendLiveData/useEditSendLiveData";
+import useGetAllUser from "../../../hooks/users/useGetAllUser";
+import MobileActions from "../../mobileTable/MobileActions";
+import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
+import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 
 const schema = z.object({
   endpoint: z.string().min(1, "This field is required").url(),
@@ -131,7 +131,7 @@ function SendLiveDataRow({ row, index }: Props) {
         <TableCell>{userName || "-"} </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+        <TableCell sx={{ paddingY: 0 }} colSpan={6}>
           <Collapse
             in={open}
             timeout="auto"

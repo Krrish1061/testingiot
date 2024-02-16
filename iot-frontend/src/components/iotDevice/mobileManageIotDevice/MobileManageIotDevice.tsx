@@ -20,6 +20,10 @@ function MobileManageIotDevice() {
       <Table aria-label="collapsible table">
         <TableHead>
           <TableRow>
+            <TableCell size="small" sx={{ paddingX: 0 }}></TableCell>
+            {/* <TableCell size="small" sx={{ paddingLeft: 0, paddingRight: 1 }}>
+              S.N
+            </TableCell> */}
             <TableCell>Device Id</TableCell>
             <TableCell>Company</TableCell>
             <TableCell>User</TableCell>
