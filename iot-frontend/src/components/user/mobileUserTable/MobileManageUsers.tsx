@@ -21,6 +21,10 @@ function MobileManageUsers() {
       <Table aria-label="collapsible table">
         <TableHead>
           <TableRow>
+            <TableCell size="small" sx={{ paddingX: 0 }}></TableCell>
+            <TableCell size="small" sx={{ paddingX: 0 }}>
+              S.N
+            </TableCell>
             <TableCell>Avatar</TableCell>
             <TableCell>Username</TableCell>
             <TableCell>UserType</TableCell>
@@ -28,7 +32,7 @@ function MobileManageUsers() {
         </TableHead>
         <TableBody>
           {users.map((user, index) => (
-            <UserRow key={index} row={user} />
+            <UserRow key={index} row={user} index={index} />
           ))}
         </TableBody>
       </Table>

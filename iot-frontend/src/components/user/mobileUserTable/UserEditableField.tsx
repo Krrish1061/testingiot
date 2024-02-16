@@ -1,48 +1,39 @@
+import Checkbox from "@mui/material/Checkbox";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import InputLabel from "@mui/material/InputLabel";
-import FormControl from "@mui/material/FormControl";
-import UserTypes from "../../../constants/userTypes";
-import Checkbox from "@mui/material/Checkbox";
-import { ChangeEvent } from "react";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+import { Control, Controller } from "react-hook-form";
 import UserGroups from "../../../constants/userGroups";
+import UserTypes from "../../../constants/userTypes";
 import useAuthStore from "../../../store/authStore";
+
+interface IFormInputs {
+  type: "ADMIN" | "MODERATOR" | "VIEWER" | "SUPERADMIN";
+  is_active: boolean;
+}
 
 interface Props {
   isEditMode: boolean;
   userType: string;
   username: string;
-  type: string;
-  isActive: boolean;
-  handleChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  handleTypeChange: (event: SelectChangeEvent) => void;
+  control: Control<IFormInputs>;
 }
 
-function UserEditableField({
-  isEditMode,
-  userType,
-  username,
-  type,
-  isActive,
-  handleChange,
-  handleTypeChange,
-}: Props) {
+function UserEditableField({ isEditMode, userType, username, control }: Props) {
   const user = useAuthStore((state) => state.user);
-
   const isUserSuperAdmin =
     user?.groups.includes(UserGroups.superAdminGroup) || false;
   const isUserCompanySuperAdmin =
     user?.groups.includes(UserGroups.companySuperAdminGroup) || false;
-
   const userTypeId = `user-type-${username}`;
   const userIsActiveId = `user-isactive-${username}`;
 
   return (
     <>
       <Stack
-        marginTop={2}
+        marginTop={1}
         direction="row"
         justifyContent="flex-start"
         alignItems="center"
@@ -59,25 +50,25 @@ function UserEditableField({
         {!isEditMode ? (
           <Typography>{userType} </Typography>
         ) : (
-          <FormControl
-            variant="outlined"
-            size="small"
-            sx={{ marginTop: 1, minWidth: 150 }}
-          >
-            <Select
-              value={type}
-              inputProps={{
-                id: userTypeId,
-              }}
-              onChange={handleTypeChange}
-            >
-              <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
-              <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
-              {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
-                <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
-              )}
-            </Select>
-          </FormControl>
+          <Controller
+            name="type"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                value={field.value}
+                inputProps={{
+                  id: userTypeId,
+                }}
+              >
+                <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
+                <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
+                {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
+                  <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
+                )}
+              </Select>
+            )}
+          />
         )}
       </Stack>
       <Stack
@@ -91,14 +82,22 @@ function UserEditableField({
         <InputLabel htmlFor={userIsActiveId} sx={{ color: "inherit" }}>
           Is Active:
         </InputLabel>
-        <Checkbox
-          id={userIsActiveId}
-          size="small"
-          checked={isActive}
-          onChange={handleChange}
-          inputProps={{
-            readOnly: !isEditMode ? true : false,
-          }}
+        <Controller
+          name="is_active"
+          control={control}
+          render={({ field }) => (
+            <Checkbox
+              id={userIsActiveId}
+              size="small"
+              onChange={(e) => {
+                if (!e.target.readOnly) field.onChange(e.target.checked);
+              }}
+              checked={field.value}
+              inputProps={{
+                readOnly: isEditMode ? false : true,
+              }}
+            />
+          )}
         />
       </Stack>
     </>

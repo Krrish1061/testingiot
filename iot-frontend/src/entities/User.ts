@@ -3,7 +3,7 @@ import UserProfile from "./UserProfile";
 interface User {
   id: number;
   username: string;
-  type: string;
+  type: "ADMIN" | "MODERATOR" | "VIEWER" | "SUPERADMIN";
   groups: string[];
   email?: string;
   company?: string | null;

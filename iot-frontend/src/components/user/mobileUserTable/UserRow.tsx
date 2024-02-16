@@ -1,81 +1,86 @@
-import User from "../../../entities/User";
-import { ChangeEvent, useState } from "react";
-import ImageAvatar from "../../ImageAvatar";
+import { zodResolver } from "@hookform/resolvers/zod";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import Collapse from "@mui/material/Collapse";
 import Stack from "@mui/material/Stack";
-import { SelectChangeEvent } from "@mui/material/Select";
-import useAuthStore from "../../../store/authStore";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import Box from "@mui/material/Box";
-import useEditUser from "../../../hooks/users/useEditUser";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
+import User from "../../../entities/User";
 import useDeleteUser from "../../../hooks/users/useDeleteUser";
-import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
-import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
+import useEditUser from "../../../hooks/users/useEditUser";
+import useAuthStore from "../../../store/authStore";
+import ImageAvatar from "../../ImageAvatar";
 import MobileActions from "../../mobileTable/MobileActions";
+import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
+import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 import UserEditableField from "./UserEditableField";
 import UserRowHeader from "./UserRowHeader";
 
 interface Props {
   row: User;
+  index: number;
 }
 
-function UserRow({ row }: Props) {
+const schema = z.object({
+  type: z.enum(["ADMIN", "MODERATOR", "VIEWER", "SUPERADMIN"]),
+  is_active: z.boolean(),
+});
+
+type IFormInputs = z.infer<typeof schema>;
+
+function UserRow({ row, index }: Props) {
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [type, setType] = useState<string>(row.type);
-  const [isActive, setIsActive] = useState<boolean>(row.is_active || false);
   const user = useAuthStore((state) => state.user);
   const { mutate: editUser } = useEditUser();
   const { mutate: deleteuser } = useDeleteUser();
+
+  const { handleSubmit, reset, control, getValues } = useForm<IFormInputs>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      type: row.type,
+      is_active: row.is_active,
+    },
+  });
 
   const handleDialogNoButton = () => {
     setDialogOpen(false);
   };
 
   const handleDialogYesButton = () => {
-    editUser({ ...row, type: type, is_active: isActive });
+    const formData = getValues();
+    editUser({ ...row, type: formData.type, is_active: formData.is_active });
     setDialogOpen(false);
     setIsEditMode(false);
-    // setIsActive(row.is_active || false);
-    // setType(row.type);
+    reset();
   };
 
   const handleDialogDeleteNoButton = () => {
     setDeleteDialogOpen(false);
   };
+
   const handleDialogDeleteButton = () => {
     deleteuser(row);
     setDeleteDialogOpen(false);
   };
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.readOnly) {
-      setIsActive(event.target.checked);
-    }
-  };
-
-  const handleTypeChange = (event: SelectChangeEvent) => {
-    setType(event.target.value);
+  const onSubmit: SubmitHandler<IFormInputs> = (data) => {
+    if (row.type !== data.type || row.is_active !== data.is_active)
+      setDialogOpen(true);
+    else setIsEditMode(false);
   };
 
   const isDisabled = row.id === user?.id;
 
-  const handleSaveClick = () => {
-    if (row.type !== type || row.is_active !== isActive) {
-      setDialogOpen(true);
-    } else {
-      setIsEditMode(false);
-    }
-  };
-
   const handleDeleteClick = () => setDeleteDialogOpen(true);
   const handleEditClick = () => setIsEditMode(true);
   const handleCancelClick = () => {
-    setIsActive(row.is_active || false);
-    setType(row.type);
+    reset();
     setIsEditMode(false);
   };
 
@@ -85,49 +90,63 @@ function UserRow({ row }: Props) {
         sx={{ "& > *": { borderBottom: "unset" } }}
         onClick={() => setOpen(!open)}
       >
-        <TableCell component="th" scope="row">
+        <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
+          {open ? (
+            <KeyboardArrowUpIcon />
+          ) : (
+            <KeyboardArrowDownIcon fontSize="small" />
+          )}
+        </TableCell>
+        <TableCell
+          component="th"
+          scope="row"
+          size="small"
+          sx={{ paddingLeft: 1, paddingRight: 0 }}
+        >
+          {index + 1}
+        </TableCell>
+        <TableCell component="th" scope="row" sx={{ paddingRight: 1 }}>
           <ImageAvatar
             imgUrl={row.profile?.profile_picture}
             altText={`${row.profile?.first_name} ${row?.profile?.last_name}`}
           />
         </TableCell>
-        <TableCell>{row.username}</TableCell>
-        <TableCell>{row.type}</TableCell>
+        <TableCell sx={{ paddingX: 0 }}>{row.username}</TableCell>
+        <TableCell sx={{ paddingX: 0 }}>{row.type}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell sx={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box
-              sx={{
-                margin: 1,
-              }}
-            >
-              <Stack direction="row" justifyContent="space-between">
-                <UserRowHeader
-                  fullName={` ${row.profile?.first_name} ${row.profile?.last_name}`}
-                  email={row.email}
-                  company={row.company}
-                />
-                <MobileActions
-                  isDisabled={isDisabled}
-                  isEditMode={isEditMode}
-                  handleEditClick={handleEditClick}
-                  handleSaveClick={handleSaveClick}
-                  handleDeleteClick={handleDeleteClick}
-                  handleCancelClick={handleCancelClick}
-                />
-              </Stack>
-
-              <UserEditableField
-                isEditMode={isEditMode}
-                userType={row.type}
-                username={row.username}
-                type={type}
-                isActive={isActive}
-                handleChange={handleChange}
-                handleTypeChange={handleTypeChange}
+        <TableCell sx={{ paddingY: 0 }} colSpan={6}>
+          <Collapse
+            in={open}
+            timeout="auto"
+            component={isEditMode ? "form" : "div"}
+            onSubmit={handleSubmit(onSubmit)}
+          >
+            <Stack direction="row" justifyContent="space-between" margin={1}>
+              <UserRowHeader
+                fullName={
+                  row.profile?.first_name
+                    ? `${row.profile.first_name} ${row.profile.last_name}`
+                    : row.username
+                }
+                email={row.email}
+                company={row.company}
               />
-            </Box>
+              <MobileActions
+                isDisabled={isDisabled}
+                isEditMode={isEditMode}
+                handleEditClick={handleEditClick}
+                handleDeleteClick={handleDeleteClick}
+                handleCancelClick={handleCancelClick}
+              />
+            </Stack>
+
+            <UserEditableField
+              isEditMode={isEditMode}
+              control={control}
+              userType={row.type}
+              username={row.username}
+            />
           </Collapse>
         </TableCell>
       </TableRow>
