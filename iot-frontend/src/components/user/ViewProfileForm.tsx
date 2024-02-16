@@ -71,6 +71,7 @@ function ViewProfileForm() {
   const email = user?.email || noValue;
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
+    console.log(data);
     mutate(data);
     setIsEditMode(false);
   };
@@ -267,7 +268,7 @@ function ViewProfileForm() {
                     readOnly={!isEditMode ? true : false}
                     disableFuture
                     slotProps={{
-                      // field: { clearable: true },
+                      field: { clearable: true },
                       textField: {
                         id: "date_of_birth",
                         size: "small",
@@ -280,7 +281,7 @@ function ViewProfileForm() {
                       },
                     }}
                     sx={{
-                      maxWidth: "25ch",
+                      maxWidth: "24ch",
                     }}
                   />
                 </LocalizationProvider>

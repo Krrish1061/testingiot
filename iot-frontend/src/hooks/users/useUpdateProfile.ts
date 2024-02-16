@@ -26,7 +26,9 @@ function useUpdateProfile() {
     axiosInstance
       .patch<UserProfile>(`${user?.username}/profile/`, {
         ...data,
-        date_of_birth: dayjs(data.date_of_birth).format("YYYY-MM-DD"),
+        date_of_birth: data.date_of_birth
+          ? dayjs(data.date_of_birth).format("YYYY-MM-DD")
+          : null,
       })
       .then((res) => res.data);
 
@@ -34,6 +36,9 @@ function useUpdateProfile() {
     mutationFn: UpdateProfile,
     onSuccess(userProfile) {
       setUser({ ...user, profile: userProfile } as User);
+      enqueueSnackbar("Profile Upadated", {
+        variant: "success",
+      });
     },
     onError: (error) => {
       enqueueSnackbar(error?.response ? error.response.data : error.message, {

@@ -82,7 +82,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_associated_with_company = models.BooleanField(default=False, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now, editable=False)
+    date_joined = models.DateTimeField(
+        default=timezone.now, editable=False, null=True, blank=True
+    )
     api_key = models.CharField(
         verbose_name="Authentication Api key",
         max_length=32,
@@ -164,7 +166,6 @@ class AdminUser(User):
 
 # Defining the proxy model for Moderator usertypes
 class ModeratorUser(User):
-
     """
     Proxy model representing an Moderator User.
 
@@ -189,7 +190,6 @@ class ModeratorUser(User):
 
 # defining the proxy model for viewer usertypes
 class ViewerUser(User):
-
     """
     Proxy model representing an Viewer User.
 
