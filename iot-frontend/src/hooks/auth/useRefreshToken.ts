@@ -16,7 +16,7 @@ interface Token {
 interface accessToken extends JwtPayload {
   user_id: number;
   username: string;
-  type: string;
+  type: "ADMIN" | "MODERATOR" | "VIEWER" | "SUPERADMIN";
   groups: string[];
 }
 
