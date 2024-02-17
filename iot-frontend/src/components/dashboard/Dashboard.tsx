@@ -21,6 +21,7 @@ function Dashboard() {
   const theme = useTheme();
   const user = useAuthStore((state) => state.user);
   const setDrawerOpen = useDrawerStore((state) => state.setDrawerOpen);
+  const setIsMobile = useDrawerStore((state) => state.setIsMobile);
 
   const closeWebSocket = useWebSocketStore((state) => state.closeWebSocket);
   // connect to the websocket
@@ -36,6 +37,7 @@ function Dashboard() {
     if (!isMobile) {
       setDrawerOpen(true);
     }
+    setIsMobile(isMobile);
     return () => {
       // Close WebSocket when component unmounts
       closeWebSocket();

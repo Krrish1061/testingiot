@@ -71,7 +71,6 @@ function ViewProfileForm() {
   const email = user?.email || noValue;
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-    console.log(data);
     mutate(data);
     setIsEditMode(false);
   };

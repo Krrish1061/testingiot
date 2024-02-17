@@ -45,7 +45,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
     async def send_data(self, event):
         # Send the data to the websocket
-        print("inside sens dtada websocket consumer", event)
         device_id = event["device_id"]
         data = event["data"]
         sensor_data = {

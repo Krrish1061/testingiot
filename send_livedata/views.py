@@ -79,8 +79,6 @@ def send_livedata(request):
             else SendLiveDataCache.get_send_livedata_by_company(company_slug)
         )
 
-        print(send_livedata, type(send_livedata))
-
         if send_livedata is None:
             return Response(
                 {"error": ERROR_404_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND

@@ -12,19 +12,20 @@ import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import Zoom from "@mui/material/Zoom";
 import { Link as RouterLink } from "react-router-dom";
 import useDrawerStore from "../../store/drawerStore";
+import Box from "@mui/material/Box";
 
 const DrawerTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
   [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: theme.palette.common.white,
-    color: "rgba(0, 0, 0, 0.87)",
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
     boxShadow: theme.shadows[1],
     fontSize: 10,
   },
   [`& .${tooltipClasses.arrow}`]: {
     // Customize the arrow styles here
-    color: "black",
+    color: theme.palette.text.primary,
   },
 }));
 
@@ -48,23 +49,27 @@ const DrawerListItem = ({
 }: DrawerListItemProps) => {
   const [dropdownState, setDropdownState] = useState(false);
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
-  const handleClick = () => {
+  const setDrawerOpen = useDrawerStore((state) => state.setDrawerOpen);
+  const isMobile = useDrawerStore((state) => state.isMobile);
+
+  const handleDropDownButtonClick = () => {
     setDropdownState(!dropdownState);
   };
+
+  const handleListButtonClick = () => {
+    if (isMobile) setDrawerOpen(false);
+  };
+
   if (!isDropdown) {
     return (
       <ListItem disableGutters disablePadding>
-        {linkto ? (
+        {linkto && (
           <ListItemButton
             autoFocus={autoFocus}
             component={RouterLink}
             to={linkto}
+            onClick={handleListButtonClick}
           >
-            <ListItemIcon sx={{ marginRight: -1 }}>{icon}</ListItemIcon>
-            <ListItemText primary={text} />
-          </ListItemButton>
-        ) : (
-          <ListItemButton autoFocus={autoFocus}>
             <ListItemIcon sx={{ marginRight: -1 }}>{icon}</ListItemIcon>
             <ListItemText primary={text} />
           </ListItemButton>
@@ -80,7 +85,7 @@ const DrawerListItem = ({
               <ListItemButton
                 sx={{ paddingRight: 0.5 }}
                 autoFocus={autoFocus}
-                onClick={handleClick}
+                onClick={handleDropDownButtonClick}
               >
                 <ListItemIcon sx={{ marginRight: -1 }}>{icon}</ListItemIcon>
                 <ListItemText primary={text} />
@@ -89,7 +94,13 @@ const DrawerListItem = ({
             </ListItem>
 
             <Collapse in={dropdownState} unmountOnExit sx={{ paddingLeft: 5 }}>
-              {dropDownNode}
+              <Box
+                role="presentation"
+                onClick={handleListButtonClick}
+                onKeyDown={handleListButtonClick}
+              >
+                {dropDownNode}
+              </Box>
             </Collapse>
           </>
         ) : (

@@ -102,9 +102,7 @@ class SendLiveDataCaching(Cache):
                 send_livedata = SendLiveDataList.objects.select_related(
                     "user", "company"
                 ).get(company__slug=company_slug)
-                print(
-                    "get_send_livedata_by_company", send_livedata, type(send_livedata)
-                )
+
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
