@@ -29,34 +29,26 @@ class ConnectedConsumersCaching(Cache):
         return self.get(self.cache_key)
 
     def __handle_connect(self, group_name: str, cached_data: dict):
-        print("inside __handle_connect block", cached_data)
         if cached_data is not None:
             if group_name in cached_data:
-                print(f"before {group_name}:", cached_data[group_name])
                 cached_data[group_name] += 1
-                print(f"after {group_name}:", cached_data[group_name])
         else:
-            print("inside else block")
             cached_data = {group_name: 1}
 
         return cached_data
 
     def __handle_disconnect(self, group_name: str, cached_data: dict | None):
-        print("inside __handle_disconnect block", cached_data)
         if cached_data and group_name in cached_data:
-            print(f"before {group_name}:", cached_data[group_name])
             current_value = cached_data[group_name]
             if current_value == 1:
                 del cached_data[group_name]
             else:
                 cached_data[group_name] -= 1
-            print(f"after {group_name}:", cached_data.get(group_name))
 
             return cached_data
 
     def set_connected_consumers(self, group_name: str, actions: str):
         cached_data = self.get_connected_consumers()
-        print(actions)
         if actions == "connect":
             cached_data = self.__handle_connect(group_name, cached_data)
         else:
