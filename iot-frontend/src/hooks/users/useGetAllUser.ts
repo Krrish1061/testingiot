@@ -4,7 +4,7 @@ import useAxios from "../../api/axiosInstance";
 import User from "../../entities/User";
 import useAuthStore from "../../store/authStore";
 
-function useGetAllUser() {
+function useGetAllUser(isEnabled: boolean = true) {
   const user = useAuthStore((state) => state.user);
   const axiosInstance = useAxios();
 
@@ -16,6 +16,7 @@ function useGetAllUser() {
   return useQuery<User[], AxiosError>({
     queryKey: ["userList"],
     queryFn: fetchUsers,
+    enabled: isEnabled,
   });
 }
 

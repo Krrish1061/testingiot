@@ -1,0 +1,606 @@
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Grow from "@mui/material/Grow";
+import InputLabel from "@mui/material/InputLabel";
+import Paper from "@mui/material/Paper";
+import Popper from "@mui/material/Popper";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { Dispatch, RefObject, SetStateAction, useEffect, useMemo } from "react";
+import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import useGetAllUser from "../../hooks/users/useGetAllUser";
+import UserGroups from "../../constants/userGroups";
+import Button from "@mui/material/Button";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import { z } from "zod";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import dayjs from "dayjs";
+import useAuthStore from "../../store/authStore";
+import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
+import Checkbox from "@mui/material/Checkbox";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
+const checkedIcon = <CheckBoxIcon fontSize="small" />;
+
+interface Props {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  anchorRef: RefObject<HTMLButtonElement>;
+}
+
+const schema = z
+  .object({
+    start_date: z.coerce
+      .date()
+      .nullable()
+      .refine((value) => value !== null, {
+        message: "This field is required",
+      }),
+    end_date: z.coerce
+      .date()
+      .nullable()
+      .refine((value) => value !== null, {
+        message: "This field is required",
+      }),
+    user: z.string().nullish().or(z.string().array()),
+    company: z.string().nullish().or(z.string().array()),
+    sensors: z
+      .string()
+      .array()
+      .or(z.string())
+      .refine(
+        (value) => {
+          if (Array.isArray(value)) {
+            if (value.length === 0) return false;
+          }
+          return true;
+        },
+        {
+          message: "This field is required",
+        }
+      ),
+    file_type: z.string().min(1, "File Type is required"),
+  })
+  .refine(
+    (value) =>
+      value.start_date && value.end_date && value.start_date <= value.end_date,
+    {
+      path: ["start_date"],
+
+      message: "start date must be smaller than end date",
+    }
+  );
+
+type IDownloadFormInputs = z.infer<typeof schema>;
+
+function DownloadForm({ open, setOpen, anchorRef }: Props) {
+  const user = useAuthStore((state) => state.user);
+  const isuserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
+  const { data: companyList } = useGetAllCompany(isuserSuperAdmin);
+  const { data: userList } = useGetAllUser(isuserSuperAdmin);
+  const { data: sensorList } = useGetAllSensors();
+
+  const sensorNameList = useMemo(() => {
+    const names = sensorList?.map((sensor) => sensor.name) || [];
+    names.unshift("all");
+    return names;
+  }, [sensorList]);
+
+  const newCompanyList = useMemo(() => {
+    const names = companyList
+      ? [{ name: "all", slug: "all" }, ...companyList]
+      : [];
+    return names;
+  }, [companyList]);
+
+  const newUserList = useMemo(() => {
+    const adminUserList =
+      userList?.filter(
+        (user) =>
+          user.groups.includes(UserGroups.adminGroup) &&
+          !user.is_associated_with_company
+      ) || [];
+
+    return [{ name: "all", username: "all", profile: null }, ...adminUserList];
+  }, [userList]);
+
+  const {
+    handleSubmit,
+    control,
+    reset,
+    setValue,
+    clearErrors,
+    formState: { errors },
+  } = useForm<IDownloadFormInputs>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      start_date: null,
+      end_date: null,
+      user: null,
+      company: null,
+      sensors: "all",
+      file_type: "excel",
+    },
+  });
+
+  useEffect(() => {
+    if (!open) {
+      reset();
+    }
+  }, [open, reset]);
+
+  const handleClose = (event: Event | React.SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+    reset();
+    setOpen(false);
+  };
+
+  const onSubmit: SubmitHandler<IDownloadFormInputs> = (data) => {
+    console.log(data);
+  };
+
+  const handleTodayClick = () => {
+    clearErrors(["start_date", "end_date"]);
+    const currentDate = dayjs().toDate();
+    setValue("start_date", currentDate);
+    setValue("end_date", currentDate);
+  };
+
+  const handleWeekClick = () => {
+    clearErrors(["start_date", "end_date"]);
+    const currentDate = dayjs().toDate();
+    const oneWeekAgo = dayjs().subtract(1, "week").toDate();
+    setValue("start_date", oneWeekAgo);
+    setValue("end_date", currentDate);
+  };
+
+  const handleMonthClick = () => {
+    clearErrors(["start_date", "end_date"]);
+    const currentDate = dayjs().toDate();
+    const oneWeekAgo = dayjs().subtract(1, "month").toDate();
+    setValue("start_date", oneWeekAgo);
+    setValue("end_date", currentDate);
+  };
+
+  const handleYearClick = () => {
+    clearErrors(["start_date", "end_date"]);
+    const currentDate = dayjs().toDate();
+    const oneWeekAgo = dayjs().subtract(1, "year").toDate();
+    setValue("start_date", oneWeekAgo);
+    setValue("end_date", currentDate);
+  };
+
+  const handleAllClick = () => {
+    clearErrors(["start_date", "end_date"]);
+    const currentDate = dayjs().toDate();
+    const startDate = dayjs("2000/01/01").toDate();
+    setValue("start_date", startDate);
+    setValue("end_date", currentDate);
+  };
+
+  const handleCancelClick = () => {
+    reset();
+    setOpen(false);
+  };
+
+  return (
+    <Popper
+      open={open}
+      anchorEl={anchorRef.current}
+      role={undefined}
+      placement="bottom-start"
+      transition
+      sx={{ zIndex: 1200, width: { xs: 320, sm: 500 }, p: 1 }}
+    >
+      {({ TransitionProps }) => (
+        <Grow
+          {...TransitionProps}
+          style={{
+            transformOrigin: "right top",
+          }}
+        >
+          <Paper elevation={12} sx={{ p: 2 }}>
+            <ClickAwayListener onClickAway={handleClose}>
+              <Box
+                component="form"
+                noValidate
+                onSubmit={handleSubmit(onSubmit)}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  justifyContent="space-around"
+                  spacing={{ xs: 2, sm: 4 }}
+                >
+                  <Stack
+                    direction={{ xs: "row", sm: "column" }}
+                    spacing={{ xs: 2, sm: 0 }}
+                    alignItems={{ xs: "center", sm: "flex-start" }}
+                  >
+                    <Typography
+                      component={InputLabel}
+                      htmlFor="start_date"
+                      gutterBottom
+                      color="inherit"
+                      fontWeight="bold"
+                      sx={{ overflow: "visible" }}
+                    >
+                      Start Date:
+                    </Typography>
+
+                    <Controller
+                      name="start_date"
+                      control={control}
+                      render={({ field }) => (
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <DatePicker
+                            {...field}
+                            value={dayjs(field.value)}
+                            onChange={(newValue) => field.onChange(newValue)}
+                            disableFuture
+                            slotProps={{
+                              field: { clearable: true },
+                              textField: {
+                                id: "start_date",
+                                size: "small",
+                                variant: "outlined",
+                                error: !!errors.start_date,
+                                helperText: errors.start_date?.message,
+                              },
+                            }}
+                            sx={{
+                              maxWidth: "24ch",
+                            }}
+                          />
+                        </LocalizationProvider>
+                      )}
+                    />
+                  </Stack>
+                  <Stack
+                    direction={{ xs: "row", sm: "column" }}
+                    spacing={{ xs: 3, sm: 0 }}
+                    alignItems={{ xs: "center", sm: "flex-start" }}
+                  >
+                    <Typography
+                      component={InputLabel}
+                      htmlFor="end_date"
+                      gutterBottom
+                      color="inherit"
+                      fontWeight="bold"
+                      sx={{ overflow: "visible" }}
+                    >
+                      End Date:
+                    </Typography>
+
+                    <Controller
+                      name="end_date"
+                      control={control}
+                      render={({ field }) => (
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <DatePicker
+                            {...field}
+                            value={dayjs(field.value)}
+                            onChange={(newValue) => field.onChange(newValue)}
+                            disableFuture
+                            slotProps={{
+                              field: { clearable: true },
+                              textField: {
+                                id: "end_date",
+                                size: "small",
+                                variant: "outlined",
+                                error: !!errors.end_date,
+                                helperText: errors.end_date?.message,
+                              },
+                            }}
+                            sx={{
+                              maxWidth: "24ch",
+                            }}
+                          />
+                        </LocalizationProvider>
+                      )}
+                    />
+                  </Stack>
+                </Stack>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  marginY={2}
+                  justifyContent={
+                    isuserSuperAdmin ? "space-evenly" : "flex-start"
+                  }
+                >
+                  <Chip
+                    label="today"
+                    variant="outlined"
+                    clickable
+                    size="small"
+                    onClick={handleTodayClick}
+                  />
+                  <Chip
+                    label="week"
+                    variant="outlined"
+                    clickable
+                    size="small"
+                    onClick={handleWeekClick}
+                  />
+                  {isuserSuperAdmin && (
+                    <>
+                      <Chip
+                        label="month"
+                        variant="outlined"
+                        clickable
+                        size="small"
+                        onClick={handleMonthClick}
+                      />
+                      <Chip
+                        label="year"
+                        variant="outlined"
+                        clickable
+                        size="small"
+                        onClick={handleYearClick}
+                      />
+                      <Chip
+                        label="all"
+                        variant="outlined"
+                        clickable
+                        size="small"
+                        onClick={handleAllClick}
+                      />
+                    </>
+                  )}
+                </Stack>
+                {isuserSuperAdmin && (
+                  <>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      spacing={{ xs: 1, sm: 2 }}
+                      marginBottom={2}
+                    >
+                      <InputLabel
+                        sx={{ color: "inherit", fontWeight: "bold" }}
+                        htmlFor="user"
+                      >
+                        User:
+                      </InputLabel>
+
+                      <Controller
+                        name="user"
+                        control={control}
+                        render={({ field }) => (
+                          <Autocomplete
+                            {...field}
+                            disablePortal
+                            id="user"
+                            multiple
+                            options={newUserList}
+                            getOptionLabel={(option) =>
+                              option.profile?.first_name
+                                ? `${option.profile?.first_name} ${option.profile?.last_name}`
+                                : option.username
+                            }
+                            value={newUserList.filter((user) =>
+                              field.value?.includes(user.username)
+                            )}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                type="text"
+                                error={!!errors.user}
+                                helperText={errors.user?.message}
+                              />
+                            )}
+                            renderOption={(props, option, { selected }) => (
+                              <li {...props}>
+                                <Checkbox
+                                  icon={icon}
+                                  id={option.username}
+                                  checkedIcon={checkedIcon}
+                                  style={{ marginRight: 8 }}
+                                  checked={selected}
+                                />
+                                {option.profile?.first_name
+                                  ? `${option.profile?.first_name} ${option.profile?.last_name}`
+                                  : option.username}
+                              </li>
+                            )}
+                            onChange={(_, data) => {
+                              const newData = data.find(
+                                (user) => user.username === "all"
+                              )
+                                ? "all"
+                                : data.map(
+                                    (user) =>
+                                      typeof user !== "string" && user.username
+                                  );
+                              field.onChange(newData);
+                            }}
+                            sx={{
+                              width: { xs: 1, sm: 350 },
+                              marginLeft: { xs: 0, sm: 4 },
+                            }}
+                          />
+                        )}
+                      />
+                    </Stack>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      spacing={{ xs: 1, sm: 2 }}
+                      marginBottom={2}
+                    >
+                      <InputLabel
+                        sx={{ color: "inherit", fontWeight: "bold" }}
+                        htmlFor="company"
+                      >
+                        Company:
+                      </InputLabel>
+
+                      <Controller
+                        name="company"
+                        control={control}
+                        render={({ field }) => (
+                          <Autocomplete
+                            {...field}
+                            disablePortal
+                            id="company"
+                            multiple
+                            options={newCompanyList}
+                            getOptionLabel={(option) => option.name}
+                            value={newCompanyList.filter((company) =>
+                              field.value?.includes(company.slug)
+                            )}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                type="text"
+                                error={!!errors.company}
+                                helperText={errors.company?.message}
+                              />
+                            )}
+                            renderOption={(props, option, { selected }) => (
+                              <li {...props}>
+                                <Checkbox
+                                  icon={icon}
+                                  id={option.slug}
+                                  checkedIcon={checkedIcon}
+                                  style={{ marginRight: 8 }}
+                                  checked={selected}
+                                />
+                                {option.name}
+                              </li>
+                            )}
+                            onChange={(_, data) => {
+                              const newData = data.find(
+                                (company) => company.name === "all"
+                              )
+                                ? "all"
+                                : data.map(
+                                    (company) =>
+                                      typeof company !== "string" &&
+                                      company.slug
+                                  );
+                              field.onChange(newData);
+                            }}
+                            sx={{ width: { xs: 1, sm: 350 } }}
+                          />
+                        )}
+                      />
+                    </Stack>
+                  </>
+                )}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  spacing={{ xs: 1, sm: 2 }}
+                  marginBottom={2}
+                >
+                  <InputLabel
+                    sx={{ color: "inherit", fontWeight: "bold" }}
+                    htmlFor="sensors"
+                  >
+                    Sensors:
+                  </InputLabel>
+
+                  <Controller
+                    name="sensors"
+                    control={control}
+                    render={({ field }) => (
+                      <Autocomplete
+                        {...field}
+                        disablePortal
+                        id="sensors"
+                        multiple
+                        options={sensorNameList ?? []}
+                        value={
+                          Array.isArray(field.value) ? field.value : ["all"]
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            type="text"
+                            error={!!errors.sensors}
+                            helperText={errors.sensors?.message}
+                          />
+                        )}
+                        renderOption={(props, option, { selected }) => (
+                          <li {...props}>
+                            <Checkbox
+                              icon={icon}
+                              id={option}
+                              checkedIcon={checkedIcon}
+                              style={{ marginRight: 8 }}
+                              checked={selected}
+                            />
+                            {option}
+                          </li>
+                        )}
+                        onChange={(_, data) =>
+                          data.includes("all")
+                            ? field.onChange("all")
+                            : field.onChange(data)
+                        }
+                        sx={{
+                          width: { xs: 1, sm: 350 },
+                          marginLeft: { xs: 0, sm: 1 },
+                        }}
+                      />
+                    )}
+                  />
+                </Stack>
+
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Typography gutterBottom color="inherit" fontWeight="bold">
+                    File Type:
+                  </Typography>
+
+                  <Controller
+                    name="file_type"
+                    control={control}
+                    render={({ field }) => (
+                      <RadioGroup {...field} row name="row-radio-file-type">
+                        <FormControlLabel
+                          value="excel"
+                          control={<Radio />}
+                          label="excel"
+                        />
+                        <FormControlLabel
+                          value="csv"
+                          control={<Radio />}
+                          label="csv"
+                        />
+                      </RadioGroup>
+                    )}
+                  />
+                </Stack>
+                <Stack direction="row" justifyContent="flex-end">
+                  <Button type="button" onClick={handleCancelClick}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Download</Button>
+                </Stack>
+              </Box>
+            </ClickAwayListener>
+          </Paper>
+        </Grow>
+      )}
+    </Popper>
+  );
+}
+
+export default DownloadForm;
