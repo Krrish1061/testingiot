@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 
 from channels.db import database_sync_to_async
+from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -42,6 +43,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         await self.unsubscribe_from_group()
+        raise StopConsumer()
 
     async def send_data(self, event):
         # Send the data to the websocket
