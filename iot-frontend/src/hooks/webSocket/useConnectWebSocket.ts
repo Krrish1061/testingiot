@@ -31,7 +31,7 @@ function useConnectWebSocket() {
 
   useEffect(() => {
     if (!websocket && isSuccess) {
-      connectWebSocket(websocketEndpoint + "?token=a" + webSocketToken.token);
+      connectWebSocket(websocketEndpoint + "?token=" + webSocketToken.token);
     }
     if (!websocket && !isSuccess) {
       (async () => await getWebSocketToken())();

@@ -41,7 +41,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             initial_data = await self.send_initial_data(user=user, company=user.company)
             await self.send(text_data=json.dumps(initial_data))
 
-    async def disconnect(self, close_code):
+    async def disconnect(self):
         await self.unsubscribe_from_group()
         raise StopConsumer()
 
