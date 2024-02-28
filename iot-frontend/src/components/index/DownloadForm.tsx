@@ -20,15 +20,19 @@ import Button from "@mui/material/Button";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Radio from "@mui/material/Radio";
-import { z } from "zod";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import useAuthStore from "../../store/authStore";
 import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
 import Checkbox from "@mui/material/Checkbox";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import DownloadFormSchema, {
+  IDownloadFormInputs,
+} from "./ZodSchema/DownloadFormSchema";
+import useDownload from "../../hooks/sensorData/useDownload";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -39,57 +43,13 @@ interface Props {
   anchorRef: RefObject<HTMLButtonElement>;
 }
 
-const schema = z
-  .object({
-    start_date: z.coerce
-      .date()
-      .nullable()
-      .refine((value) => value !== null, {
-        message: "This field is required",
-      }),
-    end_date: z.coerce
-      .date()
-      .nullable()
-      .refine((value) => value !== null, {
-        message: "This field is required",
-      }),
-    user: z.string().nullish().or(z.string().array()),
-    company: z.string().nullish().or(z.string().array()),
-    sensors: z
-      .string()
-      .array()
-      .or(z.string())
-      .refine(
-        (value) => {
-          if (Array.isArray(value)) {
-            if (value.length === 0) return false;
-          }
-          return true;
-        },
-        {
-          message: "This field is required",
-        }
-      ),
-    file_type: z.string().min(1, "File Type is required"),
-  })
-  .refine(
-    (value) =>
-      value.start_date && value.end_date && value.start_date <= value.end_date,
-    {
-      path: ["start_date"],
-
-      message: "start date must be smaller than end date",
-    }
-  );
-
-type IDownloadFormInputs = z.infer<typeof schema>;
-
 function DownloadForm({ open, setOpen, anchorRef }: Props) {
   const user = useAuthStore((state) => state.user);
   const isuserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
   const { data: companyList } = useGetAllCompany(isuserSuperAdmin);
   const { data: userList } = useGetAllUser(isuserSuperAdmin);
   const { data: sensorList } = useGetAllSensors();
+  const { downloadSensorData, isLoading, setIsLoading } = useDownload();
 
   const sensorNameList = useMemo(() => {
     const names = sensorList?.map((sensor) => sensor.name) || [];
@@ -123,7 +83,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
     clearErrors,
     formState: { errors },
   } = useForm<IDownloadFormInputs>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(DownloadFormSchema),
     defaultValues: {
       start_date: null,
       end_date: null,
@@ -152,7 +112,8 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
   };
 
   const onSubmit: SubmitHandler<IDownloadFormInputs> = (data) => {
-    console.log(data);
+    setIsLoading(true);
+    downloadSensorData(data);
   };
 
   const handleTodayClick = () => {
@@ -197,6 +158,22 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
   const handleCancelClick = () => {
     reset();
     setOpen(false);
+  };
+
+  const handleDateChange = (
+    newValue: dayjs.Dayjs | null,
+    onChange: (value: Dayjs | null) => void
+  ) => {
+    const currentDate = dayjs();
+    const oneMonthAgo = currentDate.subtract(1, "month");
+    // Check if the newValue date is before one month
+    if (!isuserSuperAdmin && newValue && newValue.isBefore(oneMonthAgo)) {
+      newValue = oneMonthAgo;
+    } else if (newValue && newValue.isAfter(currentDate)) {
+      newValue = currentDate;
+    }
+    clearErrors(["start_date"]);
+    onChange(newValue);
   };
 
   return (
@@ -250,8 +227,16 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <DatePicker
                             {...field}
+                            format="YYYY-M-D"
+                            minDate={
+                              !isuserSuperAdmin
+                                ? dayjs().subtract(1, "month")
+                                : undefined
+                            }
                             value={dayjs(field.value)}
-                            onChange={(newValue) => field.onChange(newValue)}
+                            onChange={(newValue) =>
+                              handleDateChange(newValue, field.onChange)
+                            }
                             disableFuture
                             slotProps={{
                               field: { clearable: true },
@@ -294,8 +279,16 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <DatePicker
                             {...field}
+                            format="YYYY-M-D"
+                            minDate={
+                              !isuserSuperAdmin
+                                ? dayjs().subtract(1, "month")
+                                : undefined
+                            }
                             value={dayjs(field.value)}
-                            onChange={(newValue) => field.onChange(newValue)}
+                            onChange={(newValue) =>
+                              handleDateChange(newValue, field.onChange)
+                            }
                             disableFuture
                             slotProps={{
                               field: { clearable: true },
@@ -320,9 +313,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                   direction="row"
                   spacing={1}
                   marginY={2}
-                  justifyContent={
-                    isuserSuperAdmin ? "space-evenly" : "flex-start"
-                  }
+                  justifyContent="space-evenly"
                 >
                   <Chip
                     label="today"
@@ -338,15 +329,15 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                     size="small"
                     onClick={handleWeekClick}
                   />
+                  <Chip
+                    label="month"
+                    variant="outlined"
+                    clickable
+                    size="small"
+                    onClick={handleMonthClick}
+                  />
                   {isuserSuperAdmin && (
                     <>
-                      <Chip
-                        label="month"
-                        variant="outlined"
-                        clickable
-                        size="small"
-                        onClick={handleMonthClick}
-                      />
                       <Chip
                         label="year"
                         variant="outlined"
@@ -386,6 +377,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                           <Autocomplete
                             {...field}
                             disablePortal
+                            disableCloseOnSelect
                             id="user"
                             multiple
                             options={newUserList}
@@ -458,6 +450,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                           <Autocomplete
                             {...field}
                             disablePortal
+                            disableCloseOnSelect
                             id="company"
                             multiple
                             options={newCompanyList}
@@ -525,6 +518,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                         {...field}
                         disablePortal
                         id="sensors"
+                        disableCloseOnSelect
                         multiple
                         options={sensorNameList ?? []}
                         value={
@@ -588,11 +582,35 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                     )}
                   />
                 </Stack>
-                <Stack direction="row" justifyContent="flex-end">
-                  <Button type="button" onClick={handleCancelClick}>
+                <Stack
+                  direction="row"
+                  justifyContent="flex-end"
+                  sx={{ position: "relative" }}
+                >
+                  <Button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={handleCancelClick}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit">Download</Button>
+                  <Button type="submit" disabled={isLoading}>
+                    Download
+                  </Button>
+                  {isLoading && (
+                    <CircularProgress
+                      color="primary"
+                      size={30}
+                      thickness={5}
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        right: "18%",
+                        marginTop: "-12px",
+                        marginRight: "-12px",
+                      }}
+                    />
+                  )}
                 </Stack>
               </Box>
             </ClickAwayListener>

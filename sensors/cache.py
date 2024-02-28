@@ -1,5 +1,7 @@
 from caching.cache import Cache
+from company.cache import CompanyCache
 from sensors.models import Sensor
+from users.cache import UserCache
 
 
 class SensorCaching(Cache):
@@ -57,11 +59,14 @@ class SensorCaching(Cache):
     def delete_sensor(self, sensor_id: int):
         self.delete_from_list(self.cache_key, self.app_name, id=sensor_id)
 
-    def get_all_company_sensor(self, company) -> list:
+    def get_all_company_sensor(self, company=None, company_slug=None) -> list:
         """Return the list of all the sensor name that company owns"""
-        cache_key = self.__get_company_sensor_cache_key(company.slug)
+        company_slug = company.slug if company else company_slug
+        cache_key = self.__get_company_sensor_cache_key(company_slug)
         company_sensors = self.get(cache_key=cache_key)
         if company_sensors is None:
+            if company is None:
+                company = CompanyCache.get_company(company_slug)
             company_sensors = (
                 company.iot_device.prefetch_related("iot_device_sensors")
                 .exclude(iot_device_sensors__sensor__name__isnull=True)
@@ -71,12 +76,14 @@ class SensorCaching(Cache):
             self.set(cache_key=cache_key, data=company_sensors)
         return company_sensors
 
-    def get_all_user_sensor(self, user) -> list:
+    def get_all_user_sensor(self, user=None, username=None) -> list:
         """Return the list of all the sensor name that admin user owns"""
-
-        cache_key = self.__get_admin_user_sensor_cache_key(user.username)
+        username = user.username if user else username
+        cache_key = self.__get_admin_user_sensor_cache_key(username)
         user_sensors = self.get(cache_key=cache_key)
         if user_sensors is None:
+            if user is None:
+                user = UserCache.get_user(username)
             user_sensors = (
                 user.iot_device.prefetch_related("iot_device_sensors")
                 .exclude(iot_device_sensors__sensor__name__isnull=True)
