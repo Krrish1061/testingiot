@@ -3,7 +3,6 @@ from collections import defaultdict
 from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import F, OuterRef, Subquery
 from django.utils import timezone
 from company.cache import CompanyCache
@@ -12,14 +11,11 @@ from sensor_data.models import SensorData
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
-from websocket.cache import ConnectedConsumersCache
 
 
 class SensorDataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
-        if isinstance(user, AnonymousUser):
-            await self.close()
         user_groups = get_groups_tuple(user)
         self.is_superadmin = (
             True if GroupName.SUPERADMIN_GROUP in user_groups else False
@@ -73,16 +69,11 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 await self.unsubscribe_from_group()
                 await self.subscribe_to_group(group_name)
                 initial_data = await self.get_initial_data(user=user, company=company)
-
                 await self.send(text_data=json.dumps(initial_data))
-        else:
-            # no is allowed to send data so close the connection if such data is received
-            await self.close()
 
     async def subscribe_to_group(self, group_name):
         await self.channel_layer.group_add(group_name, self.channel_name)
         self.subscribed_group = group_name
-        # await self.connected_consumers(group_name, actions="connect")
 
     async def unsubscribe_from_group(self):
         if self.subscribed_group:
@@ -90,9 +81,9 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 self.subscribed_group, self.channel_name
             )
             self.subscribed_group = ""
-            # await self.connected_consumers(group_name, actions="disconnect")
 
     @staticmethod
+    @database_sync_to_async
     def get_group_name(user=None):
         """Gets all the user group name except user in superadmin group"""
         if user.is_associated_with_company:
@@ -102,12 +93,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             return user.created_by.username
         else:
             return user.username
-
-    @staticmethod
-    @database_sync_to_async
-    def connected_consumers(group_name: str, actions: str):
-        """to get the list of connected list"""
-        ConnectedConsumersCache.set_connected_consumers(group_name, actions)
 
     @staticmethod
     @database_sync_to_async
