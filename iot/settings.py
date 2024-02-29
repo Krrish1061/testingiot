@@ -88,7 +88,7 @@ TEMPLATES = [
 
 # WSGI_APPLICATION = "iot.wsgi.application"
 ASGI_APPLICATION = "iot.asgi.application"
-
+ASGI_THREADS = 1000
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
