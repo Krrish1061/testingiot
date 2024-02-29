@@ -133,7 +133,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         else:
             # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
-
+        logger.info("inside before device_sensor_data_qs method")
         device_sensor_data_qs = (
             SensorData.objects.filter(iot_device__in=iot_device_list)
             .values(
@@ -157,7 +157,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         )
 
         sensors_data = defaultdict(dict)
-
+        logger.info("inside before looping device_sensor_data_qs method")
         for data in device_sensor_data_qs:
             iot_device_id = data.pop("iot_device_id")
             data["timestamp"] = timezone.localtime(

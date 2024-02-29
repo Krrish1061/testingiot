@@ -58,6 +58,7 @@ def send_data_to_websocket(
 
     """
     logger.info("inside send_data_to_websocket")
+    print("---inside--send-- celery----task-------")
     channel_layer = get_channel_layer()
 
     # defining the group name for admin user or company
