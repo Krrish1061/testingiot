@@ -87,7 +87,7 @@ function RenderUserDashboard() {
         <Tab
           label={
             currentAdminUser?.profile?.first_name
-              ? `${currentAdminUser?.profile?.first_name} ${currentAdminUser?.profile?.first_name} OVERVIEW`
+              ? `${currentAdminUser?.profile?.first_name} ${currentAdminUser?.profile?.last_name} OVERVIEW`
               : `${currentAdminUser?.username} OVERVIEW`
           }
           {...a11yProps(0)}

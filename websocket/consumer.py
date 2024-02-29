@@ -1,23 +1,18 @@
 import json
 from collections import defaultdict
-
 from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import F, OuterRef, Subquery
 from django.utils import timezone
-
+from company.cache import CompanyCache
 from iot_devices.cache import IotDeviceCache
 from sensor_data.models import SensorData
 from users.cache import UserCache
-from company.cache import CompanyCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
 from websocket.cache import ConnectedConsumersCache
-
-User = get_user_model()
 
 
 class SensorDataConsumer(AsyncWebsocketConsumer):
@@ -38,11 +33,14 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
         if not self.is_superadmin:
-            initial_data = await self.send_initial_data(user=user, company=user.company)
+            initial_data = await self.get_initial_data(user=user, company=user.company)
             await self.send(text_data=json.dumps(initial_data))
 
-    async def disconnect(self):
-        await self.unsubscribe_from_group()
+    async def disconnect(self, code):
+        if self.subscribed_group:
+            await self.channel_layer.group_discard(
+                self.subscribed_group, self.channel_name
+            )
         raise StopConsumer()
 
     async def send_data(self, event):
@@ -65,6 +63,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             if message_type == "group_subscribe":
                 company_slug = data.get("company_slug")
                 username = data.get("username")
+                # handle case when both username and company_slug is send
                 group_type = data.get("group_type")
                 user, company = await self.get_user_or_company(
                     group_type, username=username, company_slug=company_slug
@@ -73,7 +72,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 group_name = user.username if user else company.slug
                 await self.unsubscribe_from_group()
                 await self.subscribe_to_group(group_name)
-                initial_data = await self.send_initial_data(user=user, company=company)
+                initial_data = await self.get_initial_data(user=user, company=company)
 
                 await self.send(text_data=json.dumps(initial_data))
         else:
@@ -124,13 +123,14 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     @database_sync_to_async
-    def send_initial_data(user, company):
+    def get_initial_data(user, company):
         iot_device_list = []
         if company:
             iot_device_list = IotDeviceCache.get_all_company_iot_devices(company)
         elif user.type == "ADMIN":
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user)
         else:
+            # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
 
         device_sensor_data_qs = (

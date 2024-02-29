@@ -84,15 +84,6 @@ TEMPLATES = [
 # WSGI_APPLICATION = "iot.wsgi.application"
 ASGI_APPLICATION = "iot.asgi.application"
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-            "group_expiry": 10800,
-        },
-    },
-}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -259,6 +250,19 @@ CACHES = {
         # },
     }
 }
+
+
+# setting the channel layer for websocket connection
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+            "group_expiry": 10800,
+        },
+    },
+}
+
 
 # this setting is used for both email verification and password reset. Timeout is changed later check users.utilis.TokenGenerator
 PASSWORD_RESET_TIMEOUT = 259200  # value in second for 3 days

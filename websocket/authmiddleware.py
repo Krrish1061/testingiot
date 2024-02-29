@@ -3,17 +3,15 @@ General web socket Middlewares
 """
 
 from urllib.parse import parse_qs
+
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
-from django.contrib.auth import get_user_model
 from django.db import close_old_connections
 from django.utils import timezone
 
 from users.cache import UserCache
 from websocket.cache import WebSocketCache
-
-User = get_user_model()
 
 
 @database_sync_to_async
