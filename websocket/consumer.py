@@ -12,7 +12,7 @@ from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
 import logging
-
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +85,12 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         logger.info("exiting SensorDataConsumer receive method")
 
     async def subscribe_to_group(self, group_name):
+        logger.info("inside subscribe_to_group method")
         await self.channel_layer.group_add(group_name, self.channel_name)
         self.subscribed_group = group_name
 
     async def unsubscribe_from_group(self):
+        logger.info("inside unsubscribe_from_group method")
         if self.subscribed_group:
             await self.channel_layer.group_discard(
                 self.subscribed_group, self.channel_name
@@ -134,27 +136,89 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
         logger.info("inside before device_sensor_data_qs method")
-        device_sensor_data_qs = (
-            SensorData.objects.filter(iot_device__in=iot_device_list)
-            .values(
-                "device_sensor__sensor__name",
-                "iot_device_id",
-                "value",
-            )
-            .annotate(
-                latest_timestamp=Subquery(
-                    SensorData.objects.filter(
-                        device_sensor__sensor__name=OuterRef(
-                            "device_sensor__sensor__name"
-                        ),
-                        iot_device_id=OuterRef("iot_device_id"),
-                    )
-                    .order_by("-timestamp")
-                    .values("timestamp")[:1]
+        # device_sensor_data_qs = (
+        #     SensorData.objects.filter(iot_device__in=iot_device_list)
+        #     .values(
+        #         "device_sensor__sensor__name",
+        #         "iot_device_id",
+        #         "value",
+        #     )
+        #     .annotate(
+        #         latest_timestamp=Subquery(
+        #             SensorData.objects.filter(
+        #                 device_sensor__sensor__name=OuterRef(
+        #                     "device_sensor__sensor__name"
+        #                 ),
+        #                 iot_device_id=OuterRef("iot_device_id"),
+        #             )
+        #             .order_by("-timestamp")
+        #             .values("timestamp")[:1]
+        #         ),
+        #     )
+        #     .filter(timestamp=F("latest_timestamp"))
+        # )
+
+        device_sensor_data_qs = [
+            {
+                "device_sensor__sensor__name": "temperature",
+                "iot_device_id": 2,
+                "value": 60.556,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 23, 10, 22, 41, 516589, tzinfo=datetime.timezone.utc
                 ),
-            )
-            .filter(timestamp=F("latest_timestamp"))
-        )
+            },
+            {
+                "device_sensor__sensor__name": "light",
+                "iot_device_id": 2,
+                "value": 2000.2,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 23, 10, 22, 41, 516589, tzinfo=datetime.timezone.utc
+                ),
+            },
+            {
+                "device_sensor__sensor__name": "humidity",
+                "iot_device_id": 1,
+                "value": 30.222,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 23, 10, 39, 49, 110144, tzinfo=datetime.timezone.utc
+                ),
+            },
+            {
+                "device_sensor__sensor__name": "mains",
+                "iot_device_id": 1,
+                "value": 1.0,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 23, 10, 39, 49, 110144, tzinfo=datetime.timezone.utc
+                ),
+            },
+            {
+                "device_sensor__sensor__name": "temperature",
+                "iot_device_id": 1,
+                "value": 55.2,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
+                ),
+            },
+            {
+                "device_sensor__sensor__name": "nitrogen",
+                "iot_device_id": 1,
+                "value": 65.52,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
+                ),
+            },
+            {
+                "device_sensor__sensor__name": "oxygen",
+                "iot_device_id": 1,
+                "value": 0.0,
+                "latest_timestamp": datetime.datetime(
+                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
+                ),
+            },
+        ]
+
+        # print(device_sensor_data_qs)
+        # print("---------------")
 
         sensors_data = defaultdict(dict)
         logger.info("inside before looping device_sensor_data_qs method")
