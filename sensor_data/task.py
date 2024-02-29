@@ -3,7 +3,6 @@ from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
 from send_livedata.cache import SendLiveDataCache
-from websocket.cache import ConnectedConsumersCache
 from .utilis import prepare_sensor_data
 from django.utils import timezone
 

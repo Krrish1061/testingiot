@@ -27,7 +27,6 @@ from django.urls import path, include
 urlpatterns = [
     # path("", TemplateView.as_view(template_name="index.html")),
     path("admin/", admin.site.urls),
-    path("__debug__/", include("debug_toolbar.urls")),
     path("sensor/", include("sensors.urls")),
     path("iot-device/", include("iot_devices.urls")),
     path("sensor-data/", include("sensor_data.urls")),
@@ -40,6 +39,9 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))] + static(
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+    )
+
 
 # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
