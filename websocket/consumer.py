@@ -12,7 +12,6 @@ from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
 import logging
-import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -136,100 +135,37 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
         logger.info("inside before device_sensor_data_qs method")
-        # device_sensor_data_qs = (
-        #     SensorData.objects.filter(iot_device__in=iot_device_list)
-        #     .values(
-        #         "device_sensor__sensor__name",
-        #         "iot_device_id",
-        #         "value",
-        #     )
-        #     .annotate(
-        #         latest_timestamp=Subquery(
-        #             SensorData.objects.filter(
-        #                 device_sensor__sensor__name=OuterRef(
-        #                     "device_sensor__sensor__name"
-        #                 ),
-        #                 iot_device_id=OuterRef("iot_device_id"),
-        #             )
-        #             .order_by("-timestamp")
-        #             .values("timestamp")[:1]
-        #         ),
-        #     )
-        #     .filter(timestamp=F("latest_timestamp"))
-        # )
 
-        device_sensor_data_qs = [
-            {
-                "device_sensor__sensor__name": "temperature",
-                "iot_device_id": 2,
-                "value": 60.556,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 23, 10, 22, 41, 516589, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "light",
-                "iot_device_id": 2,
-                "value": 2000.2,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 23, 10, 22, 41, 516589, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "humidity",
-                "iot_device_id": 1,
-                "value": 30.222,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 23, 10, 39, 49, 110144, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "mains",
-                "iot_device_id": 1,
-                "value": 1.0,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 23, 10, 39, 49, 110144, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "temperature",
-                "iot_device_id": 1,
-                "value": 55.2,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "nitrogen",
-                "iot_device_id": 1,
-                "value": 65.52,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
-                ),
-            },
-            {
-                "device_sensor__sensor__name": "oxygen",
-                "iot_device_id": 1,
-                "value": 0.0,
-                "latest_timestamp": datetime.datetime(
-                    2024, 2, 29, 10, 53, 23, 684232, tzinfo=datetime.timezone.utc
-                ),
-            },
-        ]
-
-        # print(device_sensor_data_qs)
-        # print("---------------")
+        # Use annotate to get the latest timestamp for each device_sensor
+        latest_timestamp_subquery = (
+            SensorData.objects.filter(device_sensor=OuterRef("device_sensor"))
+            .order_by("-timestamp")
+            .values("timestamp")[:1]
+        )
+        # Use these latest timestamps to filter the queryset
+        latest_sensor_data_qs = (
+            SensorData.objects.select_related("device_sensor", "iot_device")
+            .filter(iot_device__in=iot_device_list)
+            .filter(timestamp=Subquery(latest_timestamp_subquery))
+            .values(
+                "device_sensor__sensor__name",
+                "iot_device_id",
+                "value",
+                "timestamp",
+            )
+        )
 
         sensors_data = defaultdict(dict)
         logger.info("inside before looping device_sensor_data_qs method")
-        for data in device_sensor_data_qs:
+        for data in latest_sensor_data_qs:
             iot_device_id = data.pop("iot_device_id")
-            data["timestamp"] = timezone.localtime(
-                data.pop("latest_timestamp")
-            ).strftime("%Y/%m/%d %H:%M:%S")
+            data["timestamp"] = timezone.localtime(data.pop("timestamp")).strftime(
+                "%Y/%m/%d %H:%M:%S"
+            )
             sensor_name = data.pop("device_sensor__sensor__name")
             sensor_value = data.pop("value")
             data[sensor_name] = sensor_value
             sensors_data[iot_device_id].update(data)
+
         logger.info("exiting SensorDataConsumer get initial data method")
         return sensors_data
