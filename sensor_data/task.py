@@ -5,10 +5,6 @@ from channels.layers import get_channel_layer
 from send_livedata.cache import SendLiveDataCache
 from .utilis import prepare_sensor_data
 from django.utils import timezone
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -57,8 +53,6 @@ def send_data_to_websocket(
     connects to the send_data function in the consumer.py
 
     """
-    logger.info("inside send_data_to_websocket")
-    print("---inside--send-- celery----task-------")
     channel_layer = get_channel_layer()
 
     # defining the group name for admin user or company
@@ -67,7 +61,6 @@ def send_data_to_websocket(
     localized_timestamp = data["timestamp"].astimezone(timezone.get_default_timezone())
     data["timestamp"] = localized_timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
-    logger.info("sending_data_to_channel layer")
     # connects to the Consumers.py and calls send_data function in websocket app
     async_to_sync(channel_layer.group_send)(
         group_name,

@@ -299,7 +299,7 @@ LOGGING = {
     "loggers": {
         "": {
             "handlers": ["file"],
-            "level": "DEBUG",
+            "level": "WARNING",
         }
     },
 }

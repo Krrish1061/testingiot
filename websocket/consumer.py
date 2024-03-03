@@ -1,24 +1,22 @@
 import json
 from collections import defaultdict
+
 from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.db.models import F, OuterRef, Subquery
+from django.db.models import OuterRef, Subquery
 from django.utils import timezone
+
 from company.cache import CompanyCache
 from iot_devices.cache import IotDeviceCache
 from sensor_data.models import SensorData
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class SensorDataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        logger.info("inside SensorDataConsumer connect method")
         user = self.scope["user"]
         user_groups = get_groups_tuple(user)
         self.is_superadmin = (
@@ -37,9 +35,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(initial_data))
 
     async def disconnect(self, code):
-        logger.info("inside SensorDataConsumer disconnect method")
         if self.subscribed_group:
-            logger.info("inside SensorDataConsumer disconnect method if condition")
             await self.channel_layer.group_discard(
                 self.subscribed_group, self.channel_name
             )
@@ -47,7 +43,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
     async def send_data(self, event):
         # Send the data to the websocket
-        logger.info("inside SensorDataConsumer send_data method")
         device_id = event["device_id"]
         data = event["data"]
         sensor_data = {
@@ -57,10 +52,8 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         }
         sensor_data["timestamp"] = data["timestamp"]
         await self.send(text_data=json.dumps({device_id: sensor_data}))
-        logger.info("exiting SensorDataConsumer send_data method")
 
     async def receive(self, text_data):
-        logger.info("inside SensorDataConsumer receive method")
         if self.is_superadmin:
             data = json.loads(text_data)
             message_type = data.get("type")
@@ -78,18 +71,13 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 await self.unsubscribe_from_group()
                 await self.subscribe_to_group(group_name)
                 initial_data = await self.get_initial_data(user=user, company=company)
-                logger.info("before sending data to client receive method")
                 await self.send(text_data=json.dumps(initial_data))
-                logger.info("after sending data to client receive method")
-        logger.info("exiting SensorDataConsumer receive method")
 
     async def subscribe_to_group(self, group_name):
-        logger.info("inside subscribe_to_group method")
         await self.channel_layer.group_add(group_name, self.channel_name)
         self.subscribed_group = group_name
 
     async def unsubscribe_from_group(self):
-        logger.info("inside unsubscribe_from_group method")
         if self.subscribed_group:
             await self.channel_layer.group_discard(
                 self.subscribed_group, self.channel_name
@@ -100,7 +88,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_group_name(user=None):
         """Gets all the user group name except user in superadmin group"""
-        logger.info("inside SensorDataConsumer get_group_name method")
         if user.is_associated_with_company:
             return user.company.slug
         elif user.type != UserType.ADMIN:
@@ -113,7 +100,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_user_or_company(group_type, username=None, company_slug=None):
         """Returns tuple(user, company)"""
-        logger.info("inside SensorDataConsumer get_user_or_company method")
         if group_type == "company":
             company = CompanyCache.get_company(company_slug)
             return (None, company)
@@ -125,7 +111,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_initial_data(user, company):
-        logger.info("inside SensorDataConsumer get initial data method")
         iot_device_list = []
         if company:
             iot_device_list = IotDeviceCache.get_all_company_iot_devices(company)
@@ -134,7 +119,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         else:
             # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
-        logger.info("inside before device_sensor_data_qs method")
 
         # Use annotate to get the latest timestamp for each device_sensor
         latest_timestamp_subquery = (
@@ -156,7 +140,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         )
 
         sensors_data = defaultdict(dict)
-        logger.info("inside before looping device_sensor_data_qs method")
         for data in latest_sensor_data_qs:
             iot_device_id = data.pop("iot_device_id")
             data["timestamp"] = timezone.localtime(data.pop("timestamp")).strftime(
@@ -167,5 +150,4 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             data[sensor_name] = sensor_value
             sensors_data[iot_device_id].update(data)
 
-        logger.info("exiting SensorDataConsumer get initial data method")
         return sensors_data
