@@ -6,6 +6,7 @@ import getCsrf from "../../utilis/getCsrf";
 import CsrfError from "../../errors/csrfError";
 import useAxios from "../../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import useWebSocketStore from "../../store/webSocketStore";
 
 //  userefresh hook is called 3 times due to react query setting and
 // thats why we are seeing multiple error when we logout.
@@ -17,6 +18,9 @@ const useLogout = () => {
   const setToken = useAuthStore((state) => state.setToken);
   const setIsUserSuperAdmin = useAuthStore(
     (state) => state.setIsUserSuperAdmin
+  );
+  const setliveDataToNull = useWebSocketStore(
+    (state) => state.setliveDataToNull
   );
   const navigate = useNavigate();
 
@@ -37,6 +41,7 @@ const useLogout = () => {
       setUser(null);
       setToken(null);
       setIsUserSuperAdmin(false);
+      setliveDataToNull();
       navigate("/login", {
         replace: true,
       });
