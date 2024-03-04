@@ -1,7 +1,9 @@
+from django.utils.http import urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_protect
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from django.utils.http import urlsafe_base64_decode
+
 from users.cache import UserCache
 from users.serializers import UserPasswordSerializer
 from users.task import (
@@ -9,7 +11,6 @@ from users.task import (
     sending_password_reset_email,
 )
 from users.utilis import activation_token_for_email
-from django.views.decorators.csrf import csrf_protect
 
 
 @csrf_protect

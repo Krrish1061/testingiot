@@ -57,7 +57,7 @@ class UserCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=user,
+                    data=self.__get_queryset(username),
                 )
             except ObjectDoesNotExist:
                 return None
@@ -102,8 +102,10 @@ class UserCaching(Cache):
         user_queryset = self.__get_queryset(user.username)
         self.set_to_list(self.cache_key, self.app_name, user_queryset)
 
-    def delete_user(self, user_id):
+    def delete_user(self, user_id, api_key=None):
         self.delete_from_list(self.cache_key, self.app_name, id=user_id)
+        if api_key:
+            self.delete_auth_cache_user(api_key)
 
     def get_profile(self, username):
         user = self.get_user(username)
@@ -126,9 +128,10 @@ class UserCaching(Cache):
                 return None
         return user
 
-    def delete_auth_cache_user(self, user):
+    def delete_auth_cache_user(self, user=None, api_key=None):
         """Delete the user in cache that is being used for authetication of user"""
-        cache_key = self.__generate_cache_key_from_api_key(user.api_key)
+        api_key = api_key if api_key else user.api_key
+        cache_key = self.__generate_cache_key_from_api_key(api_key)
         self.delete(cache_key)
 
 

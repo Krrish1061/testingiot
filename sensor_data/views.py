@@ -1,5 +1,9 @@
+import re
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
+from io import BytesIO
+
+import pandas as pd
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -12,6 +16,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from company.cache import CompanyCache
 from iot_devices.auth import DeviceAuthentication
 from iot_devices.cache import IotDeviceCache
@@ -19,13 +24,10 @@ from sensors.cache import SensorCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName
+
 from .models import SensorData
 from .serializers import IotDeviceSensorDataSerializer
 from .task import send_data_to_websocket, send_live_data_to
-from datetime import datetime
-import pandas as pd
-from io import BytesIO
-import re
 
 
 def sensor_data_generator(sensor_data_qs):

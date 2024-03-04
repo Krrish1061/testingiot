@@ -1,25 +1,27 @@
-from rest_framework.decorators import api_view, permission_classes
-from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
-from django.middleware.csrf import get_token
-from rest_framework.response import Response
-from rest_framework import status
-from users.serializers import CustomTokenObtainPairSerializer, UserSerializer
-from django.contrib.auth.models import update_last_login
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import authenticate
-from django.conf import settings
 from datetime import datetime
+
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from django.core.signing import BadSignature
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from users.serializers import CustomTokenObtainPairSerializer, UserSerializer
+from users.utilis import check_username
 from utils.error_message import (
     ERROR_INCORRECT_USERNAME_PASSWORD,
     ERROR_INVALID_TOKEN,
     ERROR_INVALID_URL,
     ERROR_REFRESH_TOKEN_NOT_FOUND,
 )
-from users.utilis import check_username
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer
-from django.core.signing import BadSignature
 
 
 def get_tokens_for_user(user):

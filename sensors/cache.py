@@ -35,7 +35,7 @@ class SensorCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=sensor,
+                    data=self.__get_queryset(sensor_name),
                 )
             except Sensor.DoesNotExist:
                 return None

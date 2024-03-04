@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -17,12 +19,8 @@ from utils.error_message import (
     error_protected_delete_message,
 )
 
-
 from .serializers import CompanyProfileSerializer, CompanySerializer
 from .utils import is_slugId_ofSameInstance
-
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 
 
 @api_view(["GET"])
@@ -77,6 +75,7 @@ def company(request, company_slug):
             {"error": "Company Does not Exist"},
             status=status.HTTP_404_NOT_FOUND,
         )
+
     if request.method == "GET":
         serializer = CompanySerializer(company, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -93,8 +92,9 @@ def company(request, company_slug):
 
         elif request.method == "DELETE":
             try:
+                id = company.id
                 company.delete()
-                CompanyCache.delete_company(company.id)
+                CompanyCache.delete_company(id)
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects

@@ -52,7 +52,7 @@ class IotDeviceCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=iot_device,
+                    data=self.__get_queryset(iot_device_id),
                 )
             except IotDevice.DoesNotExist:
                 return None
@@ -79,8 +79,11 @@ class IotDeviceCaching(Cache):
         queryset = self.__get_queryset(iot_device.id)
         self.set_to_list(self.cache_key, self.app_name, queryset)
 
-    def delete_iot_device(self, iot_device_id: int):
+    def delete_iot_device(self, iot_device_id: int, system_delete=False):
         self.delete_from_list(self.cache_key, self.app_name, id=iot_device_id)
+        if system_delete:
+            self.delete_device_sensors(iot_device_id)
+            self.delete_auth_cache_iot_device(iot_device_id)
 
     def get_all_device_sensors(self, device_id):
         """Returns the IotDeviceSensor Models, all instances associated with the Iot device"""

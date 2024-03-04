@@ -35,7 +35,7 @@ class CompanyCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=company,
+                    data=self.__get_queryset(company_slug),
                 )
             except Company.DoesNotExist:
                 return None

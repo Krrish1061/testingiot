@@ -1,15 +1,9 @@
-from django.contrib.auth import get_user_model
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from caching.cache import Cache
-from caching.cache_key import (
-    SENSOR_LIST_CACHE_KEY,
-    SENSOR_LIST_CACHE_KEY_APP_NAME,
-)
 from sensors.cache import SensorCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
@@ -20,10 +14,7 @@ from utils.error_message import (
     error_protected_delete_message,
 )
 
-from .models import Sensor
 from .serializers import SensorSerializer
-
-User = get_user_model()
 
 
 # def get_sensor_list():
@@ -104,8 +95,9 @@ def sensor(request, name):
 
         elif request.method == "DELETE":
             try:
+                id = sensor.id
                 sensor.delete()
-                SensorCache.delete_sensor(sensor.id)
+                SensorCache.delete_sensor(id)
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects

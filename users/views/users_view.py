@@ -244,8 +244,10 @@ def user(request, username):
                     {"error": error_message}, status=status.HTTP_403_FORBIDDEN
                 )
             try:
+                user_id = user.id
+                api_key = user.api_key
                 user.delete()
-                UserCache.delete_user(user_id=user.id)
+                UserCache.delete_user(user_id=user_id, api_key=api_key)
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of projected objects

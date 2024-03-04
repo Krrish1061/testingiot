@@ -71,7 +71,7 @@ class SendLiveDataCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=send_livedata,
+                    data=self.__get_queryset(id),
                 )
 
             except SendLiveDataList.DoesNotExist:
@@ -88,7 +88,7 @@ class SendLiveDataCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=send_livedata,
+                    data=self.__get_queryset(send_livedata.id),
                 )
 
             except SendLiveDataList.DoesNotExist:
@@ -106,7 +106,7 @@ class SendLiveDataCaching(Cache):
                 self.set_to_list(
                     cache_key=self.cache_key,
                     app_name=self.app_name,
-                    data=send_livedata,
+                    data=self.__get_queryset(send_livedata.id),
                 )
 
             except SendLiveDataList.DoesNotExist:

@@ -1,10 +1,14 @@
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from users.cache import UserCache
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.http import urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_protect
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from users.cache import UserCache
 from users.serializers import ChangePasswordSerializer, UserPasswordSerializer
 from users.task import (
     sending_account_is_active_email,
@@ -12,11 +16,7 @@ from users.task import (
     sending_confirmation_mail_for_email_update,
     sending_update_email,
 )
-from users.utilis import check_username
-from django.utils.http import urlsafe_base64_decode
-from users.utilis import activation_token_for_email
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
+from users.utilis import activation_token_for_email, check_username
 from utils.commom_functions import generate_api_key, get_groups_tuple
 from utils.constants import GroupName
 from utils.error_message import (
@@ -29,7 +29,6 @@ from utils.error_message import (
     ERROR_USERNAME_ALREADY_CHANGED,
     ERROR_USERNAME_VALUE_NOT_PROVIDED,
 )
-
 
 User = get_user_model()
 

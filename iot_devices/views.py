@@ -1,5 +1,3 @@
-import re
-
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -17,8 +15,8 @@ from utils.error_message import (
     error_protected_delete_message,
 )
 
-from .serializers import IotDeviceSensorSerializer, IotDeviceSerializer
 from .models import IotDevice
+from .serializers import IotDeviceSensorSerializer, IotDeviceSerializer
 
 
 # Create your views here.
@@ -93,7 +91,7 @@ def iot_device(request, id):
         elif request.method == "DELETE":
             try:
                 iot_device.delete()
-                IotDeviceCache.delete_iot_device(iot_device.id)
+                IotDeviceCache.delete_iot_device(id)
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of protected objects

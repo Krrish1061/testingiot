@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from send_livedata.cache import SendLiveDataCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
@@ -12,7 +13,6 @@ from utils.error_message import (
     ERROR_PERMISSION_DENIED,
 )
 
-from .models import SendLiveDataList
 from .serializers import SendLiveDataListSerializer
 
 # Create your views here.
@@ -99,8 +99,9 @@ def send_livedata(request):
 
         elif request.method == "DELETE":
             try:
+                id = send_livedata.id
                 send_livedata.delete()
-                SendLiveDataCache.delete_send_livedata(send_livedata.id)
+                SendLiveDataCache.delete_send_livedata(id)
             except:
                 return Response(
                     {"error": ERROR_DELETE_FAILED}, status=status.HTTP_403_FORBIDDEN
