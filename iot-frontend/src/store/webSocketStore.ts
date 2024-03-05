@@ -33,7 +33,6 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
     // set({ websocket: webSocketService.websocket });
 
     webSocketService.websocket!.onopen = () => {
-      console.log("WebSocket connection established");
       set({ websocket: webSocketService.websocket, connectionState: "open" });
     };
 

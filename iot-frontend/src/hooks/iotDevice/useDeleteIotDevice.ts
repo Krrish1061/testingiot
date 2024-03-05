@@ -19,8 +19,7 @@ function useDeleteIotDevice() {
     onSuccess: () => {
       enqueueSnackbar("IotDevice sucessfully Deleted", { variant: "success" });
     },
-    onError: (error: AxiosError, iotDevice) => {
-      console.log(error);
+    onError: (_error: AxiosError, iotDevice) => {
       // reverting to the old rows here sensor is the sensor to be deleted
       setRows([...rows, iotDevice]);
       enqueueSnackbar("IotDevice Deletion failed", { variant: "error" });

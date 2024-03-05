@@ -31,7 +31,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
         if not self.is_superadmin:
-            print("inside connect not super admin")
             initial_data = await self.get_initial_data(user=user, company=user.company)
             await self.send(text_data=json.dumps(initial_data))
 
@@ -77,7 +76,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     async def subscribe_to_group(self, group_name):
         await self.channel_layer.group_add(group_name, self.channel_name)
         self.subscribed_group = group_name
-        print("finsied subscribing the group")
 
     async def unsubscribe_from_group(self):
         if self.subscribed_group:

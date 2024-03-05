@@ -100,8 +100,8 @@ function useDataGrid<T>({
     setRowModesModel(newRowModesModel);
   };
 
-  const handleProcessRowUpdateError = useCallback((error: AxiosError) => {
-    console.log("handleRowModesModelChangeError dsdas ", error);
+  const handleProcessRowUpdateError = useCallback(() => {
+    console.log("error occured in datagrid");
   }, []);
 
   const handleDialogDeleteNoButton = () => {

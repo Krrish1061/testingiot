@@ -26,16 +26,16 @@ from django.urls import path, include
 # "domain/api/savedata" for saving the data in the devices.
 urlpatterns = [
     # path("", TemplateView.as_view(template_name="index.html")),
-    path("admin/", admin.site.urls),
-    path("sensor/", include("sensors.urls")),
-    path("iot-device/", include("iot_devices.urls")),
-    path("sensor-data/", include("sensor_data.urls")),
-    path("company/", include("company.urls")),
-    path("websocket/", include("websocket.urls")),
-    path("api/", include("api.urls")),
-    path("send-data/", include("send_livedata.urls")),
-    path("account/", include("users.urls.auth_urls")),
-    path("<str:username>/", include("users.urls.urls")),
+    path("api/admin/", admin.site.urls),
+    path("api/sensor/", include("sensors.urls")),
+    path("api/iot-device/", include("iot_devices.urls")),
+    path("api/sensor-data/", include("sensor_data.urls")),
+    path("api/company/", include("company.urls")),
+    path("api/websocket/", include("websocket.urls")),
+    path("api/api/", include("api.urls")),
+    path("api/send-data/", include("send_livedata.urls")),
+    path("api/account/", include("users.urls.auth_urls")),
+    path("api/<str:username>/", include("users.urls.urls")),
 ]
 
 if settings.DEBUG:

@@ -20,8 +20,7 @@ function useDeleteUser() {
     onSuccess: () => {
       enqueueSnackbar("User sucessfull Deleted", { variant: "success" });
     },
-    onError: (error: AxiosError, user) => {
-      console.log(error);
+    onError: (_error: AxiosError, user) => {
       // reverting to the old rows here user is the user to be deleted
       setRows([...rows, user]);
       enqueueSnackbar("User Deletion failed", { variant: "error" });

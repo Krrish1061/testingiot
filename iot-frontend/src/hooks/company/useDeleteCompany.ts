@@ -19,8 +19,7 @@ function useDeleteCompany() {
     onSuccess: () => {
       enqueueSnackbar("Company sucessfully Deleted", { variant: "success" });
     },
-    onError: (error: AxiosError, company) => {
-      console.log(error);
+    onError: (_error: AxiosError, company) => {
       // reverting to the old rows here company is the company to be deleted
       setRows([...rows, company]);
       enqueueSnackbar("Company Deletion failed", { variant: "error" });

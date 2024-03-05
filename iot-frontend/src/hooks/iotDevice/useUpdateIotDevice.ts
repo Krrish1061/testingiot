@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import useAxios from "../../api/axiosInstance";
 import { enqueueSnackbar } from "notistack";
-import { AxiosError } from "axios";
 import IotDevice from "../../entities/IotDevice";
 
 function useUpdateIotDevice() {
@@ -18,8 +17,7 @@ function useUpdateIotDevice() {
     onSuccess: () => {
       enqueueSnackbar("Iot Device sucessfully Updated", { variant: "success" });
     },
-    onError: (error: AxiosError) => {
-      console.log(error);
+    onError: () => {
       // reverting to the old rows here sensor is the sensor to be deleted
       enqueueSnackbar("Iot Device could not be Updated", { variant: "error" });
     },

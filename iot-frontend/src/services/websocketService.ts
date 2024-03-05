@@ -7,22 +7,22 @@ class WebSocketService {
   connect(endpoint: string): void {
     this.websocket = new WebSocket(endpoint);
 
-    this.websocket.onopen = () => {
-      console.log("WebSocket connection established");
-    };
+    // this.websocket.onopen = () => {
+    //   console.log("WebSocket connection established");
+    // };
 
-    this.websocket.onmessage = (event) => {
-      console.log(event.data);
-    };
+    // this.websocket.onmessage = (event) => {
+    //   console.log(event.data);
+    // };
 
-    this.websocket.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
+    // this.websocket.onclose = () => {
+    //   console.log("WebSocket connection closed");
+    // };
 
-    this.websocket.onerror = (event) => {
-      // Happens on Websocket REJECTs
-      console.log("Socket error", event);
-    };
+    // this.websocket.onerror = (event) => {
+    //   // Happens on Websocket REJECTs
+    //   console.log("Socket error", event);
+    // };
   }
 
   send(message: SendMessage): void {
