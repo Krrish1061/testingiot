@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import useAxios from "../../api/axiosInstance";
 import { enqueueSnackbar } from "notistack";
+import { AxiosError } from "axios";
 import IotDevice from "../../entities/IotDevice";
 
 function useUpdateIotDevice() {
@@ -12,7 +13,7 @@ function useUpdateIotDevice() {
       .then((res) => res.data);
   };
 
-  return useMutation({
+  return useMutation<IotDevice, AxiosError, IotDevice>({
     mutationFn: updateIotDevice,
     onSuccess: () => {
       enqueueSnackbar("Iot Device sucessfully Updated", { variant: "success" });
