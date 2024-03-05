@@ -6,6 +6,7 @@ import Actions from "../../datagrid/Actions";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
 import dayjs from "dayjs";
+import RenderCellExpand from "../../datagrid/RenderCellExpand";
 
 function IotDeviceColumns() {
   const rowModesModel = useIotDeviceDataGridStore(
@@ -46,16 +47,7 @@ function IotDeviceColumns() {
         flex: 1,
         editable: true,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <Tooltip
-            disableFocusListener
-            placement="top"
-            arrow
-            title={params.value || ""}
-          >
-            {params.value || ""}
-          </Tooltip>
-        ),
+        renderCell: RenderCellExpand,
       },
       {
         field: "user",
@@ -64,16 +56,7 @@ function IotDeviceColumns() {
         flex: 0.5,
         editable: true,
         hideable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <Tooltip
-            disableFocusListener
-            placement="top"
-            arrow
-            title={params.value || ""}
-          >
-            {params.value || ""}
-          </Tooltip>
-        ),
+        renderCell: RenderCellExpand,
       },
 
       {
@@ -98,16 +81,7 @@ function IotDeviceColumns() {
         minWidth: 150,
         editable: true,
         hideable: true,
-        renderCell: (params: GridRenderCellParams) => (
-          <Tooltip
-            disableFocusListener
-            placement="top"
-            arrow
-            title={params.value}
-          >
-            {params.value}
-          </Tooltip>
-        ),
+        renderCell: RenderCellExpand,
       },
 
       {
