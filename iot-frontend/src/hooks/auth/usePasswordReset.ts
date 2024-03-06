@@ -17,7 +17,7 @@ function usePasswordReset() {
   const navigate = useNavigate();
   const setPassword = async (data: FormData) =>
     axiosPrivate
-      .post(`password-reset-confirm/${username}/${token}`, data)
+      .post(`account/password-reset-confirm/${username}/${token}`, data)
       .then((res) => res.data);
 
   return useMutation<Response, AxiosError<Response>, FormData>({

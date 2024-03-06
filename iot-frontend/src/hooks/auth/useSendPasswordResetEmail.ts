@@ -12,7 +12,7 @@ interface Response {
 
 function useSendPasswordResetEmail() {
   const sendPasswordResetEmail = async (data: FormData) =>
-    axiosPrivate.post("/password-reset/", data).then((res) => {
+    axiosPrivate.post("account/password-reset/", data).then((res) => {
       return res.data;
     });
 
