@@ -20,7 +20,11 @@ function ProfileCard() {
       >
         <ImageAvatar
           imgUrl={user?.profile?.profile_picture}
-          altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+          altText={
+            user?.profile?.first_name
+              ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+              : user!.username
+          }
           height={50}
           width={50}
         />
