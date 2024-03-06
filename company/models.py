@@ -13,7 +13,7 @@ class Company(models.Model):
 
     name = models.CharField(max_length=250, unique=True)
     email = models.EmailField(max_length=255, unique=True)
-    slug = models.SlugField(max_length=50, unique=True, blank=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     user_limit = models.PositiveSmallIntegerField(default=5, blank=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     api_key = models.CharField(
