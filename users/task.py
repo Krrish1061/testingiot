@@ -87,7 +87,7 @@ def sending_password_reset_email(email: str):
     """Celery Task to send password reset email to user"""
     # get the user
     try:
-        user = UserCache.get_user_by_email(username)
+        user = UserCache.get_user_by_email(email)
         if user is None:
             raise ObjectDoesNotExist
 
