@@ -14,7 +14,14 @@ function LiveDataCard({ sensorName, data }: Props) {
   const { data: sensors } = useGetAllSensors();
 
   return (
-    <Card elevation={0}>
+    <Card
+      elevation={1}
+      sx={{
+        borderStyle: "solid",
+        borderWidth: "1px",
+        borderColor: "primary.main",
+      }}
+    >
       <CardContent
         sx={{
           display: "flex",

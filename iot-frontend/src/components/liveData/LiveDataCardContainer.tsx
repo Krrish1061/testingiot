@@ -40,7 +40,7 @@ function LiveDataCardContainer() {
                 ) : null
               )}
             </Grid>
-            <Typography noWrap textAlign="center">
+            <Typography noWrap textAlign="center" marginTop={1}>
               Last Updated: {value.timestamp}
             </Typography>
           </Box>
