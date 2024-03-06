@@ -85,13 +85,24 @@ def iot_device(request, id):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            IotDeviceCache.delete_iot_device(iot_device.id)
+            IotDeviceCache.delete_iot_device(
+                iot_device_id=iot_device.id,
+                company_slug=iot_device.company.slug if iot_device.company else None,
+                username=iot_device.user.username if iot_device.user else None,
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         elif request.method == "DELETE":
             try:
+                username = iot_device.user.username if iot_device.user else None
+                company_slug = iot_device.company.slug if iot_device.company else None
                 iot_device.delete()
-                IotDeviceCache.delete_iot_device(id)
+                IotDeviceCache.delete_iot_device(
+                    iot_device_id=id,
+                    system_delete=True,
+                    username=username,
+                    company_slug=company_slug,
+                )
             except ProtectedError as e:
                 related_objects = e.protected_objects
                 # send list of protected objects

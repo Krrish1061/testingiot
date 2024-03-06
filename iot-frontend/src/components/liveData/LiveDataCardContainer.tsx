@@ -7,7 +7,6 @@ import useWebSocketStore, { Data } from "../../store/webSocketStore";
 
 function LiveDataCardContainer() {
   const liveData = useWebSocketStore((state) => state.liveData);
-  console.log("inside livedata container", liveData);
 
   return (
     <Box>

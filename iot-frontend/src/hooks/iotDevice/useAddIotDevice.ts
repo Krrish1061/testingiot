@@ -14,6 +14,7 @@ import { IDeviceFormInputs } from "../../components/iotDevice/zodSchema/IotDevic
 
 interface IError {
   error: string;
+  board_id?: string[];
 }
 
 function useAddIotDevice() {
@@ -30,9 +31,15 @@ function useAddIotDevice() {
       enqueueSnackbar("Iot Device sucessfully Added", { variant: "success" });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.error, {
-        variant: "error",
-      });
+      if (error.response?.data?.board_id) {
+        enqueueSnackbar(error.response.data.board_id[0], {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar(error.response?.data.error, {
+          variant: "error",
+        });
+      }
     },
   });
 }
