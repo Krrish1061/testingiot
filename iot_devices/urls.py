@@ -20,6 +20,6 @@ urlpatterns = [
     path(
         "device-sensors/all/",
         views.get_all_device_sensor,
-        name="company-device-sensor-list-all",
+        name="device-sensor-list-all",
     ),
 ]
