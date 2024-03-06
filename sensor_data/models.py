@@ -31,7 +31,7 @@ class SensorData(models.Model):
     value = models.FloatField(blank=True, null=True)
 
     class Meta:
-        ordering = ["timestamp", "iot_device"]
+        ordering = ["timestamp", "iot_device", "device_sensor"]
 
         indexes = [
             models.Index(fields=["timestamp"]),
