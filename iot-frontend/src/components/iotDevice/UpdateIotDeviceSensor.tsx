@@ -71,6 +71,9 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
     [iotDeviceSensors]
   );
 
+  console.log("inside UpdateIotDeviceSensor", iotDeviceSensors);
+  console.log("inside UpdateIotDeviceSensor inital data", initalData);
+
   const {
     mutate: addDeviceSensors,
     isLoading: addLoading,
