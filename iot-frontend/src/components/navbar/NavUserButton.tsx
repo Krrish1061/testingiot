@@ -84,7 +84,11 @@ function NavUserButton() {
       >
         <ImageAvatar
           imgUrl={user?.profile?.profile_picture}
-          altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+          altText={
+            user?.profile?.first_name
+              ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+              : user!.username
+          }
           height={{
             xs: 50,
             md: 30,
@@ -100,7 +104,7 @@ function NavUserButton() {
             md: "inherit",
           }}
         >
-          {user?.profile?.first_name}
+          {user?.profile?.first_name || user?.username}
         </Typography>
       </NavButton>
       <Popper

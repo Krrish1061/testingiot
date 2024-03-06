@@ -81,7 +81,11 @@ function ViewProfile() {
           >
             <ImageAvatar
               imgUrl={user?.profile?.profile_picture}
-              altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+              altText={
+                user?.profile?.first_name
+                  ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+                  : user!.username
+              }
               height={200}
               width={200}
             />
@@ -99,7 +103,9 @@ function ViewProfile() {
               {user?.type}
             </Typography>
             <Typography>
-              {user?.profile?.first_name} {user?.profile?.last_name}
+              {user?.profile?.first_name
+                ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+                : user!.username}
             </Typography>
           </Box>
         </Stack>
