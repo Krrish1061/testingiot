@@ -29,7 +29,10 @@ const CompanyList = () => {
                   component={RouterLink}
                   to={`/company/${company.slug}`}
                 >
-                  <ListItemText primary={company.name} />
+                  <ListItemText
+                    primary={company.name}
+                    sx={{ whiteSpace: "normal" }}
+                  />
                 </ListItemButton>
               </ListItem>
             ))

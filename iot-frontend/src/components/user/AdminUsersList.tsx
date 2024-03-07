@@ -44,6 +44,7 @@ function AdminUsersList() {
                   ? `${adminUser.profile?.first_name} ${adminUser.profile?.last_name}`
                   : adminUser.username
               }
+              sx={{ whiteSpace: "normal" }}
             />
           </ListItemButton>
         </ListItem>
