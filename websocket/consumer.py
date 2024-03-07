@@ -137,6 +137,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 "value",
                 "timestamp",
             )
+            .order_by("device_sensor__field_number")
         )
 
         sensors_data = defaultdict(dict)
