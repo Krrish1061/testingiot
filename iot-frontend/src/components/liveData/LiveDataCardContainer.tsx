@@ -4,9 +4,11 @@ import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import Typography from "@mui/material/Typography";
 import LiveDataCard from "./LiveDataCard";
 import useWebSocketStore, { Data } from "../../store/webSocketStore";
+import useDrawerStore from "../../store/drawerStore";
 
 function LiveDataCardContainer() {
   const liveData = useWebSocketStore((state) => state.liveData);
+  const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
 
   return (
     <Box>
@@ -31,8 +33,11 @@ function LiveDataCardContainer() {
                     alignItems="center"
                     flexGrow={1}
                     xs={4}
-                    sm="auto"
-                    md="auto"
+                    sm={8}
+                    smd={isDrawerOpen ? 8 : 4}
+                    md={4}
+                    lg={isDrawerOpen ? 4 : 3}
+                    xl="auto"
                     key={index}
                   >
                     <LiveDataCard data={data} sensorName={sensorName} />
@@ -40,7 +45,7 @@ function LiveDataCardContainer() {
                 ) : null
               )}
             </Grid>
-            <Typography noWrap textAlign="center" marginTop={1}>
+            <Typography textAlign="center" marginTop={1}>
               Last Updated: {value.timestamp}
             </Typography>
           </Box>

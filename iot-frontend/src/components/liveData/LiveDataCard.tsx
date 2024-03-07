@@ -20,6 +20,8 @@ function LiveDataCard({ sensorName, data }: Props) {
         borderStyle: "solid",
         borderWidth: "1px",
         borderColor: "primary.main",
+        width: { xs: 320, smd: 1 },
+        paddingBottom: 0,
       }}
     >
       <CardContent
@@ -28,6 +30,7 @@ function LiveDataCard({ sensorName, data }: Props) {
           justifyContent: "center",
           alignItems: "center",
           flexDirection: "column",
+          paddingBottom: 0,
         }}
       >
         <Typography variant="h3" fontSize={24} component="h2">

@@ -37,7 +37,6 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
     };
 
     webSocketService.websocket!.onmessage = (event) => {
-      console.log(event.data);
       const data = JSON.parse(event.data as string) as LiveData;
       set((state) => {
         return {
