@@ -9,6 +9,7 @@ ERROR_DELETE_FAILED = "Specified Object Deletion Failed"
 ERROR_PHONE_NUMBER = "Phone number must only contain exactly 10 Numeric digits."
 ERROR_REFRESH_TOKEN_NOT_FOUND = "Refresh token not found"
 ERROR_INVALID_TOKEN = "Token is invalid or expired"
+ERROR_INVALID_FIELD_NAME = "Invalid field name! Field name format should be 'field' followed by a number e.g: field100"
 
 
 def error_protected_delete_message(obj, length: int):

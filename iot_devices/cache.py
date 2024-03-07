@@ -105,10 +105,8 @@ class IotDeviceCaching(Cache):
         cache_key = self.__get_device_sensor_cache_key(device_id)
         device_sensors = self.get(cache_key)
         if device_sensors is None:
-            device_sensors = (
-                IotDeviceSensor.objects.select_related("sensor")
-                .filter(iot_device=device_id)
-                .order_by("field_name")
+            device_sensors = IotDeviceSensor.objects.select_related("sensor").filter(
+                iot_device=device_id
             )
             self.set(cache_key, data=device_sensors)
         return device_sensors

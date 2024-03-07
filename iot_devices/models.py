@@ -7,7 +7,9 @@ from users.models import AdminUser
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
     ERROR_DEVICE_NO_VALID_ASSOCIATION,
+    ERROR_INVALID_FIELD_NAME,
 )
+from django.core.validators import RegexValidator
 
 
 # Create your models here.
@@ -91,6 +93,19 @@ class IotDeviceSensor(models.Model):
     field_name = models.CharField(
         max_length=255,
         blank=False,
+        validators=[
+            RegexValidator(
+                regex=r"^field\d+$",
+                message=ERROR_INVALID_FIELD_NAME,
+            ),
+        ],
+    )
+
+    field_number = models.IntegerField(
+        blank=True,
+        null=True,
+        editable=False,
+        help_text="Numeric part of field_name for sorting",
     )
 
     max_limit = models.IntegerField(
@@ -114,10 +129,11 @@ class IotDeviceSensor(models.Model):
             ["iot_device", "field_name"],
             ["iot_device", "sensor"],
         ]
-        ordering = ["iot_device", "field_name"]
+        ordering = ["iot_device", "field_number"]
         indexes = [
             models.Index(fields=["iot_device", "sensor"]),
             models.Index(fields=["iot_device", "field_name"]),
+            models.Index(fields=["iot_device", "field_number"]),
         ]
 
     def save(self, *args, **kwargs):
@@ -127,6 +143,7 @@ class IotDeviceSensor(models.Model):
         if self.min_limit is None:
             self.min_limit = self.sensor.min_limit
 
+        self.field_number = int(self.field_name[5:])
         super().save(*args, **kwargs)
 
 

@@ -10,6 +10,7 @@ from utils.error_message import (
     ERROR_ADMIN_USER_NOT_FOUND,
     ERROR_COMPANY_NOT_FOUND,
     ERROR_DEVICE_NO_VALID_ASSOCIATION,
+    ERROR_INVALID_FIELD_NAME,
     empty_dict,
     error_assigned_sensor,
 )
@@ -192,11 +193,7 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
     def check_dict_keys_pattern(self, keys):
         pattern = re.compile(r"^field\d+$")
         if not all(pattern.match(key) for key in keys):
-            raise serializers.ValidationError(
-                {
-                    "error": "Invalid field name! Field name format should be 'field' followed by a number e.g: field100"
-                }
-            )
+            raise serializers.ValidationError({"error": ERROR_INVALID_FIELD_NAME})
 
     def validate_fieldname_sensor(self, value):
         self.check_dict_keys_pattern(value.keys())
