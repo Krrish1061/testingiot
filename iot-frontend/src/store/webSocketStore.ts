@@ -30,7 +30,6 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
 
   connectWebSocket: (endpoint: string) => {
     webSocketService.connect(endpoint);
-    // set({ websocket: webSocketService.websocket });
 
     webSocketService.websocket!.onopen = () => {
       set({ websocket: webSocketService.websocket, connectionState: "open" });
@@ -39,10 +38,22 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
     webSocketService.websocket!.onmessage = (event) => {
       const data = JSON.parse(event.data as string) as LiveData;
       set((state) => {
-        return {
-          ...state,
-          liveData: state.liveData ? { ...state.liveData, ...data } : data,
-        };
+        if (state.liveData) {
+          const device_id = +Object.keys(data)[0];
+          const newData = { ...state.liveData[device_id], ...data[device_id] };
+          return {
+            ...state,
+            liveData: {
+              ...state.liveData,
+              [device_id]: newData,
+            },
+          };
+        } else {
+          return {
+            ...state,
+            liveData: data,
+          };
+        }
       });
     };
   },

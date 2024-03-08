@@ -45,13 +45,11 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         # Send the data to the websocket
         device_id = event["device_id"]
         data = event["data"]
-        sensor_data = {
-            sensor_name: data[field_name]
-            for field_name, sensor_name in event["field_sensor_name_dict"].items()
-            if field_name in data
-        }
-        sensor_data["timestamp"] = data["timestamp"]
-        await self.send(text_data=json.dumps({device_id: sensor_data}))
+        timestamp = event["timestamp"]
+        device_sensor_data = await self.prepare_live_sensors_data(
+            device_id, data, timestamp
+        )
+        await self.send(text_data=json.dumps(device_sensor_data))
 
     async def receive(self, text_data):
         if self.is_superadmin:
@@ -106,7 +104,30 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         else:
             user = UserCache.get_user(username)
             return (user, None)
-        # handle error if the username is not send form the superadmin
+
+    @staticmethod
+    @database_sync_to_async
+    def prepare_live_sensors_data(device_id, data, timestamp):
+        """Prepare data to send over to client"""
+        device_sensors = IotDeviceCache.get_all_device_sensors(device_id)
+        sensor_data = {
+            device_sensor.sensor.name: data[device_sensor.field_name]
+            for device_sensor in device_sensors
+            if (
+                device_sensor.field_name in data
+                and (
+                    device_sensor.max_limit is None
+                    or data[device_sensor.field_name] <= device_sensor.max_limit
+                )
+                and (
+                    device_sensor.min_limit is None
+                    or data[device_sensor.field_name] >= device_sensor.min_limit
+                )
+            )
+        }
+
+        sensor_data["timestamp"] = timestamp
+        return {device_id: sensor_data}
 
     @staticmethod
     @database_sync_to_async
