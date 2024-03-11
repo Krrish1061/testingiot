@@ -29,6 +29,8 @@ import iotDeviceDetailSchema, {
 import useUpdateIotDeviceDetail from "../../hooks/iotDevice/useUpdateIotDeviceDetail";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import useAuthStore from "../../store/authStore";
+import UserGroups from "../../constants/userGroups";
 
 interface Props {
   open: boolean;
@@ -37,6 +39,7 @@ interface Props {
 }
 
 function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
+  const user = useAuthStore((state) => state.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const noValue = "N/A";
   const { mutate, isSuccess, isLoading } = useUpdateIotDeviceDetail();
@@ -50,8 +53,14 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
     resolver: zodResolver(iotDeviceDetailSchema),
   });
 
+  const allowEdit =
+    user &&
+    user.groups.some(
+      (group) =>
+        group === UserGroups.superAdminGroup || group === UserGroups.adminGroup
+    );
+
   const onSubmit: SubmitHandler<IDeviceDetailFormInputs> = (data) => {
-    console.log(data);
     mutate({ device_id: iotDevice?.id, device_detail: data });
   };
 
@@ -110,50 +119,52 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
       >
         <CloseIcon />
       </IconButton>
-      <Stack direction="row" justifyContent="flex-end" paddingRight={1}>
-        {isEditMode ? (
-          <Box sx={{ position: "relative" }}>
+      {allowEdit && (
+        <Stack direction="row" justifyContent="flex-end" paddingRight={1}>
+          {isEditMode ? (
+            <Box sx={{ position: "relative" }}>
+              <Button
+                size="small"
+                startIcon={<SaveIcon />}
+                type="submit"
+                disabled={isLoading}
+              >
+                save
+              </Button>
+              <Button
+                size="small"
+                startIcon={<CloseIcon />}
+                disabled={isLoading}
+                onClick={handleCancelClick}
+              >
+                cancel
+              </Button>
+              {isLoading && (
+                <CircularProgress
+                  color="primary"
+                  size={30}
+                  thickness={5}
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    right: "45%",
+                    marginTop: "-12px",
+                    marginRight: "-12px",
+                  }}
+                />
+              )}
+            </Box>
+          ) : (
             <Button
               size="small"
-              startIcon={<SaveIcon />}
-              type="submit"
-              disabled={isLoading}
+              startIcon={<EditIcon />}
+              onClick={() => setIsEditMode(true)}
             >
-              save
+              edit
             </Button>
-            <Button
-              size="small"
-              startIcon={<CloseIcon />}
-              disabled={isLoading}
-              onClick={handleCancelClick}
-            >
-              cancel
-            </Button>
-            {isLoading && (
-              <CircularProgress
-                color="primary"
-                size={30}
-                thickness={5}
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  right: "45%",
-                  marginTop: "-12px",
-                  marginRight: "-12px",
-                }}
-              />
-            )}
-          </Box>
-        ) : (
-          <Button
-            size="small"
-            startIcon={<EditIcon />}
-            onClick={() => setIsEditMode(true)}
-          >
-            edit
-          </Button>
-        )}
-      </Stack>
+          )}
+        </Stack>
+      )}
 
       <DialogContent>
         <Stack direction="column" marginBottom={2}>
