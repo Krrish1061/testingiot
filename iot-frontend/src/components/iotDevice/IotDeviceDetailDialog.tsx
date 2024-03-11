@@ -82,10 +82,10 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
   useEffect(() => {
     if (iotDevice && !isEditMode) {
       reset({
-        name: iotDevice?.iot_device_details.name || "",
-        environment_type: iotDevice?.iot_device_details.environment_type,
-        address: iotDevice?.iot_device_details.address,
-        description: iotDevice?.iot_device_details.description,
+        name: iotDevice?.iot_device_details?.name || "",
+        environment_type: iotDevice?.iot_device_details?.environment_type,
+        address: iotDevice?.iot_device_details?.address,
+        description: iotDevice?.iot_device_details?.description,
       });
     }
   }, [iotDevice, reset, isEditMode]);
@@ -177,7 +177,7 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
           </Typography>
           {!isEditMode ? (
             <Typography sx={{ color: "inherit" }}>
-              {iotDevice?.iot_device_details.name || noValue}
+              {iotDevice?.iot_device_details?.name || noValue}
             </Typography>
           ) : (
             <TextField
@@ -209,7 +209,7 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
           </Typography>
           {!isEditMode ? (
             <Typography sx={{ color: "inherit" }}>
-              {iotDevice?.iot_device_details.environment_type || noValue}
+              {iotDevice?.iot_device_details?.environment_type || noValue}
             </Typography>
           ) : (
             <Controller
@@ -252,7 +252,7 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
           </Typography>
           {!isEditMode ? (
             <Typography sx={{ color: "inherit" }}>
-              {iotDevice?.iot_device_details.address || noValue}
+              {iotDevice?.iot_device_details?.address || noValue}
             </Typography>
           ) : (
             <TextField
@@ -279,7 +279,7 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
           </Typography>
           {!isEditMode ? (
             <Typography sx={{ color: "inherit" }}>
-              {iotDevice?.iot_device_details.description || noValue}
+              {iotDevice?.iot_device_details?.description || noValue}
             </Typography>
           ) : (
             <TextField

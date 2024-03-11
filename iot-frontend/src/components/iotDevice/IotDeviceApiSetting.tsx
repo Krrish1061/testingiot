@@ -86,6 +86,7 @@ function IotDeviceApiSetting({ companySlug, username }: Props) {
                 S.N
               </TableCell>
               <TableCell>Device Id</TableCell>
+              <TableCell>Device Name</TableCell>
               <TableCell>Board Id</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -97,6 +98,9 @@ function IotDeviceApiSetting({ companySlug, username }: Props) {
                   {index + 1}
                 </TableCell>
                 <TableCell>{iotDevice.id}</TableCell>
+                <TableCell>
+                  {iotDevice.iot_device_details?.name || "-"}
+                </TableCell>
                 <TableCell>{iotDevice.board_id || "-"}</TableCell>
                 <TableCell>
                   <Box sx={{ position: "relative" }}>

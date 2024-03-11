@@ -41,6 +41,16 @@ function IotDeviceColumns() {
       },
 
       {
+        field: "iot_device_details",
+        headerName: "Device Name",
+        minWidth: 150,
+        editable: false,
+        hideable: false,
+        valueGetter: (params) => params.value?.name,
+        renderCell: RenderCellExpand,
+      },
+
+      {
         field: "company",
         headerName: "Company",
         minWidth: 110,
@@ -76,11 +86,12 @@ function IotDeviceColumns() {
       },
 
       {
-        field: "iot_device_location",
+        field: "device_location",
         headerName: "Device Location",
         minWidth: 150,
         editable: true,
         hideable: true,
+        valueGetter: (params) => params.value?.address,
         renderCell: RenderCellExpand,
       },
 

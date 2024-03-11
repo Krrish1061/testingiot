@@ -27,6 +27,14 @@ class IotDeviceDetailSerializer(serializers.ModelSerializer):
             "description",
             "address",
         ]
+        extra_kwargs = {
+            "name": {"required": True},
+        }
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Name field must not be empty.")
+        return value
 
     def update(self, instance, validated_data):
         # Update only the fields that are present in validated_data
@@ -358,6 +366,7 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
                 iot_device=self.context["iot_device"],
                 sensor=sensor_obj,
                 field_name=field_name,
+                field_number=int(field_name[5:]),
                 max_limit=max_limit,
                 min_limit=min_limit,
             )

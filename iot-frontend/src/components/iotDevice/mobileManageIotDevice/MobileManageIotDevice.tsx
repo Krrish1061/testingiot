@@ -21,17 +21,17 @@ function MobileManageIotDevice() {
         <TableHead>
           <TableRow>
             <TableCell size="small" sx={{ paddingX: 0 }}></TableCell>
-            {/* <TableCell size="small" sx={{ paddingLeft: 0, paddingRight: 1 }}>
+            <TableCell size="small" sx={{ paddingLeft: 0, paddingRight: 1 }}>
               S.N
-            </TableCell> */}
-            <TableCell>Device Id</TableCell>
+            </TableCell>
+            <TableCell>Device Name</TableCell>
             <TableCell>Company</TableCell>
             <TableCell>User</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {iotDevices.map((iotDevice, index) => (
-            <IotDeviceRow key={index} row={iotDevice} />
+            <IotDeviceRow key={index} row={iotDevice} index={index} />
           ))}
         </TableBody>
       </Table>

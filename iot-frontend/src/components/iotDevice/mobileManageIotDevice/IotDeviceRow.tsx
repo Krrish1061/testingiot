@@ -23,9 +23,10 @@ import IotDeviceEditableField from "./IotDeviceEditableField";
 
 interface Props {
   row: IotDevice;
+  index: number;
 }
 
-function IotDeviceRow({ row }: Props) {
+function IotDeviceRow({ row, index }: Props) {
   const [open, setOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -133,16 +134,16 @@ function IotDeviceRow({ row }: Props) {
         <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
           {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </TableCell>
-        {/* <TableCell
+        <TableCell
           component="th"
           scope="row"
           size="small"
           sx={{ paddingLeft: 1, paddingRight: 0 }}
         >
           {index + 1}
-        </TableCell> */}
+        </TableCell>
         <TableCell component="th" scope="row">
-          {row.id}
+          {row.iot_device_details?.name || "-"}
         </TableCell>
         <TableCell>{companyName || "-"} </TableCell>
         <TableCell>{userName || "-"} </TableCell>
@@ -157,7 +158,7 @@ function IotDeviceRow({ row }: Props) {
           >
             <Stack direction="row" justifyContent="space-between" margin={1}>
               <Typography variant="h6" component="div" marginBottom={0}>
-                Iot-Device {row.id}
+                Iot-Device {row.iot_device_details?.name}
               </Typography>
 
               <MobileActions
