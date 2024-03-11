@@ -24,14 +24,19 @@ class IotDeviceDetailSerializer(serializers.ModelSerializer):
         fields = [
             "name",
             "environment_type",
-            "optimal_operating_environment",
             "description",
-            "power_consumption",
             "address",
-            "latitude",
-            "longitude",
-            "device_specifications",
         ]
+
+    def update(self, instance, validated_data):
+        # Update only the fields that are present in validated_data
+        for field in self.Meta.fields:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+
+        # Save the updated instance
+        instance.save()
+        return instance
 
 
 class IotDeviceSerializer(serializers.ModelSerializer):
@@ -45,7 +50,6 @@ class IotDeviceSerializer(serializers.ModelSerializer):
             "company",
             "is_active",
             "board_id",
-            "iot_device_location",
             "created_at",
             "iot_device_details",
         ]
@@ -108,18 +112,6 @@ class IotDeviceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"error": ERROR_DEVICE_NO_VALID_ASSOCIATION}
             )
-
-        # if request.method == "POST":
-        #     if ("user" not in attrs and "company" not in attrs) or (
-        #         "user" in attrs and "company" in attrs
-        #     ):
-        #         raise serializers.ValidationError(
-        #             {"error": ERROR_DEVICE_NO_VALID_ASSOCIATION}
-        #         )
-
-        # elif request.method == "PATCH":
-
-        # remove device location and include board id
 
         return attrs
 

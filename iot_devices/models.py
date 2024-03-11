@@ -20,7 +20,6 @@ class IotDevice(models.Model):
     Fields:
     - company: The Company who owns the iot device.
     - user: The admin user who owns the iot device.
-    - iot_device_location: The location of the device.
     - is_active: Flag indicating if the device is active.
     - api_key: Unique Identity for each iot devices
     - created_at: Date and time in which Iot devices is registered in system
@@ -42,7 +41,6 @@ class IotDevice(models.Model):
         blank=True,
         null=True,
     )
-    iot_device_location = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True, blank=True)
     api_key = models.CharField(
         verbose_name=" Iot device authentication Api key",
@@ -153,19 +151,8 @@ class IotDeviceDetail(models.Model):
     )
     name = models.CharField(max_length=255, blank=True, null=True)
     environment_type = models.CharField(max_length=255, blank=True, null=True)
-    optimal_operating_environment = models.JSONField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    power_consumption = models.CharField(max_length=50, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    latitude = models.FloatField(blank=True, null=True)
-    longitude = models.FloatField(blank=True, null=True)
-    is_maintenance_requested = models.BooleanField(default=False)
-    maintenance_notes = models.TextField(blank=True, null=True)
-    maintenance_log = models.JSONField(blank=True, null=True)
-    last_maintenance_requested_date = models.DateField(blank=True, null=True)
-    last_updated = models.DateField(blank=True, null=True)
-    network_configuration = models.JSONField(blank=True, null=True)
-    device_specifications = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return f"Details of Iot Device {self.iot_device.id}"

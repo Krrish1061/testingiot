@@ -16,7 +16,11 @@ from utils.error_message import (
 )
 
 from .models import IotDevice
-from .serializers import IotDeviceSensorSerializer, IotDeviceSerializer
+from .serializers import (
+    IotDeviceSensorSerializer,
+    IotDeviceSerializer,
+    IotDeviceDetailSerializer,
+)
 
 
 # Create your views here.
@@ -47,16 +51,20 @@ def add_iot_device(request):
 def iot_device_list_all(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
-    if GroupName.SUPERADMIN_GROUP in user_groups:
-        iot_devices = IotDeviceCache.get_all_iot_devices()
-        serializer = IotDeviceSerializer(
-            iot_devices, many=True, context={"request": request}
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    else:
-        return Response(
-            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
-        )
+    iot_devices = IotDeviceCache.get_all_iot_devices()
+    if not GroupName.SUPERADMIN_GROUP in user_groups:
+        if user.company:
+            iot_device_list = IotDeviceCache.get_all_company_iot_devices(user.company)
+        elif user.type == "ADMIN":
+            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user)
+        else:
+            # user is of type Viewer or Moderator
+            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
+        iot_devices = iot_devices.filter(id__in=iot_device_list)
+    serializer = IotDeviceSerializer(
+        iot_devices, many=True, context={"request": request}
+    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET", "PATCH", "DELETE"])
@@ -203,7 +211,7 @@ def device_sensor(request, device_id):
         )
 
 
-@api_view(["POST", "GET", "PATCH", "DELETE"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_device_sensor(request):
     user = UserCache.get_user(username=request.user.username)
@@ -249,6 +257,60 @@ def get_iot_device_api_key(request, device_id):
             )
 
         return Response({"api_key": iot_device.api_key}, status=status.HTTP_200_OK)
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def iot_device_detail(request, device_id):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if any(
+        group_name in user_groups
+        for group_name in (GroupName.ADMIN_GROUP, GroupName.SUPERADMIN_GROUP)
+    ):
+        iot_device = IotDeviceCache.get_iot_device(device_id)
+        if iot_device is None:
+            return Response(
+                {"error": ERROR_DEVICE_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        company = iot_device.company
+        user = iot_device.user
+
+        if GroupName.ADMIN_GROUP in user_groups:
+            iot_device_list = (
+                IotDeviceCache.get_all_company_iot_devices(company)
+                if company
+                else IotDeviceCache.get_all_user_iot_devices(user)
+            )
+            if device_id not in iot_device_list:
+                return Response(
+                    {
+                        "error": "Invalid Device Id! The provided device id does not match registered ownership."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        serializer = IotDeviceDetailSerializer(
+            iot_device.iot_device_details,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        IotDeviceCache.delete_iot_device(
+            iot_device_id=iot_device.id,
+            company_slug=company.slug if company else None,
+            username=user.username if user else None,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     else:
         return Response(

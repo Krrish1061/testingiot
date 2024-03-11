@@ -46,7 +46,9 @@ function ProfileCard() {
             noWrap
             textAlign="center"
           >
-            {user?.profile?.first_name} {user?.profile?.last_name}
+            {user?.profile?.first_name
+              ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+              : user!.username}
           </Typography>
           <Typography
             component="h1"

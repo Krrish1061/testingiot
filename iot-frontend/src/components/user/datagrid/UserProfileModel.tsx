@@ -90,7 +90,11 @@ function UserProfileModel({ params }: Props) {
             <Stack justifyContent="center" alignItems="center" spacing={3}>
               <ImageAvatar
                 imgUrl={user?.profile?.profile_picture}
-                altText={`${user?.profile?.first_name} ${user?.profile?.last_name}`}
+                altText={
+                  user?.profile?.first_name
+                    ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+                    : user!.username
+                }
                 height={200}
                 width={200}
               />
@@ -99,7 +103,9 @@ function UserProfileModel({ params }: Props) {
                   {user?.type}
                 </Typography>
                 <Typography>
-                  {user?.profile?.first_name} {user?.profile?.last_name}
+                  {user?.profile?.first_name
+                    ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+                    : user!.username}
                 </Typography>
               </Box>
             </Stack>
@@ -127,7 +133,7 @@ function UserProfileModel({ params }: Props) {
                     First name:
                   </Typography>
                   <Typography color="inherit" gutterBottom>
-                    {user.profile?.first_name}
+                    {user.profile?.first_name || noValue}
                   </Typography>
                 </Box>
               </Grid>
@@ -137,7 +143,7 @@ function UserProfileModel({ params }: Props) {
                     Last name:
                   </Typography>
                   <Typography color="inherit" gutterBottom>
-                    {user.profile?.last_name}
+                    {user.profile?.last_name || noValue}
                   </Typography>
                 </Box>
               </Grid>

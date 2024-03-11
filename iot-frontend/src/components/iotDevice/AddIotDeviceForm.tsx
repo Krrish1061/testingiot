@@ -69,7 +69,6 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
           render={({ field }) => (
             <Autocomplete
               {...field}
-              disablePortal
               id="user"
               options={
                 UserList?.filter(
@@ -111,7 +110,6 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
           render={({ field }) => (
             <Autocomplete
               {...field}
-              disablePortal
               id="company"
               options={companyList ?? []}
               getOptionLabel={(option) => option.name}

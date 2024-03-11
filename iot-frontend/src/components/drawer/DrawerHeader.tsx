@@ -58,7 +58,7 @@ const DrawerHeader = () => {
           {isDrawerOpen && (
             <Box textAlign="center">
               <Typography>{user?.username}</Typography>
-              <Typography gutterBottom> {user?.type}</Typography>
+              <Typography gutterBottom>{user?.type}</Typography>
             </Box>
           )}
         </Stack>

@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from utils.commom_functions import generate_api_key
 
 
-from .models import IotDevice
+from .models import IotDevice, IotDeviceDetail
 
 
 @receiver(post_save, sender=IotDevice)
@@ -15,3 +15,9 @@ def handle_iot_device_api_key_generation(sender, created, instance, *args, **kwa
             api_key = generate_api_key()
         instance.api_key = api_key
         instance.save()
+
+
+@receiver(post_save, sender=IotDevice)
+def handle_iot_device_creation(sender, created, instance, *args, **kwargs):
+    if created:
+        IotDeviceDetail.objects.create(iot_device=instance)

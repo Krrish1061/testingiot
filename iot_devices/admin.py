@@ -10,7 +10,6 @@ class IotDeviceAdmin(admin.ModelAdmin):
         "company",
         "user",
         "board_id",
-        "iot_device_location",
         "is_active",
         "api_key",
     )
@@ -23,6 +22,7 @@ class IotDeviceSensorAdmin(admin.ModelAdmin):
         "iot_device",
         "sensor",
         "field_name",
+        "field_number",
         "max_limit",
         "min_limit",
     )
@@ -35,7 +35,6 @@ class IotDeviceDetailAdmin(admin.ModelAdmin):
         "name",
         "iot_device",
         "environment_type",
-        "optimal_operating_environment",
         "address",
         "description",
     )
