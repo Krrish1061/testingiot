@@ -60,10 +60,10 @@ class IotDeviceSensorDataSerializer(serializers.ModelSerializer):
 
                     # checking if values lies in the range or not
                     # if max_limit and value <= max_limit:
-                    if (max_limit and value > max_limit) or (
-                        min_limit and value < min_limit
+                    if (max_limit is not None and value > max_limit) or (
+                        min_limit is not None and value < min_limit
                     ):
-                        # log the error later
+                        # no need to store it in database
                         continue
 
                 sensor_data.append(
