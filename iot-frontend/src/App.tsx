@@ -25,7 +25,7 @@ function App() {
         >
           <CssBaseline enableColorScheme />
           <SnackbarProvider
-            // preventDuplicate
+            preventDuplicate
             autoHideDuration={3000}
             maxSnack={3}
             anchorOrigin={{
