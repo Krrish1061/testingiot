@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import Actions from "../../datagrid/Actions";
+import RenderCellExpand from "../../datagrid/RenderCellExpand";
 
 function SensorColumns() {
   const rowModesModel = useSensorDataGridStore((state) => state.rowModesModel);
@@ -34,7 +35,7 @@ function SensorColumns() {
         headerName: "Name",
         flex: 1,
         minWidth: 150,
-        editable: true,
+        editable: false,
         hideable: false,
       },
       {
@@ -48,6 +49,7 @@ function SensorColumns() {
         headerName: "Unit",
         editable: true,
         hideable: false,
+        renderCell: RenderCellExpand,
       },
       {
         field: "min_value",

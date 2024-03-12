@@ -17,21 +17,6 @@ from utils.error_message import (
 from .serializers import SensorSerializer
 
 
-# def get_sensor_list():
-#     """Get the list of the sensors objects"""
-#     sensors = Cache.get_all(
-#         cache_key=SENSOR_LIST_CACHE_KEY, app_name=SENSOR_LIST_CACHE_KEY_APP_NAME
-#     )
-#     if sensors is None:
-#         sensors = Sensor.objects.all()
-#         Cache.set_all(
-#             cache_key=SENSOR_LIST_CACHE_KEY,
-#             app_name=SENSOR_LIST_CACHE_KEY_APP_NAME,
-#             data=sensors,
-#         )
-#     return sensors if sensors else None
-
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_sensor_all(request):
@@ -110,6 +95,37 @@ def sensor(request, name):
                 )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_sensor_name(request, name):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        sensor = SensorCache.get_sensor(name)
+        if sensor is None:
+            return Response(
+                {"error": ERROR_SENSOR_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        new_name = request.data.get("sensor_name", None)
+        if not new_name:
+            return Response(
+                {"error": "No name is provided to update the sensor name"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        sensor.name = new_name
+        sensor.save(update_fields=["name"])
+        SensorCache.delete_sensor(sensor.id)
+        serializer = SensorSerializer(sensor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     else:
         return Response(

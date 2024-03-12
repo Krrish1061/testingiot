@@ -7,6 +7,7 @@ import DeleteDialog from "../../datagrid/DeleteDialog";
 import Box from "@mui/material/Box";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import SensorColumns from "./SensorColumns";
+import SensorToolBar from "./SensorToolBar";
 
 function DesktopManageSensors() {
   const { data, isError, isSuccess, isLoading } = useGetAllSensors();
@@ -57,6 +58,7 @@ function DesktopManageSensors() {
           pagination: { paginationModel: { pageSize: 20 } },
         }}
         rowModesModel={rowModesModel}
+        customToolbar={SensorToolBar}
         slotProps={{
           toolbar: { setRows, setRowModesModel },
         }}
