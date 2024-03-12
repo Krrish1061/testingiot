@@ -128,7 +128,7 @@ function ChangeSensorName({ open, setOpen }: Props) {
           </InputLabel>
           <TextField
             inputProps={{ ...register("new_name") }}
-            id="sensorName"
+            id="newSensorName"
             type="text"
             fullWidth
             error={!!errors.new_name}
