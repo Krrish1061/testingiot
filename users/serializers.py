@@ -168,6 +168,8 @@ class UserSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         if instance.is_associated_with_company:
             representation["company"] = instance.company.slug
+        if instance.created_by:
+            representation["created_by"] = instance.created_by.username
         return representation
 
     def validate_password(self, value):

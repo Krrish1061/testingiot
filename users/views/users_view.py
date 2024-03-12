@@ -183,7 +183,11 @@ def get_all_users(request, username):
                     )
             else:
                 # list of the user created by the admin user which is not associated with the company
-                users = (user for user in users if user.created_by == requested_user)
+                users = (
+                    user
+                    for user in users
+                    if (user.created_by == requested_user or user == requested_user)
+                )
 
         serializer = UserSerializer(users, context={"request": request}, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
