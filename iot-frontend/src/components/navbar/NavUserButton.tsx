@@ -30,7 +30,7 @@ function NavUserButton() {
   const anchorRef = useRef<HTMLButtonElement>(null);
   const user = useAuthStore((state) => state.user);
   const [open, setOpen] = useState(false);
-  const { mutateAsync, isLoading } = useLogout();
+  const { mutate, isLoading } = useLogout();
 
   function handleListKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Tab") {
@@ -66,8 +66,8 @@ function NavUserButton() {
     handleClose(event);
   };
 
-  const handleLogout = async () => {
-    await mutateAsync();
+  const handleLogout = () => {
+    mutate(user?.username);
   };
 
   return (
@@ -87,7 +87,7 @@ function NavUserButton() {
           altText={
             user?.profile?.first_name
               ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-              : user!.username
+              : user?.username
           }
           height={{
             xs: 50,

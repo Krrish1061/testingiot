@@ -93,7 +93,7 @@ function UserProfileModel({ params }: Props) {
                 altText={
                   user?.profile?.first_name
                     ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-                    : user!.username
+                    : user?.username
                 }
                 height={200}
                 width={200}
@@ -105,7 +105,7 @@ function UserProfileModel({ params }: Props) {
                 <Typography>
                   {user?.profile?.first_name
                     ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-                    : user!.username}
+                    : user?.username}
                 </Typography>
               </Box>
             </Stack>

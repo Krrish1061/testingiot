@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import useRefreshToken from "../hooks/auth/useRefreshToken";
 import LoadingSpinner from "../components/LoadingSpinner";
 import useGetUser from "../hooks/users/useGetUser";
 
 function ProtectedAppLayout() {
+  const location = useLocation();
   const {
     mutate,
     isSuccess: isRefreshTokenSuccess,
@@ -14,10 +15,14 @@ function ProtectedAppLayout() {
   const { isLoading } = useGetUser(isRefreshTokenSuccess);
 
   useEffect(() => {
-    if (!isRefreshTokenSuccess && isIdle) {
+    if (!isRefreshTokenSuccess && isIdle && location.state?.from !== "logout") {
       mutate();
     }
-  }, [isRefreshTokenSuccess, isIdle, mutate]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRefreshTokenSuccess, isIdle, mutate, location]);
+
+  if (location.state?.from === "logout") return <Outlet />;
 
   if (isRefreshTokenError) return <Outlet />;
 

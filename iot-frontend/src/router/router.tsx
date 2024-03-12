@@ -21,6 +21,7 @@ import ViewCompanyProfile from "../pages/ViewCompanyProfile";
 import ViewProfile from "../pages/ViewProfile";
 import RenderUserDashboard from "../components/dashboard/RenderUserDashboard";
 import SendLiveData from "../pages/SendLiveData";
+import Error404Page from "../components/Error404Page";
 
 // pages 404 unauthorized
 
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <Error404Page />,
     children: [
       {
         element: <ProtectedAppLayout />,

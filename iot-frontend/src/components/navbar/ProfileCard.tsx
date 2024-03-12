@@ -23,7 +23,7 @@ function ProfileCard() {
           altText={
             user?.profile?.first_name
               ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-              : user!.username
+              : user?.username
           }
           height={50}
           width={50}
@@ -48,7 +48,7 @@ function ProfileCard() {
           >
             {user?.profile?.first_name
               ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-              : user!.username}
+              : user?.username}
           </Typography>
           <Typography
             component="h1"

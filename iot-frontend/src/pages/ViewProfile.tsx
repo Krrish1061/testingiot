@@ -84,7 +84,7 @@ function ViewProfile() {
               altText={
                 user?.profile?.first_name
                   ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-                  : user!.username
+                  : user?.username
               }
               height={200}
               width={200}
@@ -105,7 +105,7 @@ function ViewProfile() {
             <Typography>
               {user?.profile?.first_name
                 ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-                : user!.username}
+                : user?.username}
             </Typography>
           </Box>
         </Stack>

@@ -13,7 +13,6 @@ import useWebSocketStore from "../../store/webSocketStore";
 
 const useLogout = () => {
   const axiosInstance = useAxios();
-  const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const setToken = useAuthStore((state) => state.setToken);
   const setIsUserSuperAdmin = useAuthStore(
@@ -24,25 +23,26 @@ const useLogout = () => {
   );
   const navigate = useNavigate();
 
-  const logoutUser = async () => {
+  const logoutUser = async (username: string | undefined) => {
     const csrfToken = await getCsrf();
     if (csrfToken === null) {
       throw new CsrfError();
     }
     return axiosInstance
-      .post<string>(`account/${user?.username}/logout/`)
+      .post<string>(`account/${username}/logout/`)
       .then((res) => res.data);
   };
 
-  return useMutation<string, AxiosError<string>>({
+  return useMutation<string, AxiosError<string>, string | undefined>({
     mutationFn: logoutUser,
     onSuccess: () => {
-      enqueueSnackbar("Logout sucessfull", { variant: "success" });
       setUser(null);
       setToken(null);
       setIsUserSuperAdmin(false);
       setliveDataToNull();
+      enqueueSnackbar("Logout sucessfull", { variant: "success" });
       navigate("/login", {
+        state: { from: "logout" },
         replace: true,
       });
     },

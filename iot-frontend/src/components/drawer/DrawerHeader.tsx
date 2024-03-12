@@ -50,7 +50,7 @@ const DrawerHeader = () => {
             altText={
               user?.profile?.first_name
                 ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-                : user!.username
+                : user?.username
             }
             width={avatarSize}
             height={avatarSize}

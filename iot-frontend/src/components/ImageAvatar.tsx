@@ -1,7 +1,7 @@
 import Avatar from "@mui/material/Avatar";
 
 interface Props {
-  altText: string;
+  altText: string | undefined;
   imgUrl: string | null | undefined;
   width?: number | string | object;
   height?: number | string | object;
@@ -65,7 +65,7 @@ function ImageAvatar({ imgUrl, width, height, altText, variant }: Props) {
   } else {
     return (
       <>
-        {altText !== " " && (
+        {altText && altText !== " " && (
           <Avatar {...stringAvatar(altText, width, height)} />
         )}
       </>
