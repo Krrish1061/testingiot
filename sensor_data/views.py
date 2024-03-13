@@ -272,7 +272,7 @@ def get_owned_iot_device_list(user):
 def get_dataframe(queryset):
     df = pd.DataFrame(
         queryset,
-        columns=["Sensor Name", "Device Id", "value", "Timestamp"],
+        columns=["Sensor Name", "Device Id", "value", "Timestamp", "Device Name"],
     )
 
     if df.empty:
@@ -314,12 +314,12 @@ def sensor_data_to_excel(
             sheet_name=worksheet_name,
             index=False,
             startrow=1,
-            columns=["value", "Timestamp", "Device Id"],
+            columns=["value", "Timestamp", "Device Name"],
         )
 
         worksheet.set_column(0, 0, 15, value_column_format)
-        worksheet.set_column(1, 1, 30)
-        worksheet.set_column(2, 2, 15)
+        worksheet.set_column(1, 2, 30)
+        # worksheet.set_column(2, 2, 15)
 
 
 def users_and_company_data_to_excel(
@@ -359,14 +359,14 @@ def users_and_company_data_to_excel(
                     index=False,
                     startrow=1,
                     startcol=start_column,
-                    columns=["value", "Timestamp", "Device Id"],
+                    columns=["value", "Timestamp", "Device Name"],
                 )
 
                 worksheet.set_column(
                     start_column, start_column, 15, value_column_format
                 )
-                worksheet.set_column(start_column + 1, start_column + 1, 30)
-                worksheet.set_column(start_column + 2, start_column + 2, 15)
+                worksheet.set_column(start_column + 1, start_column + 2, 30)
+                # worksheet.set_column(start_column + 2, start_column + 2, 15)
                 start_column = end_column + 2
                 end_column = end_column + 2 + 2
 
@@ -431,7 +431,8 @@ def download_sensor_data(request):
         )
 
     sensor_data = (
-        SensorData.objects.filter(
+        SensorData.objects.select_related("iot_device")
+        .filter(
             timestamp__range=(start_date, end_date),
         )
         .values_list(
@@ -439,6 +440,7 @@ def download_sensor_data(request):
             "iot_device_id",
             "value",
             "timestamp",
+            "iot_device__iot_device_details__name",
         )
         .order_by("-timestamp")
     )
@@ -500,7 +502,7 @@ def download_sensor_data(request):
                 bio,
                 index=False,
                 float_format="%.2f",
-                columns=["Sensor Name", "Timestamp", "value", "Device Id"],
+                columns=["Sensor Name", "Timestamp", "value", "Device Name"],
             )
 
     else:
@@ -627,7 +629,7 @@ def download_sensor_data(request):
                     bio,
                     index=False,
                     float_format="%.2f",
-                    columns=["Sensor Name", "Timestamp", "value", "Device Id"],
+                    columns=["Sensor Name", "Timestamp", "value", "Device Name"],
                 )
 
             else:
@@ -663,7 +665,7 @@ def download_sensor_data(request):
                     "Sensor Name",
                     "Timestamp",
                     "value",
-                    "Device Id",
+                    "Device Name",
                 ]
 
                 is_company_value_present = df["Company"].any() if companies else None
@@ -745,5 +747,4 @@ def download_sensor_data(request):
         content_type=content_type,
     )
     response["Content-Disposition"] = f"attachment; filename={file_name}"
-
     return response
