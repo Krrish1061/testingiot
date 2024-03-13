@@ -232,6 +232,14 @@ class UserSerializer(serializers.ModelSerializer):
             # associating the new user with the same company as of the user which created them
             if GroupName.ADMIN_GROUP in user_groups and user.is_associated_with_company:
                 attrs["company"] = user.company
+            if (
+                GroupName.SUPERADMIN_GROUP in user_groups
+                and attrs.get("type") == UserType.ADMIN
+                and attrs.get("company") is None
+                and attrs.get("user_limit") is None
+            ):
+                attrs["user_limit"] = 5
+            attrs["created_by"] = user
 
         elif request.method == "PATCH":
             if user == self.instance:

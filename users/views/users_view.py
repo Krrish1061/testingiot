@@ -40,7 +40,8 @@ def is_user_limit_reached(user, user_groups):
         else:
             # for the admin users which are not associated with the company
             user_limit = user.user_limit
-            user_created_count = User.objects.filter(created_by=user).count()
+            # one is add to count the admin user that is created by the superadmin
+            user_created_count = User.objects.filter(created_by=user).count() + 1
             if user_created_count >= user_limit:
                 return True
     return False
@@ -134,7 +135,9 @@ def add_user(request, username):
         for group_name in (GroupName.ADMIN_GROUP, GroupName.SUPERADMIN_GROUP)
     ):
         if is_user_limit_reached(user, user_groups):
-            return Response(ERROR_USER_LIMIT_REACHED, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": ERROR_USER_LIMIT_REACHED}, status=status.HTTP_403_FORBIDDEN
+            )
 
         serializer = UserSerializer(
             data=request.data, context={"request": request, "user_groups": user_groups}

@@ -62,6 +62,7 @@ const getUserTypeOptions = (user: User | null, row: User | undefined) => {
 
 function UserColumns({ users }: Props) {
   const user = useAuthStore((state) => state.user);
+  const isUserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
   const {
     handleEditClick,
     handleSaveClick,
@@ -104,7 +105,10 @@ function UserColumns({ users }: Props) {
         hideable: false,
         editable: false,
         renderCell: (params: GridRenderCellParams<User>) => (
-          <UserProfileModel params={params} />
+          <UserProfileModel
+            params={params}
+            isUserSuperAdmin={isUserSuperAdmin}
+          />
         ),
       },
       {
@@ -221,6 +225,7 @@ function UserColumns({ users }: Props) {
       handleDeleteClick,
       handleCancelClick,
       rowModesModel,
+      isUserSuperAdmin,
     ]
   );
 

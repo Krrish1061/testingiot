@@ -11,6 +11,10 @@ interface IFormInputs {
   company?: string | null | undefined;
 }
 
+interface IError {
+  error: string;
+}
+
 const useAddUser = () => {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
@@ -20,11 +24,16 @@ const useAddUser = () => {
       .post<User>(`${user?.username}/add/user/`, data)
       .then((res) => res.data);
 
-  return useMutation<User, AxiosError, IFormInputs>({
+  return useMutation<User, AxiosError<IError>, IFormInputs>({
     mutationFn: postUser,
     onSuccess: () => {
       enqueueSnackbar("User Successfully added", {
         variant: "success",
+      });
+    },
+    onError: (error) => {
+      enqueueSnackbar(error.response?.data.error, {
+        variant: "error",
       });
     },
   });

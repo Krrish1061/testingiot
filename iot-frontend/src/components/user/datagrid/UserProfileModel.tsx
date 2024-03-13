@@ -18,9 +18,11 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import dayjs from "dayjs";
+import UserGroups from "../../../constants/userGroups";
 
 interface Props {
   params: GridRenderCellParams<User>;
+  isUserSuperAdmin: boolean | undefined;
 }
 
 const SlideTransition = forwardRef(function Transition(
@@ -32,7 +34,7 @@ const SlideTransition = forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-function UserProfileModel({ params }: Props) {
+function UserProfileModel({ params, isUserSuperAdmin }: Props) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -202,8 +204,26 @@ function UserProfileModel({ params }: Props) {
                   </Typography>
                 </Box>
               </Grid>
+              {isUserSuperAdmin &&
+                !user.is_associated_with_company &&
+                user.groups.includes(UserGroups.adminGroup) && (
+                  <Grid item xs={4} sm={4} md={6}>
+                    <Box>
+                      <Typography
+                        color="inherit"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        UserLimit:
+                      </Typography>
+                      <Typography color="inherit" gutterBottom>
+                        {user.user_limit || noValue}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
 
-              <Grid item xs={4} sm={4} md={6}>
+              <Grid item xs={4} sm={8} md={12}>
                 <Box>
                   <Typography color="inherit" fontWeight="bold" gutterBottom>
                     Address:

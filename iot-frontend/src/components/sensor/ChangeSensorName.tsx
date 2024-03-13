@@ -53,7 +53,6 @@ function ChangeSensorName({ open, setOpen }: Props) {
   });
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
-    console.log(data);
     mutate(data);
   };
 
