@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 
 const StyledGrid = styled(Grid)(({ theme }) => ({
-  minHeight: "100vh",
+  minHeight: "90vh",
   background: theme.palette.background.default,
   padding: theme.spacing(6, 0),
   [theme.breakpoints.up("sm")]: {
