@@ -23,7 +23,7 @@ interface Props {
 const schema = z
   .object({
     name: z.string().min(1, "This field is required"),
-    unit: z.string().min(1, "This field is required"),
+    unit: z.string().nullish(),
     symbol: z.string().nullish(),
     is_value_boolean: z.boolean(),
     max_limit: z.coerce
@@ -129,7 +129,6 @@ function AddSensorForm({ open, setOpen }: Props) {
               <Typography
                 component={InputLabel}
                 htmlFor="unit"
-                required
                 gutterBottom
                 color="inherit"
               >
@@ -139,7 +138,6 @@ function AddSensorForm({ open, setOpen }: Props) {
                 inputProps={{ ...register("unit") }}
                 id="unit"
                 type="text"
-                required
                 fullWidth
                 error={!!errors.unit}
                 helperText={errors.unit && errors.unit.message}

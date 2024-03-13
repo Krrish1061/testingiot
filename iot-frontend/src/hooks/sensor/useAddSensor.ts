@@ -6,7 +6,7 @@ import { enqueueSnackbar } from "notistack";
 
 interface IFormInputs {
   name: string;
-  unit: string;
+  unit?: string | null;
   symbol?: string | null;
   is_value_boolean: boolean;
   max_limit?: number | null;
