@@ -442,7 +442,7 @@ def download_sensor_data(request):
             "timestamp",
             "iot_device__iot_device_details__name",
         )
-        .order_by("-timestamp")
+        .order_by("-timestamp", "iot_device")
     )
 
     if GroupName.ADMIN_GROUP in user_groups:
@@ -747,4 +747,5 @@ def download_sensor_data(request):
         content_type=content_type,
     )
     response["Content-Disposition"] = f"attachment; filename={file_name}"
+
     return response
