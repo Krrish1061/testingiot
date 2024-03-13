@@ -6,6 +6,8 @@ import useCompanyDataGridStore from "../../../store/datagrid/companyDataGridStor
 import dayjs from "dayjs";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
+import Company from "../../../entities/Company";
+import CompanyProfileModel from "./CompanyProfileModel";
 
 function CompanyColumns() {
   const rowModesModel = useCompanyDataGridStore((state) => state.rowModesModel);
@@ -29,6 +31,19 @@ function CompanyColumns() {
         renderCell: (index) =>
           index.api.getRowIndexRelativeToVisibleRows(index.row.id) + 1,
       },
+      {
+        field: "logo",
+        headerName: "Logo",
+        width: 70,
+        editable: false,
+        sortable: false,
+        filterable: false,
+        hideable: false,
+        renderCell: (params: GridRenderCellParams<Company>) => (
+          <CompanyProfileModel params={params} />
+        ),
+      },
+
       {
         field: "name",
         headerName: "Name",
