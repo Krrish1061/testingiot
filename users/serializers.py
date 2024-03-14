@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import Group
 from company.cache import CompanyCache
+from users.cache import UserCache
 from users.utilis import get_group_name
 from utils.constants import GroupName, UserType
 from utils.error_message import (
@@ -160,6 +161,16 @@ class UserSerializer(serializers.ModelSerializer):
             if company_instance is None:
                 raise serializers.ValidationError({"error": "Company not found."})
             data["company"] = company_instance.id
+
+        user_created_by = data.get("created_by")
+        if user_created_by:
+            user_created_instance = UserCache.get_user(user_created_by)
+            if user_created_instance is None:
+                raise serializers.ValidationError(
+                    {"error": "Invalid created_by user not found."}
+                )
+            else:
+                data["created_by"] = user_created_instance.id
 
         return super().to_internal_value(data)
 

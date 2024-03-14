@@ -1,14 +1,23 @@
 import useIotDeviceDataGrid from "../../../hooks/muiDataGrid/useIotDeviceDataGrid";
 import useIotDeviceDataGridStore from "../../../store/datagrid/iotDeviceDataGridStore";
 import { useMemo } from "react";
-import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  GridColDef,
+  GridRenderCellParams,
+  GridValueGetterParams,
+} from "@mui/x-data-grid";
 import Actions from "../../datagrid/Actions";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import RenderCellExpand from "../../datagrid/RenderCellExpand";
+import useGetAllUser from "../../../hooks/users/useGetAllUser";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
+import IotDevice from "../../../entities/IotDevice";
 
 function IotDeviceColumns() {
+  const { data: userList } = useGetAllUser();
+  const { data: companyList } = useGetAllCompany();
   const rowModesModel = useIotDeviceDataGridStore(
     (state) => state.rowModesModel
   );
@@ -57,6 +66,11 @@ function IotDeviceColumns() {
         flex: 1,
         editable: true,
         hideable: false,
+        valueGetter: (params: GridValueGetterParams<IotDevice>) => {
+          return companyList?.find(
+            (company) => company.slug === params.row?.company
+          )?.name;
+        },
         renderCell: RenderCellExpand,
       },
       {
@@ -66,6 +80,15 @@ function IotDeviceColumns() {
         flex: 0.5,
         editable: true,
         hideable: false,
+        valueGetter: (params: GridValueGetterParams<IotDevice>) => {
+          const user = userList?.find(
+            (user) => user.username === params.row?.user
+          );
+          const name = user?.profile?.first_name
+            ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+            : user?.username;
+          return name;
+        },
         renderCell: RenderCellExpand,
       },
 
@@ -138,6 +161,8 @@ function IotDeviceColumns() {
       handleSaveClick,
       handleDeleteClick,
       handleCancelClick,
+      userList,
+      companyList,
     ]
   );
 

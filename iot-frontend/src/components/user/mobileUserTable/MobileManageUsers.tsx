@@ -26,7 +26,7 @@ function MobileManageUsers() {
               S.N
             </TableCell>
             <TableCell>Avatar</TableCell>
-            <TableCell>Username</TableCell>
+            <TableCell>Name</TableCell>
             <TableCell>UserType</TableCell>
           </TableRow>
         </TableHead>

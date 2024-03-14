@@ -16,12 +16,7 @@ from .models import SendLiveDataList
 class SendLiveDataListSerializer(serializers.ModelSerializer):
     class Meta:
         model = SendLiveDataList
-        fields = [
-            "id",
-            "company",
-            "user",
-            "endpoint",
-        ]
+        fields = ["id", "company", "user", "endpoint", "send_device_board_id"]
         extra_kwargs = {
             "company": {
                 "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},

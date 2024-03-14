@@ -5,7 +5,7 @@ import Collapse from "@mui/material/Collapse";
 import Stack from "@mui/material/Stack";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import User from "../../../entities/User";
@@ -18,6 +18,7 @@ import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
 import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 import UserEditableField from "./UserEditableField";
 import UserRowHeader from "./UserRowHeader";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 
 interface Props {
   row: User;
@@ -39,6 +40,12 @@ function UserRow({ row, index }: Props) {
   const user = useAuthStore((state) => state.user);
   const { mutate: editUser } = useEditUser();
   const { mutate: deleteuser } = useDeleteUser();
+  const { data: companyList } = useGetAllCompany();
+
+  const companyName = useMemo(
+    () => companyList?.find((company) => company.slug === row.company)?.name,
+    [companyList, row]
+  );
 
   const { handleSubmit, reset, control, getValues } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
@@ -84,6 +91,14 @@ function UserRow({ row, index }: Props) {
     setIsEditMode(false);
   };
 
+  const name = useMemo(
+    () =>
+      row?.profile?.first_name
+        ? `${row?.profile?.first_name} ${row?.profile?.last_name}`
+        : row?.username,
+    [row]
+  );
+
   return (
     <>
       <TableRow
@@ -106,12 +121,9 @@ function UserRow({ row, index }: Props) {
           {index + 1}
         </TableCell>
         <TableCell component="th" scope="row" sx={{ paddingRight: 1 }}>
-          <ImageAvatar
-            imgUrl={row.profile?.profile_picture}
-            altText={`${row.profile?.first_name} ${row?.profile?.last_name}`}
-          />
+          <ImageAvatar imgUrl={row.profile?.profile_picture} altText={name} />
         </TableCell>
-        <TableCell sx={{ paddingX: 0 }}>{row.username}</TableCell>
+        <TableCell sx={{ paddingX: 0 }}>{name}</TableCell>
         <TableCell sx={{ paddingX: 0 }}>{row.type}</TableCell>
       </TableRow>
       <TableRow>
@@ -130,7 +142,7 @@ function UserRow({ row, index }: Props) {
                     : row.username
                 }
                 email={row.email}
-                company={row.company}
+                company={companyName}
               />
               <MobileActions
                 isDisabled={isDisabled}

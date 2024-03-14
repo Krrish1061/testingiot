@@ -2,40 +2,48 @@ import requests
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
+from iot_devices.cache import IotDeviceCache
 from send_livedata.cache import SendLiveDataCache
-from .utilis import prepare_sensor_data
 from django.utils import timezone
 
 
 @shared_task
-def send_live_data_to(
-    user_id, company_slug, field_sensor_name_dict, data, iot_device_id
-):
+def send_live_data_to(username, company_slug, data, iot_device_id, board_id, timestamp):
     """Sending data to the third party api endpoint"""
 
     send_livedata_to = (
-        SendLiveDataCache.get_send_livedata_by_user(user_id)
-        if user_id
+        SendLiveDataCache.get_send_livedata_by_user(username)
+        if username
         else SendLiveDataCache.get_send_livedata_by_company(company_slug)
     )
 
     if send_livedata_to:
-        # only proceed if url exist
-        sensor_data = prepare_sensor_data(
-            field_sensor_name_dict,
-            data,
-            iot_device_id,
-            data["timestamp"],
-        )
-
-        # it is not good practice for sharing email
-        # use Device Id
-        sensor_data["email"] = (
-            send_livedata_to.user.email if user_id else send_livedata_to.company.email
-        )
-
         url = send_livedata_to.endpoint
         if url:
+            device_sensors = IotDeviceCache.get_all_device_sensors(iot_device_id)
+            sensor_data = {
+                device_sensor.sensor.name: (
+                    int(data[device_sensor.field_name])
+                    if device_sensor.sensor.is_value_boolean
+                    else data[device_sensor.field_name]
+                )
+                for device_sensor in device_sensors
+                if (
+                    device_sensor.field_name in data
+                    and (
+                        device_sensor.max_limit is None
+                        or data[device_sensor.field_name] <= device_sensor.max_limit
+                    )
+                    and (
+                        device_sensor.min_limit is None
+                        or data[device_sensor.field_name] >= device_sensor.min_limit
+                    )
+                )
+            }
+
+            sensor_data["timestamp"] = timestamp
+            if send_livedata_to.send_device_board_id:
+                sensor_data["timestamp"] = board_id
             try:
                 requests.post(url=url, json=sensor_data)
             except Exception:
@@ -46,6 +54,7 @@ def send_live_data_to(
 def send_data_to_websocket(
     username, company_slug, field_sensor_name_dict, data, iot_device_id
 ):
+    # not in used
     # make sure this processing only happen when actual websocket connection is established
     # simply move this logic inside send_data function in consumers.py
     """

@@ -49,12 +49,6 @@ function DesktopManageSensors() {
         columns={columns}
         isLoading={isLoading}
         initialState={{
-          columns: {
-            columnVisibilityModel: {
-              // Hide columns status and traderName, the other columns will remain visible
-              serial_number: false,
-            },
-          },
           pagination: { paginationModel: { pageSize: 20 } },
         }}
         rowModesModel={rowModesModel}

@@ -88,17 +88,19 @@ class IotDeviceCaching(Cache):
     def delete_iot_device(
         self, iot_device_id: int, system_delete=False, company_slug=None, username=None
     ):
+        if system_delete:
+            self.delete_device_sensors(iot_device_id)
+            iot_device = self.__get_iot_device_by_id(iot_device_id)
+            self.delete_auth_cache_iot_device(iot_device)
+
         self.delete_from_list(self.cache_key, self.app_name, id=iot_device_id)
+
         cache_key = (
             self.__get_company_device_cache_key(company_slug)
             if company_slug
             else self.__get__user_device_cache_key(username)
         )
         self.delete(cache_key)
-
-        if system_delete:
-            self.delete_device_sensors(iot_device_id)
-            # self.delete_auth_cache_iot_device(iot_device_id) need to send iot_device
 
     def get_all_device_sensors(self, device_id):
         """Returns the IotDeviceSensor Models, all instances associated with the Iot device"""
@@ -132,7 +134,7 @@ class IotDeviceCaching(Cache):
 
     def delete_auth_cache_iot_device(self, iot_device):
         """Delete the iot device in cache that is being used for authetication of device"""
-        api_key = iot_device.api_key if iot_device.api_key else None
+        api_key = iot_device.api_key if iot_device else None
         if api_key:
             cache_key = self.__generate_cache_key_from_api_key(api_key)
             self.delete(cache_key)

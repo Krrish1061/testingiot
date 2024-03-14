@@ -9,10 +9,13 @@ interface IFormInputs {
   endpoint: string;
   user?: string | null;
   company?: string | null;
+  send_device_board_id: boolean;
 }
 
 interface IError {
-  error: string[];
+  error?: string[];
+  user?: string[];
+  company?: string[];
 }
 
 function useAddSendLiveData() {
@@ -33,8 +36,11 @@ function useAddSendLiveData() {
       enqueueSnackbar("Endpoint Sucessfully Added", { variant: "success" });
     },
     onError: (error) => {
-      // reverting to the old rows here sensor is the sensor to be deleted
-      enqueueSnackbar(error.response?.data.error[0], {
+      const error_message =
+        (error.response?.data.error && error.response?.data.error[0]) ||
+        (error.response?.data.user && error.response?.data.user[0]) ||
+        (error.response?.data.company && error.response?.data.company[0]);
+      enqueueSnackbar(error_message, {
         variant: "error",
       });
     },

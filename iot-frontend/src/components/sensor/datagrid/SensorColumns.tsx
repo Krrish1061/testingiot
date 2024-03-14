@@ -52,6 +52,14 @@ function SensorColumns() {
         renderCell: RenderCellExpand,
       },
       {
+        field: "is_value_boolean",
+        headerName: "Is Value Boolean",
+        minWidth: 115,
+        editable: true,
+        hideable: true,
+        type: "boolean",
+      },
+      {
         field: "min_value",
         headerName: "Min Limit",
         type: "number",

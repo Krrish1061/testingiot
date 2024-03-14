@@ -16,6 +16,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useAddSendLiveData from "../../hooks/sendLiveData/useAddSendLiveData";
+import Checkbox from "@mui/material/Checkbox";
+import Stack from "@mui/material/Stack";
 
 interface Props {
   open: boolean;
@@ -27,6 +29,7 @@ const sendLiveDataSchema = z
     user: z.string().nullish(),
     company: z.string().nullish(),
     endpoint: z.string().min(1, "This field is required").url(),
+    send_device_board_id: z.boolean(),
   })
   .superRefine((val, ctx) => {
     if ((!val.user && !val.company) || (val.user && val.company)) {
@@ -59,6 +62,9 @@ function AddSendLiveData({ open, setOpen }: Props) {
     control,
   } = useForm<ISendLiveDataFormInputs>({
     resolver: zodResolver(sendLiveDataSchema),
+    defaultValues: {
+      send_device_board_id: false,
+    },
   });
   const handleDialogClose = (_event: SyntheticEvent, reason: string) => {
     if (reason == "backdropClick") {
@@ -185,6 +191,27 @@ function AddSendLiveData({ open, setOpen }: Props) {
             autoComplete="off"
           />
         </Box>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography
+            component={InputLabel}
+            htmlFor="send_device_board_id"
+            color="inherit"
+          >
+            Send Device Board Id:
+          </Typography>
+
+          <Controller
+            name="send_device_board_id"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id="send_device_board_id"
+                onChange={(e) => field.onChange(e.target.checked)}
+                checked={field.value}
+              />
+            )}
+          />
+        </Stack>
         <Box
           sx={{
             position: "relative",

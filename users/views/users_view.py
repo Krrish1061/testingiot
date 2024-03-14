@@ -149,7 +149,6 @@ def add_user(request, username):
         sending_verify_email.delay(new_user.username)
 
         create_company_super_admin(new_user, user_groups)
-        # check to see if company group is added or not
         UserCache.set_user(new_user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:

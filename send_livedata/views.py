@@ -18,23 +18,6 @@ from .serializers import SendLiveDataListSerializer
 # Create your views here.
 
 
-# @api_view(["POST"])
-# @permission_classes([IsAuthenticated])
-# def add_send_livedata(request):
-#     user = UserCache.get_user(username=request.user.username)
-#     user_groups = get_groups_tuple(user)
-#     if GroupName.SUPERADMIN_GROUP in user_groups:
-#         serializer = SendLiveDataListSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         send_livedata = serializer.save()
-#         SendLiveDataCache.set_send_livedata(send_livedata)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     else:
-#         return Response(
-#             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
-#         )
-
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def send_livedata_list_all(request):

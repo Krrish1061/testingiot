@@ -28,7 +28,7 @@ from utils.constants import GroupName
 
 from .models import SensorData
 from .serializers import IotDeviceSensorDataSerializer
-from .task import send_data_to_websocket, send_live_data_to
+from .task import send_live_data_to
 
 
 def sensor_data_generator(sensor_data_qs):
@@ -64,13 +64,6 @@ def process_sensor_data(sensor_data_qs, list_data_by_sensor=False):
     return sensors_data
 
 
-def get_field_sensor_name_dict(device_sensors):
-    return {
-        device_sensor.field_name: device_sensor.sensor.name
-        for device_sensor in device_sensors
-    }
-
-
 # Api handling of the Sensordata model
 @api_view(["POST"])
 @authentication_classes([DeviceAuthentication])
@@ -94,12 +87,10 @@ def save_sensor_data(request):
     with transaction.atomic():
         serializer.save()
 
-    # field_sensor_name_dict = get_field_sensor_name_dict(device_sensors)
-    # username = iot_device.user.username if iot_device.user else None
-    # company_slug = iot_device.company.slug if iot_device.company else None
-    group_name = (
-        iot_device.company.slug if iot_device.company else iot_device.user.username
-    )
+    username = iot_device.user.username if iot_device.user else None
+    company_slug = iot_device.company.slug if iot_device.company else None
+    group_name = company_slug if company_slug else username
+
     # sending data to the websocket
     channel_layer = get_channel_layer()
     timestamp = (
@@ -119,23 +110,14 @@ def save_sensor_data(request):
     )
 
     # call celery for sending live data to an api end point
-    # overall modification needed to send_live_data_to
-    # send_live_data_to.delay(
-    #     user_id=user_id,
-    #     company_slug=company_slug,
-    #     field_sensor_name_dict=field_sensor_name_dict,
-    #     data=serializer.validated_data,
-    #     iot_device_id=iot_device.id,
-    # )
-
-    # calling celery background task for sending data to websocket
-    # send_data_to_websocket.delay(
-    #     username=username,
-    #     company_slug=company_slug,
-    #     field_sensor_name_dict=field_sensor_name_dict,
-    #     data=serializer.validated_data,
-    #     iot_device_id=iot_device.id,
-    # )
+    send_live_data_to.delay(
+        username=username,
+        company_slug=company_slug,
+        data=serializer.validated_data,
+        iot_device_id=iot_device.id,
+        board_id=iot_device.board_id,
+        timestamp=timestamp,
+    )
 
     return Response(status=status.HTTP_200_OK)
 

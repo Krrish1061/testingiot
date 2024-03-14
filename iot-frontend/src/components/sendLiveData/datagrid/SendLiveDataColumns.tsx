@@ -1,14 +1,19 @@
-import { GridColDef } from "@mui/x-data-grid";
+import { GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 import useSendLiveDataDataGrid from "../../../hooks/muiDataGrid/useSendLiveDataDataGrid";
 import useSendLiveDataDataGridStore from "../../../store/datagrid/sendLiveDataDataGrid";
 import { useMemo } from "react";
 import Actions from "../../datagrid/Actions";
 import RenderCellExpand from "../../datagrid/RenderCellExpand";
+import useGetAllUser from "../../../hooks/users/useGetAllUser";
+import SendLiveData from "../../../entities/SendLiveData";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 
 function SendLiveDataColumns() {
   const rowModesModel = useSendLiveDataDataGridStore(
     (state) => state.rowModesModel
   );
+  const { data: userList } = useGetAllUser();
+  const { data: companyList } = useGetAllCompany();
   const {
     handleEditClick,
     handleSaveClick,
@@ -34,6 +39,16 @@ function SendLiveDataColumns() {
         flex: 0.25,
         editable: false,
         hideable: true,
+        valueGetter: (params: GridValueGetterParams<SendLiveData>) => {
+          const user = userList?.find(
+            (user) => user.username === params.row?.user
+          );
+          const name = user?.profile?.first_name
+            ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
+            : user?.username;
+          return name;
+        },
+        renderCell: RenderCellExpand,
       },
       {
         field: "company",
@@ -41,6 +56,12 @@ function SendLiveDataColumns() {
         headerName: "Company",
         editable: false,
         hideable: true,
+        valueGetter: (params: GridValueGetterParams<SendLiveData>) => {
+          return companyList?.find(
+            (company) => company.slug === params.row?.company
+          )?.name;
+        },
+        renderCell: RenderCellExpand,
       },
 
       {
@@ -50,6 +71,14 @@ function SendLiveDataColumns() {
         editable: true,
         hideable: false,
         renderCell: RenderCellExpand,
+      },
+      {
+        field: "send_device_board_id",
+        headerName: "Send Board Id",
+        minWidth: 105,
+        editable: true,
+        hideable: true,
+        type: "boolean",
       },
 
       {
@@ -76,6 +105,8 @@ function SendLiveDataColumns() {
       handleSaveClick,
       handleDeleteClick,
       handleCancelClick,
+      userList,
+      companyList,
     ]
   );
 

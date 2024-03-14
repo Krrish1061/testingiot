@@ -18,7 +18,7 @@ function UserRowHeader({ fullName, email, company }: Props) {
       <Typography variant="h6" component="div" marginBottom={0}>
         {fullName}
       </Typography>
-      {!isUserSuperAdmin && (
+      {isUserSuperAdmin && (
         <Typography paddingLeft={1} variant="body1" fontSize={14}>
           {company}
         </Typography>

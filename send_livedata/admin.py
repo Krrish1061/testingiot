@@ -11,4 +11,5 @@ class SendLiveDataListAdmin(admin.ModelAdmin):
         "company",
         "user",
         "endpoint",
+        "send_device_board_id",
     )

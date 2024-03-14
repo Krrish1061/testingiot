@@ -24,6 +24,8 @@ class SendLiveDataList(models.Model):
         blank=True,
     )
 
+    send_device_board_id = models.BooleanField(default=False, blank=True)
+
     endpoint = models.CharField(
         max_length=255, blank=True, null=True, validators=[validate_urls]
     )

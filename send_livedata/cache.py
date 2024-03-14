@@ -78,7 +78,7 @@ class SendLiveDataCaching(Cache):
                 return None
         return send_livedata
 
-    def get_send_livedata_by_user(self, username: int):
+    def get_send_livedata_by_user(self, username: str):
         send_livedata = self.__get_send_livedata_by_user(username)
         if send_livedata is None:
             try:

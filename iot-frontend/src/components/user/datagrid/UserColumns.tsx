@@ -18,6 +18,7 @@ import Actions from "../../datagrid/Actions";
 import useUserDataGridStore from "../../../store/datagrid/userDataGridStore";
 import useUserDataGrid from "../../../hooks/muiDataGrid/useUserDataGrid";
 import UserProfileModel from "./UserProfileModel";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 
 interface Props {
   users?: User[];
@@ -62,6 +63,7 @@ const getUserTypeOptions = (user: User | null, row: User | undefined) => {
 
 function UserColumns({ users }: Props) {
   const user = useAuthStore((state) => state.user);
+  const { data: companyList } = useGetAllCompany();
   const isUserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
   const {
     handleEditClick,
@@ -147,6 +149,11 @@ function UserColumns({ users }: Props) {
         minWidth: 110,
         flex: 0.75,
         editable: false,
+        valueGetter: (params: GridValueGetterParams<User>) => {
+          return companyList?.find(
+            (company) => company.slug === params.row?.company
+          )?.name;
+        },
         renderCell: RenderCellExpand,
       },
       {
@@ -226,6 +233,7 @@ function UserColumns({ users }: Props) {
       handleCancelClick,
       rowModesModel,
       isUserSuperAdmin,
+      companyList,
     ]
   );
 
