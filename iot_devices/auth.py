@@ -6,6 +6,9 @@ from iot_devices.cache import IotDeviceCache
 from utils.error_message import ERROR_INVALID_API_KEY, ERROR_NO_API_KEY_PROVIDED
 
 from .exceptions import InactiveDeviceException
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DeviceAuthentication(BaseAuthentication):
@@ -15,6 +18,7 @@ class DeviceAuthentication(BaseAuthentication):
         api_key = request.headers.get("API-KEY")
         if not api_key:
             api_key = request.data.get("API-KEY")
+        logger.warning(f"Device authentication of iot_device {api_key}")
         if not api_key:
             raise AuthenticationFailed(
                 {"error": ERROR_NO_API_KEY_PROVIDED},
