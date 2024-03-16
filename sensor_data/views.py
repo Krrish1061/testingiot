@@ -29,6 +29,9 @@ from utils.constants import GroupName
 from .models import SensorData
 from .serializers import IotDeviceSensorDataSerializer
 from .task import send_live_data_to
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def sensor_data_generator(sensor_data_qs):
@@ -69,6 +72,7 @@ def process_sensor_data(sensor_data_qs, list_data_by_sensor=False):
 @authentication_classes([DeviceAuthentication])
 def save_sensor_data(request):
     iot_device = request.auth
+    logger.warning(f"data of iot_device {iot_device.id}-{request.data}")
     device_sensors = IotDeviceCache.get_all_device_sensors(iot_device.id)
     if not device_sensors:
         return Response(
