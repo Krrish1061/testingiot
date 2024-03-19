@@ -22,10 +22,16 @@ function useChangePassword() {
       .post<Response>(`${user?.username}/change-password/`, data)
       .then((res) => res.data);
 
-  return useMutation<Response, AxiosError<Array<string>>, IFormInputs>({
+  return useMutation<Response, AxiosError<string[]>, IFormInputs>({
     mutationFn: ChangePassword,
     onError: (error) => {
-      enqueueSnackbar(error.response?.data[0], {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.response?.data[0] || "";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

@@ -96,7 +96,11 @@ function UserColumns({ users }: Props) {
         renderCell: (params: GridRenderCellParams<User>) => (
           <ImageAvatar
             imgUrl={params.row.profile?.profile_picture}
-            altText={`${params.row.profile?.first_name} ${params.row.profile?.last_name}`}
+            altText={
+              params.row.profile?.first_name
+                ? `${params.row.profile?.first_name} ${params.row.profile?.last_name}`
+                : params.row.username
+            }
           />
         ),
       },

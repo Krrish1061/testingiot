@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import useAuthStore from "../../store/authStore";
 import { enqueueSnackbar } from "notistack";
@@ -14,6 +14,7 @@ const useUploadProfileImage = () => {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const queryClient = useQueryClient();
 
   const UploadImage = async (data: IFormData) =>
     axiosInstance
@@ -32,12 +33,26 @@ const useUploadProfileImage = () => {
         profile: userProfile,
       } as User);
 
+      queryClient.setQueryData<User[]>(["userList"], (cachedUsers = []) =>
+        cachedUsers.map((cachedUser) =>
+          cachedUser.id === user?.id
+            ? { ...cachedUser, profile: userProfile }
+            : cachedUser
+        )
+      );
+
       enqueueSnackbar("Profile Picture sucessfully changed", {
         variant: "success",
       });
     },
     onError: (error) => {
-      enqueueSnackbar(error?.response ? error.response.data : error.message, {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.response?.data || "";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

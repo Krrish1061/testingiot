@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import useAxios from "../../api/axiosInstance";
 import User from "../../entities/User";
 import useAuthStore from "../../store/authStore";
@@ -13,10 +12,12 @@ function useGetAllUser(isEnabled: boolean = true) {
       .get<User[]>(`${user?.username}/users/all`)
       .then((res) => res.data);
 
-  return useQuery<User[], AxiosError>({
+  return useQuery<User[]>({
     queryKey: ["userList"],
     queryFn: fetchUsers,
     enabled: isEnabled,
+    cacheTime: Infinity,
+    staleTime: Infinity,
   });
 }
 

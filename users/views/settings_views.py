@@ -201,14 +201,12 @@ def set_user_password(request, username, token):
     # only allow user to set password when lastlogin field is none
     if user and user.last_login is not None:
         return Response(
-            {"message": "Password is already set for your account"},
+            {"error": "Password is already set for your account"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if not activation_token_for_email.check_token(user, token):
-        return Response(
-            {"message": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
     serializer = UserPasswordSerializer(data=request.data)
     if serializer.is_valid():

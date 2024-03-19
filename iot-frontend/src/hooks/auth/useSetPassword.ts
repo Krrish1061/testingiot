@@ -12,6 +12,11 @@ interface Response {
   message: string;
 }
 
+interface IError {
+  error: string;
+  errors: string[];
+}
+
 function useSetPassword() {
   const { username, token } = useParams();
   const navigate = useNavigate();
@@ -20,7 +25,7 @@ function useSetPassword() {
       .post(`account/set-user-password/${username}/${token}`, data)
       .then((res) => res.data);
 
-  return useMutation<Response, AxiosError<Response>, FormData>({
+  return useMutation<Response, AxiosError<IError>, FormData>({
     mutationFn: setPassword,
     onSuccess: () => {
       navigate("/login", { replace: true });
@@ -30,7 +35,14 @@ function useSetPassword() {
       });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.message, {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage =
+          error.response?.data.error || error.response?.data.errors[0] || "";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

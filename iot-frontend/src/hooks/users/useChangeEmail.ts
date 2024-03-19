@@ -28,7 +28,13 @@ function useChangeEmail() {
   return useMutation<IResponse, AxiosError<IError>, IInputs>({
     mutationFn: changeEmail,
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.error, {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.response?.data.error || "";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

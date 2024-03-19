@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Close";
@@ -41,7 +41,7 @@ function ViewProfileForm() {
   const user = useAuthStore((state) => state.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
-  const { mutate } = useUpdateProfile();
+  const { mutate, isError } = useUpdateProfile();
   const noValue = "N/A";
 
   const defaultValues = {
@@ -74,6 +74,10 @@ function ViewProfileForm() {
     mutate(data);
     setIsEditMode(false);
   };
+
+  useEffect(() => {
+    if (isError) reset();
+  }, [isError, reset]);
 
   return (
     <Paper

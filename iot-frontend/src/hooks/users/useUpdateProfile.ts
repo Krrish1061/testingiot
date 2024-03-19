@@ -1,7 +1,7 @@
 import useAuthStore from "../../store/authStore";
 import useAxios from "../../api/axiosInstance";
 import { AxiosError } from "axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
 import UserProfile from "../../entities/UserProfile";
 import User from "../../entities/User";
@@ -17,10 +17,15 @@ interface IFormInputs {
   phone_number?: string | null;
 }
 
+interface ChangeUserProfileContext {
+  previousUserList: User[];
+}
+
 function useUpdateProfile() {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const queryClient = useQueryClient();
 
   const UpdateProfile = async (data: IFormInputs) =>
     axiosInstance
@@ -32,18 +37,53 @@ function useUpdateProfile() {
       })
       .then((res) => res.data);
 
-  return useMutation<UserProfile, AxiosError<string>, IFormInputs>({
+  return useMutation<
+    UserProfile,
+    AxiosError<string>,
+    IFormInputs,
+    ChangeUserProfileContext
+  >({
     mutationFn: UpdateProfile,
-    onSuccess(userProfile) {
-      setUser({ ...user, profile: userProfile } as User);
+    onMutate: (newUserProfile) => {
+      const previousUserList =
+        queryClient.getQueryData<User[]>(["userList"]) || [];
+
+      const newProfile = { ...user?.profile, ...newUserProfile };
+
+      queryClient.setQueryData<User[]>(["userList"], (cachedUsers = []) =>
+        cachedUsers.map((cachedUser) =>
+          cachedUser.id === user?.id
+            ? { ...cachedUser, profile: newProfile as UserProfile }
+            : cachedUser
+        )
+      );
+
+      setUser({ ...user, profile: newProfile } as User);
+
+      return { previousUserList };
+    },
+    onSuccess() {
       enqueueSnackbar("Profile Upadated", {
         variant: "success",
       });
     },
-    onError: (error) => {
-      enqueueSnackbar(error?.response ? error.response.data : error.message, {
+    onError: (error, _, context) => {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage = error.response?.data || "";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
+
+      if (!context) return;
+      queryClient.setQueryData<User[]>(["userList"], context.previousUserList);
+      const oldUser = context.previousUserList.find(
+        (cachedUser) => cachedUser.id === user?.id
+      );
+      if (oldUser) setUser(oldUser);
     },
   });
 }

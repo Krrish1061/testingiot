@@ -74,11 +74,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         error_messages={"required": "No New password is provided."},
     )
 
-    def validate_current_password(self, value):
+    def validate_old_password(self, value):
         user = self.context["user"]
         # checking current password
         if not user.check_password(value):
-            raise serializers.ValidationError({"error": "Incorrect Current Password."})
+            raise serializers.ValidationError("Incorrect Current Password.")
         return value
 
     def validate_new_password(self, value):
@@ -86,26 +86,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         # new password must be different from current password
         if user.check_password(value):
             raise serializers.ValidationError(
-                {"error": "New password must be different from the current password."}
+                "New password must be different from the current password."
             )
-
         # validating the new password useing django password validator
         password_validation.validate_password(value)
         return value
-
-    # def validate(self, attrs):
-    #     user = self.context["user"]
-    #     if not user.check_password(attrs.get("old_password")):
-    #         raise serializers.ValidationError({"error": "Incorrect Current Password."})
-
-    #     # new password must be different from current password
-    #     if user.check_password(attrs.get("new_password")):
-    #         raise serializers.ValidationError(
-    #             {"error": "New password must be different from the current password."}
-    #         )
-    #     # validating the new password useing django password validator
-    #     password_validation.validate_password(attrs.get("new_password"))
-    #     return attrs
 
 
 class UserPasswordSerializer(serializers.Serializer):
@@ -190,14 +175,6 @@ class UserSerializer(serializers.ModelSerializer):
         except ValidationError as error:
             raise serializers.ValidationError(str(error))
         return value
-
-    # def validate_email(self, email):
-    #     # Email Validator
-    #     try:
-    #         validate_email(email)
-    #     except ValidationError:
-    #         return True
-    #     return False
 
     def user_type_validation(self, user_groups, user_type):
         # return true if user type is invalid
@@ -347,10 +324,11 @@ class UserSerializer(serializers.ModelSerializer):
         is_active = validated_data.get("is_active")
         user_limit = validated_data.get("user_limit")
 
-        if is_active is not None:
+        if is_active is not None and is_active != instance.is_active:
             instance.is_active = is_active
-        if user_limit:
-            instance.type = user_limit
+
+        if user_limit is not None and user_limit != instance.user_limit:
+            instance.user_limit = user_limit
 
         if user_type and user_type != instance.type:
             old_user_type = instance.type

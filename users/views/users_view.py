@@ -152,7 +152,9 @@ def add_user(request, username):
         UserCache.set_user(new_user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
-        return Response(ERROR_PERMISSION_DENIED, status=status.HTTP_403_FORBIDDEN)
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
 
 
 @csrf_protect
@@ -194,7 +196,9 @@ def get_all_users(request, username):
         serializer = UserSerializer(users, context={"request": request}, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
-        return Response(ERROR_PERMISSION_DENIED, status=status.HTTP_403_FORBIDDEN)
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
 
 
 @csrf_protect

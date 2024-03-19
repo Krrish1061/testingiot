@@ -110,7 +110,10 @@ function ChangeProfileImage({
         </Badge>
       </DialogContent>
       <DialogActions>
-        <Button onClick={(event) => handleClose(event, "cancel")}>
+        <Button
+          disabled={isLoading}
+          onClick={(event) => handleClose(event, "cancel")}
+        >
           Cancel
         </Button>
         <Box sx={{ position: "relative" }}>

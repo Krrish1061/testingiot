@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import useAxios from "../../api/axiosInstance";
 import User from "../../entities/User";
 import useAuthStore from "../../store/authStore";
@@ -12,16 +11,18 @@ function useGetUser(isEnabled: boolean = true) {
   const fetchUser = () =>
     axiosInstance.get<User>(`${user?.username}/`).then((res) => res.data);
 
-  return useQuery<User, AxiosError>({
-    queryKey: [`${user?.username}`],
+  return useQuery<User>({
+    queryKey: user ? [`${user.username}`] : undefined,
     queryFn: fetchUser,
+    enabled: isEnabled,
+    cacheTime: Infinity,
+    staleTime: Infinity,
     onSuccess: (data) => {
       if (data.profile?.date_of_birth) {
         data.profile.date_of_birth = new Date(data.profile.date_of_birth);
       }
       setUser(data);
     },
-    enabled: isEnabled,
   });
 }
 
