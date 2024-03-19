@@ -28,25 +28,16 @@ class CompanySerializer(serializers.ModelSerializer):
             "profile",
         ]
         read_only_fields = ("id", "slug", "created_at", "profile")
-
-    # def validate(self, attrs):
-    #     request = self.context["request"]
-    #     if request.method == "PATCH":
-    #         email = attrs.get("email")
-    #         if email:
-    #             raise serializers.ValidationError(
-    #                 {
-    #                     "error": f"{ERROR_PERMISSION_DENIED} You cannot Update email address",
-    #                 },
-    #             )
-    #     return attrs
+        extra_kwargs = {
+            "name": {"error_messages": {"blank": "Company name is not provided."}}
+        }
 
     def update(self, instance, validated_data):
         name = validated_data.get("name")
         user_limit = validated_data.get("user_limit")
         if name != instance.name:
             instance.name = name
-        if user_limit != instance.user_limit:
+        if user_limit is not None and user_limit != instance.user_limit:
             instance.user_limit = user_limit
         instance.save()
         return instance
