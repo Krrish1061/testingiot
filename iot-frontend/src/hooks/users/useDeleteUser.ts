@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import useAxios from "../../api/axiosInstance";
 import useAuthStore from "../../store/authStore";
 import { enqueueSnackbar } from "notistack";
@@ -24,7 +24,12 @@ function useDeleteUser() {
   const deleteUser = async (modifiedUser: User) =>
     axiosInstance.delete(`${user?.username}/?user=${modifiedUser.username}`);
 
-  return useMutation<unknown, AxiosError<IError>, User, DeleteUserContext>({
+  return useMutation<
+    AxiosResponse,
+    AxiosError<IError>,
+    User,
+    DeleteUserContext
+  >({
     mutationFn: deleteUser,
     onMutate: (deletingUser) => {
       const previousUserList =
