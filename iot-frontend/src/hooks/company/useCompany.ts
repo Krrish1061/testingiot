@@ -16,8 +16,10 @@ function useCompany() {
       .then((res) => res.data);
 
   return useQuery<Company, AxiosError, Company>({
-    queryKey: [`${user?.company}`],
+    queryKey: user ? [`${user.company}`] : undefined,
     queryFn: fetchCompanies,
+    cacheTime: Infinity,
+    staleTime: Infinity,
     onSuccess: (company) => setCompany(company),
   });
 }

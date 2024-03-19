@@ -4,6 +4,7 @@ import { enqueueSnackbar } from "notistack";
 import CompanyProfile from "../../entities/CompanyProfile";
 import useCompanyStore from "../../store/companyStore";
 import useAxios from "../../api/axiosInstance";
+import Company from "../../entities/Company";
 
 interface IFormInputs {
   address?: string | null;
@@ -12,8 +13,13 @@ interface IFormInputs {
   logo?: File;
 }
 
+interface ChangeCompanyProfileContext {
+  previousCompany: Company;
+}
+
 interface IError {
   error: string;
+  phone_number: string[];
 }
 
 function useUpdateCompanyProfile() {
@@ -31,18 +37,47 @@ function useUpdateCompanyProfile() {
       .then((res) => res.data);
   };
 
-  return useMutation<CompanyProfile, AxiosError<IError>, IFormInputs>({
+  return useMutation<
+    CompanyProfile,
+    AxiosError<IError>,
+    IFormInputs,
+    ChangeCompanyProfileContext
+  >({
     mutationFn: UpdateCompanyProfile,
-    onSuccess(companyProfile) {
-      setCompany({ ...company, profile: companyProfile });
+    onMutate: (newCompanyProfile) => {
+      const previousCompany = company;
+
+      const newProfile: CompanyProfile = {
+        ...company?.profile,
+        ...newCompanyProfile,
+      } as CompanyProfile;
+
+      setCompany({ ...company, profile: newProfile });
+
+      return { previousCompany };
     },
-    onError: (error) => {
-      enqueueSnackbar(
-        error.response ? error.response?.data.error : error.message,
-        {
-          variant: "error",
-        }
-      );
+    onSuccess() {
+      enqueueSnackbar("Profile Updated", {
+        variant: "success",
+      });
+    },
+    onError: (error, _formsInputs, context) => {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage =
+          error.response?.data.error ||
+          (error.response?.data.phone_number &&
+            error.response?.data.phone_number[0]) ||
+          "Failed to Update Profile";
+      }
+      enqueueSnackbar(errorMessage, {
+        variant: "error",
+      });
+
+      if (!context) return;
+      setCompany(context.previousCompany);
     },
   });
 }

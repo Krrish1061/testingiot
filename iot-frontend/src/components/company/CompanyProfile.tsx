@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Close";
@@ -18,8 +18,10 @@ const schema = z.object({
   phone_number: z
     .string()
     .max(10, "maximum of 10 digit")
-    .regex(/^\d{10}$/, "Invalid phone number")
-    .or(z.string().nullish()),
+    .nullish()
+    .refine((value) => !value || /^\d{10}$/.test(value), {
+      message: "Invalid phone number",
+    }),
   address: z.string().max(255, "Character limit exceeded").nullish(),
   description: z.string().nullish(),
 });
@@ -29,7 +31,7 @@ type IFormInputs = z.infer<typeof schema>;
 function CompanyProfile() {
   const [isEditMode, setIsEditMode] = useState(false);
   const company = useCompanyStore((state) => state.company);
-  const { mutate } = useUpdateCompanyProfile();
+  const { mutate, isError } = useUpdateCompanyProfile();
   const noValue = "N/A";
 
   const defaultValues = {
@@ -53,6 +55,10 @@ function CompanyProfile() {
 
     setIsEditMode(false);
   };
+
+  useEffect(() => {
+    if (isError) reset();
+  }, [isError, reset]);
 
   return (
     <Paper
