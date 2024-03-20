@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxios from "../../api/axiosInstance";
 import SendLiveData from "../../entities/SendLiveData";
 import { enqueueSnackbar } from "notistack";
@@ -18,8 +18,14 @@ interface IError {
   company?: string[];
 }
 
+interface AddSendLiveDataContext {
+  previousSendLiveDataList: SendLiveData[];
+  newSendLiveDataId: number;
+}
+
 function useAddSendLiveData() {
   const axiosInstance = useAxios();
+  const queryClient = useQueryClient();
   const rows = useSendLiveDataDataGridStore((state) => state.rows);
   const setRows = useSendLiveDataDataGridStore((state) => state.setRows);
 
@@ -29,11 +35,44 @@ function useAddSendLiveData() {
       .then((res) => res.data);
   };
 
-  return useMutation<SendLiveData, AxiosError<IError>, IFormInputs>({
+  return useMutation<
+    SendLiveData,
+    AxiosError<IError>,
+    IFormInputs,
+    AddSendLiveDataContext
+  >({
     mutationFn: addSendLiveData,
-    onSuccess: (sendLiveData) => {
-      setRows([...rows, sendLiveData]);
+    onMutate: (formInputs: IFormInputs) => {
+      const previousSendLiveDataList =
+        queryClient.getQueryData<SendLiveData[]>(["sendDataList"]) || [];
+
+      const newSendLiveDataId = Math.floor(Math.random() * 9000) + 1000;
+
+      const newSendData = {
+        ...formInputs,
+        id: newSendLiveDataId,
+      } as SendLiveData;
+
+      queryClient.setQueryData<SendLiveData[]>(
+        ["sendDataList"],
+        (sendDataLists = []) => [...sendDataLists, newSendData]
+      );
+
+      return { previousSendLiveDataList, newSendLiveDataId };
+    },
+    onSuccess: (newSendLiveData, _formsInputs, context) => {
+      setRows([...rows, newSendLiveData]);
       enqueueSnackbar("Endpoint Sucessfully Added", { variant: "success" });
+      if (!context) return;
+      queryClient.setQueryData<SendLiveData[]>(
+        ["sendDataList"],
+        (sendDataLists) =>
+          sendDataLists?.map((sendData) =>
+            sendData.id === context.newSendLiveDataId
+              ? newSendLiveData
+              : sendData
+          )
+      );
     },
     onError: (error) => {
       const error_message =

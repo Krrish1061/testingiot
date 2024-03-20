@@ -11,6 +11,8 @@ function useGetAllSendLiveData() {
   return useQuery<SendLiveData[], AxiosError>({
     queryKey: ["sendDataList"],
     queryFn: getAllSendLiveData,
+    cacheTime: Infinity,
+    staleTime: Infinity,
   });
 }
 

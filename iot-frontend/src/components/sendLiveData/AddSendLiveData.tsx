@@ -28,7 +28,11 @@ const sendLiveDataSchema = z
   .object({
     user: z.string().nullish(),
     company: z.string().nullish(),
-    endpoint: z.string().min(1, "This field is required").url(),
+    endpoint: z
+      .string()
+      .min(1, "This field is required")
+      .max(255, "Character Limit Exceeded")
+      .url(),
     send_device_board_id: z.boolean(),
   })
   .superRefine((val, ctx) => {
