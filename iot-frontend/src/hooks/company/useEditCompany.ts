@@ -41,7 +41,7 @@ function useEditCompany() {
       enqueueSnackbar("Company sucessfully Edited", { variant: "success" });
       queryClient.setQueryData<Company[]>(["companyList"], (companies) =>
         companies?.map((company) =>
-          company.slug === newCompany.slug ? newCompany : company
+          company.id === newCompany.id ? newCompany : company
         )
       );
     },

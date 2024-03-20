@@ -12,6 +12,8 @@ function useGetAllSensors() {
   return useQuery<Sensor[], AxiosError>({
     queryKey: ["sensorList"],
     queryFn: fetchSensors,
+    cacheTime: Infinity,
+    staleTime: Infinity,
   });
 }
 

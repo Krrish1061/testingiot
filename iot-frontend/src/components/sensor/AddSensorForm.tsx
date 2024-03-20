@@ -22,9 +22,12 @@ interface Props {
 
 const schema = z
   .object({
-    name: z.string().min(1, "This field is required"),
-    unit: z.string().nullish(),
-    symbol: z.string().nullish(),
+    name: z
+      .string()
+      .min(1, "This field is required")
+      .max(255, "Character Limit Exceed"),
+    unit: z.string().max(100, "Character Limit Exceed").nullish(),
+    symbol: z.string().max(10, "Character Limit Exceed").nullish(),
     is_value_boolean: z.boolean(),
     max_limit: z.coerce
       .string()

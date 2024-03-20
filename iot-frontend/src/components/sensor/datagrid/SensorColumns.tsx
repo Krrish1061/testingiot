@@ -60,7 +60,7 @@ function SensorColumns() {
         type: "boolean",
       },
       {
-        field: "min_value",
+        field: "min_limit",
         headerName: "Min Limit",
         type: "number",
         align: "center",
@@ -68,7 +68,7 @@ function SensorColumns() {
         hideable: true,
       },
       {
-        field: "max_value",
+        field: "max_limit",
         headerName: "Max Limit",
         type: "number",
         align: "center",

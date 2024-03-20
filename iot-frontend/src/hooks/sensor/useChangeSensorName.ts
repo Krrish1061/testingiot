@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
@@ -14,8 +14,13 @@ interface IError {
   error: string;
 }
 
+interface ChangeSensorNameContext {
+  previousSensorList: Sensor[];
+}
+
 function useChangeSensorName() {
   const axiosInstance = useAxios();
+  const queryClient = useQueryClient();
   const rows = useSensorDataGridStore((state) => state.rows);
   const setRows = useSensorDataGridStore((state) => state.setRows);
 
@@ -27,19 +32,49 @@ function useChangeSensorName() {
       .then((res) => res.data);
   };
 
-  return useMutation<Sensor, AxiosError<IError>, IFormInputs>({
+  return useMutation<
+    Sensor,
+    AxiosError<IError>,
+    IFormInputs,
+    ChangeSensorNameContext
+  >({
     mutationFn: changeSensorName,
+    onMutate: (formInputs) => {
+      const previousSensorList =
+        queryClient.getQueryData<Sensor[]>(["sensorList"]) || [];
+
+      queryClient.setQueryData<Sensor[]>(["sensorList"], (sensors = []) =>
+        sensors.map((sensor) =>
+          sensor.name === formInputs.sensor_name
+            ? { ...sensor, name: formInputs.new_name }
+            : sensor
+        )
+      );
+
+      return { previousSensorList };
+    },
     onSuccess: (sensor) => {
-      setRows([...rows, sensor]);
+      if (rows.length !== 0) setRows([...rows, sensor]);
       enqueueSnackbar("Sensor Name Changed Sucessfully", {
         variant: "success",
       });
     },
-    onError: (error) => {
-      // reverting to the old rows here sensor is the sensor to be deleted
-      enqueueSnackbar(error.response?.data.error, {
+    onError: (error, _formsInputs, context) => {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage =
+          error.response?.data.error || "Failed to Change Sensor Name";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
+      if (!context) return;
+      queryClient.setQueryData<Sensor[]>(
+        ["sensorList"],
+        context.previousSensorList
+      );
     },
   });
 }

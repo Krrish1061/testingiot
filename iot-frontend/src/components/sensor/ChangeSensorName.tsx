@@ -11,6 +11,7 @@ import {
   MouseEventHandler,
   SetStateAction,
   SyntheticEvent,
+  useEffect,
 } from "react";
 import { z } from "zod";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
@@ -36,7 +37,7 @@ const schema = z.object({
 type IFormInputs = z.infer<typeof schema>;
 
 function ChangeSensorName({ open, setOpen }: Props) {
-  const { mutate, isLoading } = useChangeSensorName();
+  const { mutate, isLoading, isSuccess } = useChangeSensorName();
   const { data: sensorList } = useGetAllSensors();
   const {
     register,
@@ -66,6 +67,15 @@ function ChangeSensorName({ open, setOpen }: Props) {
     reset();
     setOpen(false);
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      reset();
+      setOpen(false);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess]);
 
   return (
     <Dialog

@@ -33,7 +33,7 @@ def get_sensor_all(request):
             sensors_list = SensorCache.get_all_user_sensor(user.created_by)
         sensors = [sensor for sensor in sensors if sensor.name in sensors_list]
 
-    serializer = SensorSerializer(sensors, many=True)
+    serializer = SensorSerializer(sensors, many=True, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -43,7 +43,7 @@ def add_sensor(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     if GroupName.SUPERADMIN_GROUP in user_groups:
-        serializer = SensorSerializer(data=request.data)
+        serializer = SensorSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         sensor = serializer.save()
         SensorCache.set_sensor(sensor)
@@ -68,11 +68,13 @@ def sensor(request, name):
             )
 
         if request.method == "GET":
-            serializer = SensorSerializer(sensor)
+            serializer = SensorSerializer(sensor, context={"request": request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         if request.method == "PATCH":
-            serializer = SensorSerializer(sensor, data=request.data, partial=True)
+            serializer = SensorSerializer(
+                sensor, data=request.data, partial=True, context={"request": request}
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             SensorCache.delete_sensor(sensor.id)
@@ -121,10 +123,16 @@ def change_sensor_name(request, name):
                 {"error": "No name is provided to update the sensor name"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if SensorCache.get_sensor(new_name):
+            return Response(
+                {"error": "Invalid name! Sensor name must be unique"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         sensor.name = new_name
         sensor.save(update_fields=["name"])
         SensorCache.delete_sensor(sensor.id)
-        serializer = SensorSerializer(sensor)
+        serializer = SensorSerializer(sensor, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     else:
