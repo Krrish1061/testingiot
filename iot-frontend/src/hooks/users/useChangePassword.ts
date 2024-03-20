@@ -29,7 +29,7 @@ function useChangePassword() {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data[0] || "";
+        errorMessage = error.response?.data[0] || "Failed to Change Password";
       }
       enqueueSnackbar(errorMessage, {
         variant: "error",

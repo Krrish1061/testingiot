@@ -32,7 +32,7 @@ function useChangeEmail() {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data.error || "";
+        errorMessage = error.response?.data.error || "Failed to Change Email";
       }
       enqueueSnackbar(errorMessage, {
         variant: "error",

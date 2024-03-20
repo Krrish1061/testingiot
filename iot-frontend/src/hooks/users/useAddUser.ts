@@ -93,7 +93,9 @@ const useAddUser = () => {
         errorMessage = error.message;
       } else {
         errorMessage =
-          error.response?.data.error || error.response?.data.email[0] || "";
+          error.response?.data.error ||
+          error.response?.data.email[0] ||
+          "Failed to Create User";
       }
       enqueueSnackbar(errorMessage, {
         variant: "error",

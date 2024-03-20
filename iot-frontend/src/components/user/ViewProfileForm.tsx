@@ -20,7 +20,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import useUpdateProfile from "../../hooks/users/useUpdateProfile";
 import dayjs from "dayjs";
 
-// change these to match inputs in backend
 const schema = z.object({
   first_name: z.string().min(1, "This field is required").nullable(),
   last_name: z.string().min(1, "This field is required").nullable(),
@@ -31,8 +30,10 @@ const schema = z.object({
   phone_number: z
     .string()
     .max(10, "maximum of 10 digit")
-    .regex(/^\d{10}$/, "Invalid phone number")
-    .or(z.string().nullish()),
+    .nullish()
+    .refine((value) => !value || /^\d{10}$/.test(value), {
+      message: "Invalid phone number",
+    }),
 });
 
 type IFormInputs = z.infer<typeof schema>;

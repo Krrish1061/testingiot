@@ -19,6 +19,7 @@ interface IFormInputs {
 
 interface ChangeUserProfileContext {
   previousUserList: User[];
+  previousUser: User | null;
 }
 
 function useUpdateProfile() {
@@ -48,6 +49,8 @@ function useUpdateProfile() {
       const previousUserList =
         queryClient.getQueryData<User[]>(["userList"]) || [];
 
+      const previousUser = user;
+
       const newProfile = { ...user?.profile, ...newUserProfile };
 
       queryClient.setQueryData<User[]>(["userList"], (cachedUsers = []) =>
@@ -60,7 +63,7 @@ function useUpdateProfile() {
 
       setUser({ ...user, profile: newProfile } as User);
 
-      return { previousUserList };
+      return { previousUserList, previousUser };
     },
     onSuccess() {
       enqueueSnackbar("Profile Upadated", {
@@ -80,10 +83,8 @@ function useUpdateProfile() {
 
       if (!context) return;
       queryClient.setQueryData<User[]>(["userList"], context.previousUserList);
-      const oldUser = context.previousUserList.find(
-        (cachedUser) => cachedUser.id === user?.id
-      );
-      if (oldUser) setUser(oldUser);
+
+      if (context.previousUser) setUser(context.previousUser);
     },
   });
 }
