@@ -5,11 +5,15 @@ from iot_devices.cache import IotDeviceCache
 from django.utils import timezone
 from django.db.models import OuterRef, Subquery
 from sensor_data.models import SensorData
-import logging
+
+# import logging
+from celery.utils.log import get_task_logger
 import json
 from collections import defaultdict
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+
+logger = get_task_logger(__name__)
 
 
 @shared_task
@@ -22,9 +26,12 @@ def send_initial_data(username=None, company_slug=None):
 
     # defining the group name for admin user or company
     group_name = company_slug if company_slug else username
-    logger.warning(
+    print(
         f"inside SensorDataConsumer {company_slug if company_slug else username} get_initial_data method"
     )
+    # logger.warning(
+    #     f"inside SensorDataConsumer {company_slug if company_slug else username} get_initial_data method"
+    # )
     iot_device_list = []
     if company_slug:
         iot_device_list = IotDeviceCache.get_all_company_iot_devices(
@@ -52,9 +59,12 @@ def send_initial_data(username=None, company_slug=None):
         )
         .order_by("device_sensor__field_number")
     )
-    logger.warning(
+    print(
         f"inside SensorDataConsumer {company_slug if company_slug else username} after query method"
     )
+    # logger.warning(
+    #     f"inside SensorDataConsumer {company_slug if company_slug else username} after query method"
+    # )
 
     sensors_data = defaultdict(dict)
     for data in latest_sensor_data_qs:
@@ -66,10 +76,12 @@ def send_initial_data(username=None, company_slug=None):
         sensor_value = data.pop("value")
         data[sensor_name] = sensor_value
         sensors_data[iot_device_id].update(data)
-
-    logger.warning(
+    print(
         f"inside SensorDataConsumer {company_slug if company_slug else username} after executing query method"
     )
+    # logger.warning(
+    #     f"inside SensorDataConsumer {company_slug if company_slug else username} after executing query method"
+    # )
 
     # connects to the Consumers.py and calls send_data function in websocket app
     async_to_sync(channel_layer.group_send)(
