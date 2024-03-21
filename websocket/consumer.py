@@ -1,18 +1,17 @@
 import json
 from collections import defaultdict
-
 from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db.models import OuterRef, Subquery
 from django.utils import timezone
-
 from company.cache import CompanyCache
 from iot_devices.cache import IotDeviceCache
 from sensor_data.models import SensorData
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
+from websocket.tasks import send_initial_data
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,8 +33,16 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
         if not self.is_superadmin:
-            initial_data = await self.get_initial_data(user=user, company=user.company)
-            await self.send(text_data=json.dumps(initial_data))
+            company = user.company
+            username = None
+            if company is None:
+                username = (
+                    user.username if user.type == "ADMIN" else user.created_by.username
+                )
+            company_slug = company.slug if company else None
+            send_initial_data.delay(username=username, company_slug=company_slug)
+            # initial_data = await self.get_initial_data(user=user, company=user.company)
+            # await self.send(text_data=json.dumps(initial_data))
 
     async def disconnect(self, code):
         if self.subscribed_group:
@@ -54,6 +61,10 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         )
         await self.send(text_data=json.dumps(device_sensor_data))
 
+    async def send_initial_data(self, event):
+        # Send the data to the websocket
+        await self.send(text_data=event["data"])
+
     async def receive(self, text_data):
         if self.is_superadmin:
             data = json.loads(text_data)
@@ -71,8 +82,17 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 group_name = user.username if user else company.slug
                 await self.unsubscribe_from_group()
                 await self.subscribe_to_group(group_name)
-                initial_data = await self.get_initial_data(user=user, company=company)
-                await self.send(text_data=json.dumps(initial_data))
+                username = None
+                company_slug = company.slug if company else None
+                if company is None:
+                    username = (
+                        user.username
+                        if user.type == "ADMIN"
+                        else user.created_by.username
+                    )
+                send_initial_data.delay(username=username, company_slug=company_slug)
+                # initial_data = await self.get_initial_data(user=user, company=company)
+                # await self.send(text_data=json.dumps(initial_data))
 
     async def subscribe_to_group(self, group_name):
         await self.channel_layer.group_add(group_name, self.channel_name)

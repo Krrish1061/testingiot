@@ -28,7 +28,7 @@ from utils.constants import GroupName
 
 from .models import SensorData
 from .serializers import IotDeviceSensorDataSerializer
-from .task import send_live_data_to
+from .tasks import send_live_data_to
 
 
 def sensor_data_generator(sensor_data_qs):

@@ -80,3 +80,8 @@ def send_data_to_websocket(
             "field_sensor_name_dict": field_sensor_name_dict,
         },
     )
+
+
+@shared_task
+def send_hello():
+    print("hello")

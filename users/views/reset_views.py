@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from users.cache import UserCache
 from users.serializers import UserPasswordSerializer
-from users.task import (
+from users.tasks import (
     sending_password_reset_confirmation_email,
     sending_password_reset_email,
 )

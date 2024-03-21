@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from users.cache import UserCache
 from users.serializers import UserProfileSerializer, UserSerializer
-from users.task import sending_verify_email
+from users.tasks import sending_verify_email
 from users.utilis import check_username
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType

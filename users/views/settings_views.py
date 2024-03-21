@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from users.cache import UserCache
 from users.serializers import ChangePasswordSerializer, UserPasswordSerializer
-from users.task import (
+from users.tasks import (
     sending_account_is_active_email,
     sending_confirmation_email,
     sending_confirmation_mail_for_email_update,
