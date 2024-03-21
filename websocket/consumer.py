@@ -13,6 +13,9 @@ from sensor_data.models import SensorData
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SensorDataConsumer(AsyncWebsocketConsumer):
@@ -132,6 +135,9 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
     @staticmethod
     @database_sync_to_async
     def get_initial_data(user, company):
+        logger.warning(
+            f"inside SensorDataConsumer {company.slug if company else user.username} get_initial_data method"
+        )
         iot_device_list = []
         if company:
             iot_device_list = IotDeviceCache.get_all_company_iot_devices(company)
@@ -160,6 +166,9 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             )
             .order_by("device_sensor__field_number")
         )
+        logger.warning(
+            f"inside SensorDataConsumer {company.slug if company else user.username} after query method"
+        )
 
         sensors_data = defaultdict(dict)
         for data in latest_sensor_data_qs:
@@ -172,4 +181,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             data[sensor_name] = sensor_value
             sensors_data[iot_device_id].update(data)
 
+        logger.warning(
+            f"inside SensorDataConsumer {company.slug if company else user.username} after executing query method"
+        )
         return sensors_data
