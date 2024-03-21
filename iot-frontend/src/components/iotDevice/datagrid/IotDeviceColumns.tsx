@@ -64,7 +64,7 @@ function IotDeviceColumns() {
         headerName: "Company",
         minWidth: 110,
         flex: 1,
-        editable: true,
+        editable: false,
         hideable: false,
         valueGetter: (params: GridValueGetterParams<IotDevice>) => {
           return companyList?.find(
@@ -78,7 +78,7 @@ function IotDeviceColumns() {
         headerName: "User",
         minWidth: 110,
         flex: 0.5,
-        editable: true,
+        editable: false,
         hideable: false,
         valueGetter: (params: GridValueGetterParams<IotDevice>) => {
           const user = userList?.find(
@@ -109,12 +109,12 @@ function IotDeviceColumns() {
       },
 
       {
-        field: "device_location",
+        field: "location",
         headerName: "Device Location",
         minWidth: 150,
-        editable: true,
+        editable: false,
         hideable: true,
-        valueGetter: (params) => params.value?.address,
+        valueGetter: (params) => params.row.iot_device_details.address,
         renderCell: RenderCellExpand,
       },
 

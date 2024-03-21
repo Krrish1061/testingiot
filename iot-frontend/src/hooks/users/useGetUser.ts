@@ -12,7 +12,7 @@ function useGetUser(isEnabled: boolean = true) {
     axiosInstance.get<User>(`${user?.username}/`).then((res) => res.data);
 
   return useQuery<User>({
-    queryKey: user ? [`${user.username}`] : undefined,
+    queryKey: user ? ["users", user.username] : ["user"],
     queryFn: fetchUser,
     enabled: isEnabled,
     cacheTime: Infinity,

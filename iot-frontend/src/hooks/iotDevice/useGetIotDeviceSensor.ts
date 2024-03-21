@@ -26,12 +26,12 @@ function useGetIotDeviceSensor({ companySlug, username }: Props) {
       .then((res) => res.data);
 
   return useQuery<DeviceSensors, AxiosError>({
-    queryKey: [
-      companySlug
-        ? `${companySlug}-device-sensors`
-        : `${username}-device-sensors`,
-    ],
+    queryKey: companySlug
+      ? ["device-sensors", companySlug]
+      : ["device-sensors", username],
     queryFn: getIotDeviceSensor,
+    cacheTime: Infinity,
+    staleTime: Infinity,
   });
 }
 

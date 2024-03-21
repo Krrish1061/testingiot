@@ -83,9 +83,6 @@ const useAddSensor = () => {
           ["sensorList"],
           context.previousSensorList
         );
-        if (rows.length !== 0) {
-          setRows(rows.filter((row) => row.id !== context.newSensorId));
-        }
       },
     }
   );
