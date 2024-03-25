@@ -146,18 +146,18 @@ def send_initial_data(username=None, company_slug=None):
         with connection.cursor() as cursor:
             raw_query = """
                         SELECT sd.iot_device_id, sd.timestamp, sd.value, s.name AS sensor_name
-                        FROM iot.sensor_data_sensordata sd
+                        FROM thoploiot.sensor_data_sensordata sd
                         JOIN (
                             SELECT iot_device_id, device_sensor_id, MAX(timestamp) AS max_timestamp
-                            FROM iot.sensor_data_sensordata
+                            FROM thoploiot.sensor_data_sensordata
                             WHERE iot_device_id IN %s
                             GROUP BY iot_device_id, device_sensor_id
                         ) AS max_timestamps
                         ON sd.iot_device_id = max_timestamps.iot_device_id
                             AND sd.device_sensor_id = max_timestamps.device_sensor_id
                             AND sd.timestamp = max_timestamps.max_timestamp
-                        JOIN iot.iot_devices_iotdevicesensor ds ON sd.device_sensor_id = ds.id
-                        JOIN iot.sensors_sensor s ON ds.sensor_id = s.id
+                        JOIN thoploiot.iot_devices_iotdevicesensor ds ON sd.device_sensor_id = ds.id
+                        JOIN thoploiot.sensors_sensor s ON ds.sensor_id = s.id
                         WHERE sd.iot_device_id IN %s
                         ORDER BY ds.iot_device_id ASC,  ds.field_number ASC
                     """
