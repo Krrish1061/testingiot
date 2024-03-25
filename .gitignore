@@ -7,8 +7,8 @@ static/
 migrations/
 .vscode/
 dump.rdb
-
-
+sensor_data/management/
+output_file.sql
 # iot-frontend
 # Logs
 logs

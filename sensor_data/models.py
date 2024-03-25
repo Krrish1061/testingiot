@@ -38,4 +38,4 @@ class SensorData(models.Model):
         ]
 
     def __str__(self):
-        return f"sensor data of {self.device_sensor}"
+        return f"sensor data of device_sensor id {self.device_sensor.id}"

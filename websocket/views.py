@@ -6,14 +6,22 @@ from rest_framework.response import Response
 from iot_devices.cache import IotDeviceCache
 from sensor_data.models import SensorData
 from websocket.cache import WebSocketCache
-
 from .models import WebSocketToken
 from .utilis import generate_token_key
 from collections import defaultdict
 from django.utils import timezone
-from django.db.models import OuterRef, Subquery, Max, F
+from django.db import connection
 
 # Create your views here.
+
+
+def dictfetchall(cursor):
+    """
+    Return all rows from a cursor as a dict.
+    Assume the column names are unique.
+    """
+    columns = [col[0] for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
 @api_view(["POST"])
@@ -37,64 +45,72 @@ def get_websocket_token(request):
 def get_initial_data(request):
     username = request.query_params.get("user")
     company_slug = request.query_params.get("company")
-    iot_device_list = []
-    if company_slug:
-        iot_device_list = IotDeviceCache.get_all_company_iot_devices(
-            company_slug=company_slug
-        )
-    else:
-        iot_device_list = IotDeviceCache.get_all_user_iot_devices(username=username)
-
-    latest_sensor_data = (
-        SensorData.objects.filter(iot_device__in=iot_device_list)
-        .values(
-            "iot_device",
-            "device_sensor",
-        )
-        .annotate(
-            latest_timestamp=Max("timestamp"),
-        )
+    iot_device_list = (
+        IotDeviceCache.get_all_company_iot_devices(company_slug=company_slug)
+        if company_slug
+        else IotDeviceCache.get_all_user_iot_devices(username=username)
     )
-
-    # Use annotate to get the latest timestamp for each device_sensor
-    # latest_timestamp_subquery = (
-    #     SensorData.objects.filter(device_sensor=OuterRef("device_sensor"))
-    #     .order_by("-timestamp")
-    #     .values("timestamp")[:1]
-    # )
-    # Use these latest timestamps to filter the queryset
-    # latest_sensor_data_qs = (
-    #     SensorData.objects.select_related("device_sensor", "iot_device").filter(
-    #         iot_device__in=iot_device_list
-    #     )
-    #     # .annotate(time=Max("timestamp"))
-    #     # .filter(timestamp=Subquery(latest_sensor_data))
-    #     .values(
-    #         "device_sensor__sensor__name",
-    #         "iot_device_id",
-    #         "value",
-    #         "timestamp",
-    #     )
-    #     # .order_by("device_sensor__field_number")
-    # )
-    latest_sensor_data_qs = (
-        SensorData.objects.filter(
-            timestamp__in=Subquery(latest_sensor_data.values("latest_timestamp")),
-        )
-        .select_related("device_sensor__sensor", "iot_device")
-        .values("device_sensor__sensor__name", "iot_device_id", "value", "timestamp")
-        .order_by("iot_device", "device_sensor__field_number")
-    )
-
-    # print(latest_sensor_data_qs)
-
     sensors_data = defaultdict(dict)
-    for data in latest_sensor_data_qs:
-        iot_device_id = data.pop("iot_device_id")
-        data["timestamp"] = timezone.localtime(data.pop("timestamp")).strftime(
-            "%Y/%m/%d %H:%M:%S"
+    # use this if below code takes too much time
+    # for device_id in iot_device_list:
+    #     device_sensor_list = IotDeviceCache.get_all_device_sensors(device_id=device_id)
+    #     for device_sensor in device_sensor_list:
+    #         query = (
+    #             SensorData.objects.select_related(
+    #                 "device_sensor__sensor",
+    #             )
+    #             .filter(iot_device_id=device_id, device_sensor_id=device_sensor)
+    #             .values(
+    #                 "device_sensor__sensor__name",
+    #                 "iot_device_id",
+    #                 "value",
+    #                 "timestamp",
+    #             )
+    #             .order_by("-timestamp")[:1]
+    #         )
+    #         for data in query:
+    #             iot_device_id = data.pop("iot_device_id")
+    #             print(data["timestamp"])
+    #             data["timestamp"] = timezone.localtime(data.pop("timestamp")).strftime(
+    #                 "%Y/%m/%d %H:%M:%S"
+    #             )
+    #             sensor_name = data.pop("device_sensor__sensor__name")
+    #             sensor_value = data.pop("value")
+    #             data[sensor_name] = sensor_value
+    #             sensors_data[iot_device_id].update(data)
+
+    iot_device_list = list(iot_device_list)
+    results = {}
+    with connection.cursor() as cursor:
+        raw_query = """
+                    SELECT sd.iot_device_id, sd.timestamp, sd.value, s.name AS sensor_name
+                    FROM iot.sensor_data_sensordata sd
+                    JOIN (
+                        SELECT iot_device_id, device_sensor_id, MAX(timestamp) AS max_timestamp
+                        FROM iot.sensor_data_sensordata
+                        WHERE iot_device_id IN %s
+                        GROUP BY iot_device_id, device_sensor_id
+                    ) AS max_timestamps
+                    ON sd.iot_device_id = max_timestamps.iot_device_id
+                        AND sd.device_sensor_id = max_timestamps.device_sensor_id
+                        AND sd.timestamp = max_timestamps.max_timestamp
+                    JOIN iot.iot_devices_iotdevicesensor ds ON sd.device_sensor_id = ds.id
+                    JOIN iot.sensors_sensor s ON ds.sensor_id = s.id
+                    WHERE sd.iot_device_id IN %s
+                    ORDER BY ds.iot_device_id ASC,  ds.field_number ASC
+                """
+        cursor.execute(
+            raw_query,
+            [iot_device_list, iot_device_list],
         )
-        sensor_name = data.pop("device_sensor__sensor__name")
+        results = dictfetchall(cursor)
+
+    for data in results:
+        iot_device_id = data.pop("iot_device_id")
+        data["timestamp"] = timezone.localtime(
+            data["timestamp"].replace(tzinfo=timezone.utc)
+        ).strftime("%Y/%m/%d %H:%M:%S")
+        sensor_name = data.pop("sensor_name")
         sensor_value = data.pop("value")
         data[sensor_name] = sensor_value
         sensors_data[iot_device_id].update(data)
