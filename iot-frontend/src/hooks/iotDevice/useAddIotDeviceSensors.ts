@@ -1,7 +1,8 @@
 import useAxios from "../../api/axiosInstance";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
+import { useParams } from "react-router-dom";
 
 interface ISensorField {
   sensor_name: string;
@@ -22,7 +23,9 @@ interface IResponse {
 }
 
 function useAddIotDeviceSensors(iotDeviceId: number) {
+  const { username, companySlug } = useParams();
   const axiosInstance = useAxios();
+  const queryClient = useQueryClient();
 
   const addIotDeviceSensors = (data: IFormInputs) =>
     axiosInstance
@@ -37,9 +40,20 @@ function useAddIotDeviceSensors(iotDeviceId: number) {
       enqueueSnackbar("Sensors were sucessfully associated with the device", {
         variant: "success",
       });
+      queryClient.invalidateQueries({
+        queryKey: ["device-sensors", username || companySlug],
+      });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.error, {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage =
+          error.response?.data.error ||
+          "Failed to Associate Sensor to IotDevice";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

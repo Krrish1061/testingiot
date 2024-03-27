@@ -91,3 +91,24 @@ class Cache(ABC):
     @staticmethod
     def set_many(cache_data: dict, ttl=CACHE_TTL) -> None:
         cache.set_many(cache_data, ttl)
+
+    @staticmethod
+    def delete_pattern(pattern: str) -> None:
+        import redis
+        from decouple import config
+
+        database = config("REDIS_DATABASE")
+        pattern = f"{config('REDIS_KEY_PREFIX')}:{database}:{pattern}"
+        # connect to the redis
+        r = redis.Redis(
+            host=config("REDIS_HOST"), port=config("REDIS_DATABASE_PORT"), db=database
+        )
+        cursor = 0
+        while True:
+            cursor, keys = r.scan(cursor, match=pattern, count=100)
+            for key in keys:
+                r.delete(key)
+            if cursor == 0:
+                break
+        # close the redis connection
+        r.close()

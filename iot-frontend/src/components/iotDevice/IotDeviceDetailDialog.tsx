@@ -31,6 +31,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import useAuthStore from "../../store/authStore";
 import UserGroups from "../../constants/userGroups";
+// import IotDeviceDetail from "../../entities/IotDeviceDetail";
 
 interface Props {
   open: boolean;
@@ -42,7 +43,12 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
   const user = useAuthStore((state) => state.user);
   const [isEditMode, setIsEditMode] = useState(false);
   const noValue = "N/A";
-  const { mutate, isSuccess, isLoading } = useUpdateIotDeviceDetail();
+  const {
+    mutate,
+    data: deviceDetail,
+    isSuccess,
+    isLoading,
+  } = useUpdateIotDeviceDetail();
   const {
     register,
     handleSubmit,
@@ -77,10 +83,16 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
 
   const handleCancelClick = () => {
     setIsEditMode(false);
+    reset({
+      name: iotDevice?.iot_device_details?.name || "",
+      environment_type: iotDevice?.iot_device_details?.environment_type,
+      address: iotDevice?.iot_device_details?.address,
+      description: iotDevice?.iot_device_details?.description,
+    });
   };
 
   useEffect(() => {
-    if (iotDevice && !isEditMode) {
+    if (iotDevice) {
       reset({
         name: iotDevice?.iot_device_details?.name || "",
         environment_type: iotDevice?.iot_device_details?.environment_type,
@@ -88,10 +100,14 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
         description: iotDevice?.iot_device_details?.description,
       });
     }
-  }, [iotDevice, reset, isEditMode]);
+  }, [iotDevice, reset]);
 
   useEffect(() => {
+    if (deviceDetail && iotDevice) {
+      setIotDevice({ ...iotDevice, iot_device_details: deviceDetail });
+    }
     setIsEditMode(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess]);
 
   return (

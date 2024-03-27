@@ -43,7 +43,7 @@ function IotDeviceSensor(Props: IProps) {
                 Sensor's associated with Iot-Device {deviceName(+key) || key}
               </Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ paddingTop: 0, marginTop: 0 }}>
+            <AccordionDetails sx={{ padding: 0, marginTop: 0 }}>
               <UpdateIotDeviceSensor
                 iotDeviceId={parseInt(key)}
                 iotDeviceSensors={value}

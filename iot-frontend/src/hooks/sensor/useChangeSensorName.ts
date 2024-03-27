@@ -58,6 +58,9 @@ function useChangeSensorName() {
       enqueueSnackbar("Sensor Name Changed Sucessfully", {
         variant: "success",
       });
+      queryClient.invalidateQueries({
+        queryKey: ["device-sensors"],
+      });
     },
     onError: (error, _formsInputs, context) => {
       let errorMessage = "";

@@ -132,6 +132,7 @@ def change_sensor_name(request, name):
         sensor.name = new_name
         sensor.save(update_fields=["name"])
         SensorCache.delete_sensor(sensor.id)
+        SensorCache.handle_name_change()
         serializer = SensorSerializer(sensor, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 

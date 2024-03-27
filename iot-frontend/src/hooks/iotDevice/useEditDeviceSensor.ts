@@ -1,8 +1,9 @@
 import useAxios from "../../api/axiosInstance";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import IotDeviceSensor from "../../entities/IotDeviceSensor";
+import { useParams } from "react-router-dom";
 
 interface ISensorField {
   sensor_name: string;
@@ -19,7 +20,9 @@ interface IError {
 }
 
 function useEditDeviceSensors(iotDeviceId: number) {
+  const { username, companySlug } = useParams();
   const axiosInstance = useAxios();
+  const queryClient = useQueryClient();
 
   const editIotDeviceSensors = (data: IFormInputs) =>
     axiosInstance
@@ -34,9 +37,20 @@ function useEditDeviceSensors(iotDeviceId: number) {
       enqueueSnackbar("Device field were sucessfully updated", {
         variant: "success",
       });
+      queryClient.invalidateQueries({
+        queryKey: ["device-sensors", username || companySlug],
+      });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.error, {
+      let errorMessage = "";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = error.message;
+      } else {
+        errorMessage =
+          error.response?.data.error ||
+          "Failed to Edit Associate Sensor of IotDevice";
+      }
+      enqueueSnackbar(errorMessage, {
         variant: "error",
       });
     },

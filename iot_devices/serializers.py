@@ -33,7 +33,7 @@ class IotDeviceDetailSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         if not value:
-            raise serializers.ValidationError("Name field must not be empty.")
+            raise serializers.ValidationError("Name field is required.")
         return value
 
     def update(self, instance, validated_data):
@@ -148,6 +148,10 @@ class SensorSerializer(serializers.Serializer):
     min_limit = serializers.IntegerField(required=False, allow_null=True)
 
     def to_internal_value(self, data):
+        if not data.get("sensor_name"):
+            raise serializers.ValidationError(
+                {"sensor_name": ["sensor name is not provided"]}
+            )
         data["sensor_name"] = data.get("sensor_name").lower()
         return super().to_internal_value(data)
 
@@ -178,12 +182,13 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
             "update_fieldname_sensor",
         ]
         read_only_fields = (
+            "id",
             "sensor_name",
             "iot_device",
             "field_name",
-            "created_at",
             "max_limit",
             "min_limit",
+            "created_at",
         )
 
     def check_empty_dict(self, dict, name):

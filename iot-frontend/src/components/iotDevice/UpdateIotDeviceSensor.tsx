@@ -28,6 +28,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import useEditDeviceSensors from "../../hooks/iotDevice/useEditDeviceSensor";
 import ErrorTableRow from "./ErrorTableRow";
 import useDeleteDeviceSensor from "../../hooks/iotDevice/useDeleteDeviceSensor";
+import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 
 interface Props {
   iotDeviceId: number;
@@ -74,19 +75,19 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
   const {
     mutate: addDeviceSensors,
     isLoading: addLoading,
-    isSuccess: addSuccess,
+    // isSuccess: addSuccess,
   } = useAddIotDeviceSensors(iotDeviceId);
 
   const {
     mutate: editDeviceSensors,
     isLoading: editLoading,
-    isSuccess: editSuccess,
+    // isSuccess: editSuccess,
   } = useEditDeviceSensors(iotDeviceId);
 
   const {
     mutate: deleteDeviceSensors,
     isLoading: deleteLoading,
-    isSuccess: deleteSuccess,
+    // isSuccess: deleteSuccess,
   } = useDeleteDeviceSensor(iotDeviceId);
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -98,30 +99,39 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
   const [deleteFieldName, setDeleteFieldName] = useState<string[] | null>(null);
 
   useEffect(() => {
-    if (addSuccess) {
-      setFields({ ...fields, ...newFields });
-      setIsAddMode(false);
-      setNewFields(null);
-    }
+    setFields(initalData);
+    setIsAddMode(false);
+    setNewFields(null);
+    setIsEditMode(false);
+    setIsDeleteMode(false);
+    setDeleteFieldName(null);
+  }, [initalData]);
 
-    if (editSuccess) {
-      setIsEditMode(false);
-    }
+  // useEffect(() => {
+  //   setFields({ ...fields, ...newFields });
+  //   setIsAddMode(false);
+  //   setNewFields(null);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [addSuccess]);
 
-    if (deleteSuccess) {
-      const updatedObject = { ...fields };
-      deleteFieldName?.forEach((key) => {
-        if (key in updatedObject) {
-          delete updatedObject[key];
-        }
-      });
+  // useEffect(() => {
+  //   setIsEditMode(false);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [editSuccess]);
 
-      setFields(updatedObject);
-      setIsDeleteMode(false);
-      setDeleteFieldName(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSuccess, editSuccess, deleteSuccess]);
+  // useEffect(() => {
+  //   const updatedObject = { ...fields };
+  //   deleteFieldName?.forEach((key) => {
+  //     if (key in updatedObject) {
+  //       delete updatedObject[key];
+  //     }
+  //   });
+
+  //   setFields(updatedObject);
+  //   setIsDeleteMode(false);
+  //   setDeleteFieldName(null);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [deleteSuccess]);
 
   const handleAddEditSaveButton = () => {
     try {
@@ -252,6 +262,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
               size="small"
               color="secondary"
               startIcon={<EditIcon />}
+              disabled={iotDeviceSensors.length == 0}
               onClick={() => {
                 setNewFields({});
                 setIsEditMode(true);
@@ -263,6 +274,7 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
               size="small"
               color="error"
               startIcon={<DeleteIcon />}
+              disabled={iotDeviceSensors.length == 0}
               onClick={() => setIsDeleteMode(true)}
             >
               Delete Sensor
@@ -331,12 +343,22 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
               {isDeleteMode && <TableCell>Select to Delete</TableCell>}
             </TableRow>
           </TableHead>
+          {!newFields && iotDeviceSensors.length == 0 && (
+            <TableBody>
+              <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+                <TableCell colSpan={5}>
+                  <CustomNoRowsOverlay />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          )}
           <TableBody>
             {Object.entries(fields).map(
               ([fieldName, { sensor_name, max_limit, min_limit }], index) => (
                 <Fragment key={fieldName}>
                   <TableRow
                     sx={{
+                      paddingBottom: 0,
                       "&:last-child td, &:last-child th": { border: 0 },
                       "& > *": {
                         borderBottom:

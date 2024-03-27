@@ -163,10 +163,6 @@ REST_FRAMEWORK = {
     )
 }
 
-# Whitenoise MIME types configuration
-# WHITENOISE_MIMETYPES = {
-#     ".js": "application/javascript",
-# }
 
 #  Simple jwt settings
 SIMPLE_JWT = {
@@ -243,7 +239,9 @@ AUTH_USER_MODEL = "users.User"
 # Celery setting
 database_url = f"mysql://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
 
-CELERY_BROKER_URL = "redis://localhost:6379/2"
+CELERY_BROKER_URL = (
+    f"redis://{config('CELERY_BROKER_HOST')}:{config('CELERY_BROKER_PORT')}/{config('CELERY_BROKER_DATABASE')}",
+)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_RESULT_BACKEND = f"db+{database_url}"
 
@@ -252,8 +250,8 @@ CELERY_RESULT_BACKEND = f"db+{database_url}"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "KEY_PREFIX": "iot",
+        "LOCATION": f"redis://{config('REDIS_HOST')}:{config('REDIS_DATABASE_PORT')}/{config('REDIS_DATABASE')}",
+        "KEY_PREFIX": config("REDIS_KEY_PREFIX"),
         "TIMEOUT": 300,  # value in seconds
         # "OPTIONS": {
         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -267,8 +265,8 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-            "group_expiry": 10800,
+            "hosts": [(config("CHANNEL_HOST"), config("CHANNEL_PORT"))],
+            "group_expiry": 10800,  # 3 hours,
         },
     },
 }
