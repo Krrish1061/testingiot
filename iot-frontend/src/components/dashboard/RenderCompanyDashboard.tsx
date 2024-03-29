@@ -71,7 +71,18 @@ function RenderCompanyDashboard() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companySlug, websocket]);
+  }, [companySlug]);
+
+  useEffect(() => {
+    if (websocket) {
+      sendWebSocketMessage({
+        type: "group_subscribe",
+        company_slug: companySlug,
+        group_type: "company",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [websocket]);
 
   return (
     <>

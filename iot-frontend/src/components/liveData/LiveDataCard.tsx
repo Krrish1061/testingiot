@@ -2,17 +2,15 @@ import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
-import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
+import Sensor from "../../entities/Sensor";
 
 interface Props {
   sensorName: string;
   data: string | number;
+  sensors: Sensor[] | undefined;
 }
 
-function LiveDataCard({ sensorName, data }: Props) {
-  // only get sensor associated with the user
-  const { data: sensors } = useGetAllSensors();
-
+function LiveDataCard({ sensorName, data, sensors }: Props) {
   return (
     <Card
       elevation={1}

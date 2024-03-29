@@ -69,7 +69,16 @@ function RenderUserDashboard() {
       group_type: "user",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, websocket]);
+  }, [username]);
+
+  useEffect(() => {
+    sendWebSocketMessage({
+      type: "group_subscribe",
+      username: username,
+      group_type: "user",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [websocket]);
 
   return (
     <>

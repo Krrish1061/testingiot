@@ -60,8 +60,10 @@ class SensorCaching(Cache):
         self.delete_from_list(self.cache_key, self.app_name, id=sensor_id)
 
     def handle_name_change(self):
-        # delete all the device sensor from the cache to reflect sensor name change
-        self.delete_pattern("device_sensor_*")
+        # delete all the device sensor and sensor associated with company and user from the cache to reflect sensor name change
+        self.delete_pattern(
+            patterns=("device_sensor_*", "company_sensor_*", "admin_user_sensor_*")
+        )
 
     def get_all_company_sensor(self, company=None, company_slug=None) -> list:
         """Return the list of all the sensor name that company owns"""

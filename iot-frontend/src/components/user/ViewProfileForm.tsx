@@ -90,6 +90,7 @@ function ViewProfileForm() {
       sx={{
         margin: 1,
         padding: 2,
+
         // "& .MuiTextField-root": {
         //   minWidth: "20ch",
         // },
@@ -149,6 +150,7 @@ function ViewProfileForm() {
               color="inherit"
               fontWeight="bold"
               gutterBottom
+              required={isEditMode}
             >
               First name:
             </Typography>
@@ -158,6 +160,7 @@ function ViewProfileForm() {
               size="small"
               type="text"
               autoComplete="given-name"
+              placeholder={isEditMode ? "" : noValue}
               variant={isEditMode ? "outlined" : "standard"}
               InputProps={{
                 ...(!isEditMode && { disableUnderline: true }),
@@ -176,6 +179,7 @@ function ViewProfileForm() {
               gutterBottom
               color="inherit"
               fontWeight="bold"
+              required={isEditMode}
             >
               Last name:
             </Typography>
@@ -185,6 +189,7 @@ function ViewProfileForm() {
               type="text"
               size="small"
               autoComplete="family-name"
+              placeholder={isEditMode ? "" : noValue}
               variant={isEditMode ? "outlined" : "standard"}
               InputProps={{
                 ...(!isEditMode && { disableUnderline: true }),

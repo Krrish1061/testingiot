@@ -1,19 +1,17 @@
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import useDrawerStore from "../store/drawerStore";
-import useCompany from "../hooks/company/useCompany";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
-import EditIcon from "@mui/icons-material/Edit";
+import Typography from "@mui/material/Typography";
+import { useRef, useState } from "react";
+import ChangeImage from "../components/ChangeImage";
+import ChangeImageBadge from "../components/ChangeImageBadge";
 import ImageAvatar from "../components/ImageAvatar";
-import IconButton from "@mui/material/IconButton";
-import Badge from "@mui/material/Badge";
-import { ChangeEvent, useState, useRef } from "react";
-import CompanyProfile from "../components/company/CompanyProfile";
 import ChangeCompanyEmail from "../components/company/ChangeCompanyEmail";
+import CompanyProfile from "../components/company/CompanyProfile";
+import useCompany from "../hooks/company/useCompany";
+import useUpdateCompanyLogo from "../hooks/company/useUploadCompanyLogo";
 import useCompanyStore from "../store/companyStore";
-import VisuallyHiddenInput from "../components/styledComponents/VisuallyHiddenInput";
-import ChangeCompanyLogo from "../components/company/ChangeCompanyLogo";
+import useDrawerStore from "../store/drawerStore";
 
 function ViewCompanyProfile() {
   const [open, setOpen] = useState(false);
@@ -23,11 +21,15 @@ function ViewCompanyProfile() {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
   const selectedImage = useRef<HTMLInputElement | null>(null);
 
-  const handleChangeImage = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files;
-    if (file) {
-      setFile(URL.createObjectURL(file[0]));
-      setOpen(true);
+  const {
+    mutateAsync,
+    isSuccess,
+    isLoading: updatingCompanyProfile,
+  } = useUpdateCompanyLogo();
+
+  const handleImageUpload = async () => {
+    if (selectedImage.current && selectedImage.current.files) {
+      await mutateAsync({ logo: selectedImage.current.files[0] });
     }
   };
 
@@ -57,43 +59,28 @@ function ViewCompanyProfile() {
         padding={2}
       >
         <Stack justifyContent="center" alignItems="center" spacing={3}>
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            badgeContent={
-              <IconButton
-                size="small"
-                component="label"
-                sx={{
-                  bgcolor: "primary.main",
-                  "&:hover": {
-                    bgcolor: "secondary.dark",
-                  },
-                }}
-              >
-                <EditIcon fontSize="inherit" sx={{ color: "white" }} />
-                <VisuallyHiddenInput
-                  ref={selectedImage}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleChangeImage}
-                />
-              </IconButton>
+          <ChangeImageBadge
+            setOpen={setOpen}
+            setFile={setFile}
+            selectedImage={selectedImage}
+            imageAvatar={
+              <ImageAvatar
+                imgUrl={company.profile?.logo}
+                altText={company.name}
+                height={200}
+                width={200}
+              />
             }
-          >
-            <ImageAvatar
-              imgUrl={company.profile?.logo}
-              altText={company.name}
-              height={200}
-              width={200}
-            />
-          </Badge>
-          <ChangeCompanyLogo
+          />
+          <ChangeImage
             open={open}
             setOpen={setOpen}
             file={file}
             setFile={setFile}
             selectedImage={selectedImage}
+            handleImageUpload={handleImageUpload}
+            isSuccess={isSuccess}
+            isLoading={updatingCompanyProfile}
           />
 
           <Box component="div" textAlign="center">

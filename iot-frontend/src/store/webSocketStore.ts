@@ -11,10 +11,13 @@ interface LiveData {
   [iot_device_id: number]: Data;
 }
 
+type webSocketState = "connecting" | "connected" | "disconnected" | "closed";
+
 interface WebSocketStoreState {
   websocket: WebSocket | null;
   liveData: LiveData | null;
-  connectionState: "connecting" | "open" | "closing" | "closed";
+  connectionState: webSocketState;
+  setConnectionState: (webSocketState: webSocketState) => void;
   setliveDataToNull: () => void;
   connectWebSocket: (endpoint: string) => void;
   closeWebSocket: () => void;
@@ -28,11 +31,18 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
 
   setliveDataToNull: () => set({ liveData: null }),
 
+  setConnectionState: (webSocketState) =>
+    set({ connectionState: webSocketState }),
+
   connectWebSocket: (endpoint: string) => {
+    set({ connectionState: "connecting" });
     webSocketService.connect(endpoint);
 
     webSocketService.websocket!.onopen = () => {
-      set({ websocket: webSocketService.websocket, connectionState: "open" });
+      set({
+        websocket: webSocketService.websocket,
+        connectionState: "connected",
+      });
     };
 
     webSocketService.websocket!.onmessage = (event) => {
@@ -56,11 +66,23 @@ const useWebSocketStore = create<WebSocketStoreState>((set) => ({
         }
       });
     };
+
+    webSocketService.websocket!.onclose = () => {
+      set({
+        connectionState: "disconnected",
+      });
+    };
+
+    webSocketService.websocket!.onerror = () => {
+      set({
+        connectionState: "disconnected",
+      });
+    };
   },
 
   closeWebSocket: () => {
     webSocketService.close();
-    set({ websocket: null });
+    set({ websocket: null, connectionState: "closed" });
   },
 
   sendWebSocketMessage: (message) => {

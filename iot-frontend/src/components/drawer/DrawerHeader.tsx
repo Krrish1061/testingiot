@@ -7,11 +7,13 @@ import Logo from "/logo.png";
 import styled from "@mui/material/styles/styled";
 import Divider from "@mui/material/Divider";
 import ImageAvatar from "../ImageAvatar";
+import { Link as RouterLink } from "react-router-dom";
+import IconButton from "@mui/material/IconButton";
 
 export const SideBarHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  justifyContent: "space-around",
+  justifyContent: "center",
   padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
@@ -19,19 +21,33 @@ export const SideBarHeader = styled("div")(({ theme }) => ({
 
 const DrawerHeader = () => {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
+  const isMobile = useDrawerStore((state) => state.isMobile);
+  const setDrawerOpen = useDrawerStore((state) => state.setDrawerOpen);
   const user = useAuthStore((state) => state.user);
   const avatarSize = isDrawerOpen ? 100 : 50;
+
+  const handleIconButtonClick = () => {
+    if (isMobile) setDrawerOpen(false);
+  };
 
   return (
     <>
       <Box>
         <SideBarHeader>
-          <ImageAvatar
-            altText="Thoplo Machine Logo"
-            imgUrl={Logo}
-            width={50}
-            height={50}
-          />
+          <IconButton
+            component={RouterLink}
+            to="/"
+            disableRipple
+            onClick={handleIconButtonClick}
+          >
+            <ImageAvatar
+              altText="Thoplo Machine Logo"
+              variant="square"
+              imgUrl={Logo}
+              width={50}
+              height={50}
+            />
+          </IconButton>
           {isDrawerOpen ? (
             <Typography noWrap variant="h6" component="h1">
               Thoplo Machine
@@ -55,6 +71,7 @@ const DrawerHeader = () => {
             width={avatarSize}
             height={avatarSize}
           />
+
           {isDrawerOpen && (
             <Box textAlign="center">
               <Typography>{user?.username}</Typography>

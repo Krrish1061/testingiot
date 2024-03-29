@@ -1,22 +1,23 @@
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
-import NavUserButton from "./NavUserButton";
-import styled from "@mui/material/styles/styled";
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
-import useDrawerStore from "../../store/drawerStore";
-import { useRef, useState } from "react";
-import AddUserForm from "../user/AddUserForm";
-import useAuthStore from "../../store/authStore";
-import NavButton from "./NavButton";
-import SearchBar from "./SearchBar";
-import AddPopper from "./AddPopper";
-import ImageAvatar from "../ImageAvatar";
-import Logo from "/logo.png";
 import Typography from "@mui/material/Typography";
+import styled from "@mui/material/styles/styled";
+import { useRef, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import UserGroups from "../../constants/userGroups";
+import useAuthStore from "../../store/authStore";
+import useDrawerStore from "../../store/drawerStore";
+import ImageAvatar from "../ImageAvatar";
+import AddUserForm from "../user/AddUserForm";
+import AddPopper from "./AddPopper";
+import NavButton from "./NavButton";
+import NavUserButton from "./NavUserButton";
+import SearchBar from "./SearchBar";
+import Logo from "/logo.png";
 
 interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
@@ -109,13 +110,15 @@ function NavBar() {
               alignItems="center"
               spacing={2}
             >
-              <ImageAvatar
-                altText="Thoplo Machine Logo"
-                variant="square"
-                imgUrl={Logo}
-                width={50}
-                height={50}
-              />
+              <IconButton component={RouterLink} to="/" disableRipple>
+                <ImageAvatar
+                  altText="Thoplo Machine Logo"
+                  variant="square"
+                  imgUrl={Logo}
+                  width={50}
+                  height={50}
+                />
+              </IconButton>
               <Typography
                 component="h1"
                 variant="h6"

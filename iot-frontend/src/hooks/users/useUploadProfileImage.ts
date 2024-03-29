@@ -10,6 +10,11 @@ interface IFormData {
   profile_picture: File;
 }
 
+interface IError {
+  error: string;
+  profile_picture?: string[];
+}
+
 const useUploadProfileImage = () => {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
@@ -25,7 +30,7 @@ const useUploadProfileImage = () => {
       })
       .then((res) => res.data);
 
-  return useMutation<UserProfile, AxiosError<string>, IFormData>({
+  return useMutation<UserProfile, AxiosError<IError>, IFormData>({
     mutationFn: UploadImage,
     onSuccess: (userProfile) => {
       setUser({
@@ -50,7 +55,11 @@ const useUploadProfileImage = () => {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data || "";
+        errorMessage =
+          error.response?.data.error ||
+          (error.response?.data.profile_picture &&
+            error.response?.data.profile_picture[0]) ||
+          "Failed to update Profile Picture";
       }
       enqueueSnackbar(errorMessage, {
         variant: "error",

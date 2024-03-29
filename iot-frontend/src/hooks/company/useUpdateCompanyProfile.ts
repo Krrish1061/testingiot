@@ -1,16 +1,15 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { useMutation } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
-import CompanyProfile from "../../entities/CompanyProfile";
-import useCompanyStore from "../../store/companyStore";
 import useAxios from "../../api/axiosInstance";
 import Company from "../../entities/Company";
+import CompanyProfile from "../../entities/CompanyProfile";
+import useCompanyStore from "../../store/companyStore";
 
 interface IFormInputs {
   address?: string | null;
   description?: string | null;
   phone_number?: string | null;
-  logo?: File;
 }
 
 interface ChangeCompanyProfileContext {
@@ -26,16 +25,12 @@ function useUpdateCompanyProfile() {
   const axiosInstance = useAxios();
   const company = useCompanyStore((state) => state.company);
   const setCompany = useCompanyStore((state) => state.setCompany);
+  const queryClient = useQueryClient();
 
-  const UpdateCompanyProfile = async (data: IFormInputs) => {
-    const headers = data.logo ? { "Content-Type": "multipart/form-data" } : {};
-
-    return axiosInstance
-      .patch<CompanyProfile>(`company/${company.slug}/profile/`, data, {
-        headers,
-      })
+  const UpdateCompanyProfile = async (data: IFormInputs) =>
+    axiosInstance
+      .patch<CompanyProfile>(`company/${company.slug}/profile/`, data)
       .then((res) => res.data);
-  };
 
   return useMutation<
     CompanyProfile,
@@ -53,6 +48,14 @@ function useUpdateCompanyProfile() {
       } as CompanyProfile;
 
       setCompany({ ...company, profile: newProfile });
+
+      queryClient.setQueryData<Company>(
+        ["company", company.slug],
+        (cachedCompany = {} as Company) => ({
+          ...cachedCompany,
+          profile: newProfile,
+        })
+      );
 
       return { previousCompany };
     },
@@ -78,6 +81,10 @@ function useUpdateCompanyProfile() {
 
       if (!context) return;
       setCompany(context.previousCompany);
+      queryClient.setQueryData<Company>(
+        ["company", company.slug],
+        context.previousCompany
+      );
     },
   });
 }

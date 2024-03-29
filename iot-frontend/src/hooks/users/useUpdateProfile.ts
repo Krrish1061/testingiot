@@ -61,6 +61,14 @@ function useUpdateProfile() {
         )
       );
 
+      queryClient.setQueryData<User>(
+        ["users", user?.username],
+        (cachedUser = {} as User) => ({
+          ...cachedUser,
+          profile: newProfile as UserProfile,
+        })
+      );
+
       setUser({ ...user, profile: newProfile } as User);
 
       return { previousUserList, previousUser };
@@ -82,9 +90,14 @@ function useUpdateProfile() {
       });
 
       if (!context) return;
+      if (context.previousUser) {
+        setUser(context.previousUser);
+        queryClient.setQueryData<User>(
+          ["users", user?.username],
+          context.previousUser
+        );
+      }
       queryClient.setQueryData<User[]>(["userList"], context.previousUserList);
-
-      if (context.previousUser) setUser(context.previousUser);
     },
   });
 }
