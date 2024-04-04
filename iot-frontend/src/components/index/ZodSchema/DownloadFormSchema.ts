@@ -17,6 +17,19 @@ const DownloadFormSchema = z
       }),
     user: z.string().nullish().or(z.string().array()),
     company: z.string().nullish().or(z.string().array()),
+    iot_device: z
+      .string()
+      .or(z.string().array())
+      .refine(
+        (value) => {
+          if (Array.isArray(value) && value.length === 0) return false;
+
+          return true;
+        },
+        {
+          message: "This field is required",
+        }
+      ),
     sensors: z
       .string()
       .array()

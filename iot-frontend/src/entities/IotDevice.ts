@@ -8,6 +8,7 @@ interface IotDevice {
   is_active: boolean;
   created_at: Date;
   iot_device_details: IotDeviceDetail;
+  sensor_name_list: string[];
 }
 
 export default IotDevice;

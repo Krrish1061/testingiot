@@ -3,6 +3,7 @@ import re
 from django.db import transaction
 from rest_framework import serializers
 from company.cache import CompanyCache
+from iot_devices.cache import IotDeviceCache
 from users.cache import UserCache
 
 from utils.error_message import (
@@ -49,6 +50,7 @@ class IotDeviceDetailSerializer(serializers.ModelSerializer):
 
 class IotDeviceSerializer(serializers.ModelSerializer):
     iot_device_details = IotDeviceDetailSerializer(read_only=True)
+    sensor_name_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = IotDevice
@@ -60,6 +62,7 @@ class IotDeviceSerializer(serializers.ModelSerializer):
             "board_id",
             "created_at",
             "iot_device_details",
+            "sensor_name_list",
         ]
 
         read_only_fields = ("created_at",)
@@ -72,6 +75,10 @@ class IotDeviceSerializer(serializers.ModelSerializer):
                 "error_messages": {"does_not_exist": ERROR_ADMIN_USER_NOT_FOUND},
             },
         }
+
+    def get_sensor_name_list(self, obj):
+        device_sensors = IotDeviceCache.get_all_device_sensors(obj.id)
+        return [device_sensor.sensor.name for device_sensor in device_sensors]
 
     def to_internal_value(self, data):
         # Replace the company slug and username with the corresponding Company instance

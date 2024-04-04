@@ -1,173 +1,21 @@
 import re
-from collections import defaultdict
 from datetime import datetime, timedelta
 from io import BytesIO
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
+
 import pandas as pd
-from django.db import transaction
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-)
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from company.cache import CompanyCache
-from iot_devices.auth import DeviceAuthentication
 from iot_devices.cache import IotDeviceCache
+from sensor_data.models import SensorData
 from sensors.cache import SensorCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName
-
-from .models import SensorData
-from .serializers import IotDeviceSensorDataSerializer
-from .tasks import send_live_data_to
-
-
-def sensor_data_generator(sensor_data_qs):
-    for entry in sensor_data_qs:
-        iot_device_id = entry["iot_device_id"]
-        sensor_name = entry.get("device_sensor__sensor__name", None)
-        value = entry["value"]
-        timestamp = entry["timestamp"]
-
-        yield iot_device_id, sensor_name, value, timestamp
-
-
-def process_sensor_data(sensor_data_qs, list_data_by_sensor=False):
-    """List the sensor data in the required format"""
-    sensors_data = (
-        defaultdict(list)
-        if list_data_by_sensor
-        else defaultdict(lambda: defaultdict(list))
-    )
-
-    for iot_device_id, sensor_name, value, timestamp in sensor_data_generator(
-        sensor_data_qs
-    ):
-        if list_data_by_sensor:
-            sensors_data[sensor_name].append(
-                {"value": value, "timestamp": timestamp, "iot_device_id": iot_device_id}
-            )
-        else:
-            sensors_data[iot_device_id][sensor_name].append(
-                {"value": value, "timestamp": timestamp}
-            )
-
-    return sensors_data
-
-
-# Api handling of the Sensordata model
-@api_view(["POST"])
-@authentication_classes([DeviceAuthentication])
-def save_sensor_data(request):
-    iot_device = request.auth
-    device_sensors = IotDeviceCache.get_all_device_sensors(iot_device.id)
-    if not device_sensors:
-        return Response(
-            {"error": "No Sensor is associated with the devices"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    serializer = IotDeviceSensorDataSerializer(
-        data=request.data,
-        context={
-            "request": request,
-            "iot_device": iot_device,
-            "device_sensors": device_sensors,
-        },
-    )
-    serializer.is_valid(raise_exception=True)
-    with transaction.atomic():
-        serializer.save()
-
-    username = iot_device.user.username if iot_device.user else None
-    company_slug = iot_device.company.slug if iot_device.company else None
-    group_name = company_slug if company_slug else username
-
-    # sending data to the websocket
-    channel_layer = get_channel_layer()
-    timestamp = (
-        serializer.validated_data.pop("timestamp")
-        .astimezone(timezone.get_default_timezone())
-        .strftime("%Y-%m-%d %H:%M:%S")
-    )
-
-    async_to_sync(channel_layer.group_send)(
-        group_name,
-        {
-            "type": "send_data",
-            "data": serializer.validated_data,
-            "device_id": iot_device.id,
-            "timestamp": timestamp,
-        },
-    )
-
-    # call celery for sending live data to an api end point
-    send_live_data_to.delay(
-        username=username,
-        company_slug=company_slug,
-        data=serializer.validated_data,
-        iot_device_id=iot_device.id,
-        board_id=iot_device.board_id,
-        timestamp=timestamp,
-    )
-
-    return Response(status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_sensor_data(request):
-    user = UserCache.get_user(username=request.user.username)
-    user_groups = get_groups_tuple(user)
-    one_month_ago = timezone.now() - timedelta(days=30)
-    if GroupName.SUPERADMIN_GROUP in user_groups:
-        sensor_data_qs = (
-            SensorData.objects.filter(timestamp__gte=one_month_ago)
-            .values(
-                "device_sensor__sensor__name",
-                "iot_device_id",
-                "value",
-                "timestamp",
-            )
-            .order_by("-timestamp")
-        )
-
-    else:
-        # getting the list of the iot_device associated with the admin user or company
-        iot_device_list = []
-        if user.is_associated_with_company:
-            iot_device_list = IotDeviceCache.get_all_company_iot_devices(user.company)
-        elif GroupName.ADMIN_GROUP in user_groups:
-            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user)
-        else:
-            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
-
-        sensor_data_qs = (
-            SensorData.objects.filter(
-                iot_device__id__in=iot_device_list, timestamp__gte=one_month_ago
-            )
-            .values(
-                "device_sensor__sensor__name",
-                "iot_device_id",
-                "value",
-                "timestamp",
-            )
-            .order_by("-timestamp")
-        )
-
-    list_data_by_sensor = request.query_params.get("list_by", None)
-    sensors_data = process_sensor_data(
-        sensor_data_qs, list_data_by_sensor=(list_data_by_sensor == "sensor")
-    )
-    return Response(sensors_data, status=status.HTTP_200_OK)
 
 
 def get_users_to_download_data(users):
@@ -372,6 +220,7 @@ def download_sensor_data(request):
     start_date = request.query_params.get("start_date", None)
     end_date = request.query_params.get("end_date", None)
     sensors = request.query_params.get("sensors", None)
+    iot_device = request.query_params.get("iot_device", None)
     file_type = request.query_params.get("file_type", None)
 
     if file_type is None or not file_type in ("excel", "csv"):
@@ -402,6 +251,15 @@ def download_sensor_data(request):
     if sensors and sensors != "all":
         sensors = set(sensors.split(","))
 
+    if iot_device and iot_device != "all":
+        try:
+            iot_device = {int(device_id) for device_id in iot_device.split(",")}
+        except ValueError:
+            return Response(
+                {"error": "Invalid Iot device Id!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
     sensor_dict = get_sensor_dict(user, user_groups, sensors)
 
     if sensor_dict is None:
@@ -427,8 +285,13 @@ def download_sensor_data(request):
         .order_by("-timestamp", "iot_device")
     )
 
+    if isinstance(iot_device, set):
+        sensor_data = sensor_data.filter(
+            iot_device__in=iot_device,
+        )
+
     if GroupName.ADMIN_GROUP in user_groups:
-        if start_date < (datetime.now() - timedelta(days=30)):
+        if start_date.date() < (datetime.now() - timedelta(days=30)).date():
             return Response(
                 {
                     "error": "Invalid Start date! Start date must not be earlier than 1 month from the current date."
@@ -438,7 +301,7 @@ def download_sensor_data(request):
         owned_iot_device_list = get_owned_iot_device_list(user)
 
         sensor_data_qs = sensor_data.filter(
-            timestamp__range=(start_date, end_date),
+            # timestamp__range=(start_date, end_date),
             iot_device__in=owned_iot_device_list,
         )
 
@@ -491,6 +354,8 @@ def download_sensor_data(request):
         # user is super-admin user
         users = request.query_params.get("user", None)
         companies = request.query_params.get("company", None)
+        device_list = []
+        device_dict = {}
 
         if companies:
             companies = get_companies_to_download_data(companies)
@@ -501,6 +366,12 @@ def download_sensor_data(request):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            for slug in companies:
+                iot_device_list = IotDeviceCache.get_all_company_iot_devices(
+                    company_slug=slug
+                )
+                device_list.extend(iot_device_list)
+                device_dict[slug] = iot_device_list
 
         if users:
             users = get_users_to_download_data(users)
@@ -511,6 +382,14 @@ def download_sensor_data(request):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            for username in users:
+                iot_device_list = IotDeviceCache.get_all_user_iot_devices(
+                    username=username
+                )
+                device_list.extend(iot_device_list)
+                device_dict[username] = iot_device_list
+
+        sensor_data = sensor_data.filter(iot_device__in=device_list)
 
         df = get_dataframe(sensor_data)
         if df is None:
@@ -533,9 +412,7 @@ def download_sensor_data(request):
                 )
                 if users:
                     for username in users:
-                        iot_device_list = IotDeviceCache.get_all_user_iot_devices(
-                            username=username
-                        )
+                        iot_device_list = device_dict[username]
                         users_df = df[df["Device Id"].isin(iot_device_list)]
                         if not users_df.empty:
                             user = UserCache.get_user(username)
@@ -557,9 +434,7 @@ def download_sensor_data(request):
                             )
                 if companies:
                     for slug in companies:
-                        iot_device_list = IotDeviceCache.get_all_company_iot_devices(
-                            company_slug=slug
-                        )
+                        iot_device_list = device_dict[slug]
                         company_df = df[df["Device Id"].isin(iot_device_list)]
                         if not company_df.empty:
                             company = CompanyCache.get_company(slug)
@@ -618,9 +493,7 @@ def download_sensor_data(request):
                 if users:
                     df["User"] = None
                     for username in users:
-                        iot_device_list = IotDeviceCache.get_all_user_iot_devices(
-                            username=username
-                        )
+                        iot_device_list = device_dict[username]
                         users_mask = df["Device Id"].isin(iot_device_list)
                         if any(users_mask):
                             user = UserCache.get_user(username)
@@ -634,9 +507,7 @@ def download_sensor_data(request):
                 if companies:
                     df["Company"] = None
                     for slug in companies:
-                        iot_device_list = IotDeviceCache.get_all_company_iot_devices(
-                            company_slug=slug
-                        )
+                        iot_device_list = device_dict[slug]
                         company_mask = df["Device Id"].isin(iot_device_list)
                         if any(company_mask):
                             company = CompanyCache.get_company(slug)

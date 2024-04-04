@@ -1,39 +1,39 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Grow from "@mui/material/Grow";
 import InputLabel from "@mui/material/InputLabel";
 import Paper from "@mui/material/Paper";
 import Popper from "@mui/material/Popper";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { Dispatch, RefObject, SetStateAction, useEffect, useMemo } from "react";
-import useGetAllCompany from "../../hooks/company/useGetAllCompany";
-import useGetAllUser from "../../hooks/users/useGetAllUser";
-import UserGroups from "../../constants/userGroups";
-import Button from "@mui/material/Button";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Radio from "@mui/material/Radio";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs, { Dayjs } from "dayjs";
+import { Dispatch, RefObject, SetStateAction, useEffect, useMemo } from "react";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import UserGroups from "../../constants/userGroups";
+import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import useGetIotDeviceList from "../../hooks/download/useGetIotDeviceList";
+import useGetSensorList from "../../hooks/download/useGetSensorList";
+import useDownload from "../../hooks/sensorData/useDownload";
+import useGetAllUser from "../../hooks/users/useGetAllUser";
 import useAuthStore from "../../store/authStore";
-import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
-import Checkbox from "@mui/material/Checkbox";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DownloadFormSchema, {
   IDownloadFormInputs,
 } from "./ZodSchema/DownloadFormSchema";
-import useDownload from "../../hooks/sensorData/useDownload";
-import CircularProgress from "@mui/material/CircularProgress";
-
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -48,14 +48,38 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
   const isuserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
   const { data: companyList } = useGetAllCompany(isuserSuperAdmin);
   const { data: userList } = useGetAllUser(isuserSuperAdmin);
-  const { data: sensorList } = useGetAllSensors();
   const { downloadSensorData, isLoading, setIsLoading } = useDownload();
 
-  const sensorNameList = useMemo(() => {
-    const names = sensorList?.map((sensor) => sensor.name) || [];
-    names.unshift("all");
-    return names;
-  }, [sensorList]);
+  const {
+    handleSubmit,
+    control,
+    reset,
+    setValue,
+    clearErrors,
+    formState: { errors },
+  } = useForm<IDownloadFormInputs>({
+    resolver: zodResolver(DownloadFormSchema),
+    defaultValues: {
+      start_date: null,
+      end_date: null,
+      user: null,
+      company: null,
+      iot_device: "all",
+      sensors: "all",
+      file_type: "excel",
+    },
+  });
+
+  const newIotDeviceList = useGetIotDeviceList({
+    control: control,
+    setValue: setValue,
+  });
+
+  const sensorNameList = useGetSensorList({
+    control: control,
+    iotDeviceList: newIotDeviceList,
+    setValue: setValue,
+  });
 
   const newCompanyList = useMemo(() => {
     const names = companyList
@@ -74,25 +98,6 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
 
     return [{ name: "all", username: "all", profile: null }, ...adminUserList];
   }, [userList]);
-
-  const {
-    handleSubmit,
-    control,
-    reset,
-    setValue,
-    clearErrors,
-    formState: { errors },
-  } = useForm<IDownloadFormInputs>({
-    resolver: zodResolver(DownloadFormSchema),
-    defaultValues: {
-      start_date: null,
-      end_date: null,
-      user: null,
-      company: null,
-      sensors: "all",
-      file_type: "excel",
-    },
-  });
 
   useEffect(() => {
     if (!open) {
@@ -134,16 +139,16 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
   const handleMonthClick = () => {
     clearErrors(["start_date", "end_date"]);
     const currentDate = dayjs().toDate();
-    const oneWeekAgo = dayjs().subtract(1, "month").toDate();
-    setValue("start_date", oneWeekAgo);
+    const oneMonthAgo = dayjs().subtract(30, "days").toDate();
+    setValue("start_date", oneMonthAgo);
     setValue("end_date", currentDate);
   };
 
   const handleYearClick = () => {
     clearErrors(["start_date", "end_date"]);
     const currentDate = dayjs().toDate();
-    const oneWeekAgo = dayjs().subtract(1, "year").toDate();
-    setValue("start_date", oneWeekAgo);
+    const oneYearAgo = dayjs().subtract(1, "year").toDate();
+    setValue("start_date", oneYearAgo);
     setValue("end_date", currentDate);
   };
 
@@ -505,6 +510,73 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                 >
                   <InputLabel
                     sx={{ color: "inherit", fontWeight: "bold" }}
+                    htmlFor="iotDevice"
+                  >
+                    Iot Device:
+                  </InputLabel>
+
+                  <Controller
+                    name="iot_device"
+                    control={control}
+                    render={({ field }) => (
+                      <Autocomplete
+                        {...field}
+                        disablePortal
+                        disableCloseOnSelect
+                        id="iotDevice"
+                        multiple
+                        options={newIotDeviceList}
+                        getOptionLabel={(option) =>
+                          option.iot_device_details.name || option.id.toString()
+                        }
+                        value={newIotDeviceList.filter((iot_device) =>
+                          field.value?.includes(iot_device.id.toString())
+                        )}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            type="text"
+                            error={!!errors.iot_device}
+                            helperText={errors.iot_device?.message}
+                          />
+                        )}
+                        renderOption={(props, option, { selected }) => (
+                          <li {...props}>
+                            <Checkbox
+                              icon={icon}
+                              id={`${option.id}-${option.iot_device_details.name}`}
+                              checkedIcon={checkedIcon}
+                              style={{ marginRight: 8 }}
+                              checked={selected}
+                            />
+                            {option.iot_device_details.name || option.id}
+                          </li>
+                        )}
+                        onChange={(_, data) => {
+                          const newData = data.find(
+                            (iot_device) => iot_device.id === "all"
+                          )
+                            ? "all"
+                            : data.map(
+                                (iot_device) =>
+                                  typeof iot_device !== "string" &&
+                                  iot_device.id.toString()
+                              );
+                          field.onChange(newData);
+                        }}
+                        sx={{ width: { xs: 1, sm: 350 } }}
+                      />
+                    )}
+                  />
+                </Stack>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  spacing={{ xs: 1, sm: 2 }}
+                  marginBottom={2}
+                >
+                  <InputLabel
+                    sx={{ color: "inherit", fontWeight: "bold" }}
                     htmlFor="sensors"
                   >
                     Sensors:
@@ -520,9 +592,12 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                         id="sensors"
                         disableCloseOnSelect
                         multiple
-                        options={sensorNameList ?? []}
+                        options={sensorNameList}
                         value={
-                          Array.isArray(field.value) ? field.value : ["all"]
+                          sensorNameList.filter((sensor) =>
+                            field.value?.includes(sensor)
+                          )
+                          // Array.isArray(field.value) ? field.value : ["all"]
                         }
                         renderInput={(params) => (
                           <TextField
