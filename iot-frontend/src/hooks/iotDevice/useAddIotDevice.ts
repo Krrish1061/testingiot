@@ -50,6 +50,7 @@ function useAddIotDevice() {
           address: null,
           description: null,
         },
+        sensor_name_list: [],
       };
 
       queryClient.setQueryData<IotDevice[]>(
