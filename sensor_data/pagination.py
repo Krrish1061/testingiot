@@ -53,9 +53,6 @@ class SensorDataPaginator(Paginator):
         if self.list_data_by_sensor:
             sensors_data = defaultdict(list)
 
-            # 1 - by executing the list once and then applying the filtering condition
-            # 2 - by finding correct query statement
-
             for sensor in sensors:
                 sensors_data[sensor].append(
                     self.object_list.filter(device_sensor__sensor__name=sensor)
@@ -64,11 +61,15 @@ class SensorDataPaginator(Paginator):
             sensor_data = {
                 sensor: querysets[0][bottom:top]
                 for sensor, querysets in sensors_data.items()
-                if querysets and querysets[0][bottom:top]
+                if querysets
+                # and querysets[0][bottom:top]
             }
+            # sensor_data = {}
+            # for sensor, querysets in sensors_data.items():
+            #     if querysets:
+            #         sensor_data[sensor] = querysets[0][bottom:top]
 
-            # call the super class method instead of defining it here
-            return self._get_page(sensor_data, number, self)
+            return Page(sensor_data, number, self)
         else:
             # sensors_data = defaultdict(lambda: defaultdict(list))
 
@@ -87,20 +88,19 @@ class SensorDataPaginator(Paginator):
             sensor_data = defaultdict(lambda: defaultdict(list))
             for iot_device, sensor_dict in sensors_data.items():
                 for sensor, querysets in sensor_dict.items():
-                    new_querysets = querysets[0][bottom:top]
-                    if new_querysets:
-                        sensor_data[iot_device][sensor] = querysets[0][bottom:top]
+                    # new_querysets = querysets[0][bottom:top]
+                    # if new_querysets:
+                    sensor_data[iot_device][sensor] = querysets[0][bottom:top]
 
-            # call the super class method instead of defining it here
-            return self._get_page(sensor_data, number, self)
+            return Page(sensor_data, number, self)
 
-    def _get_page(self, *args, **kwargs):
-        """
-        Return an instance of a single page.
-        This hook can be used by subclasses to use an alternative to the
-        standard :cls:`Page` object.
-        """
-        return Page(*args, **kwargs)
+    # def _get_page(self, *args, **kwargs):
+    #     """
+    #     Return an instance of a single page.
+    #     This hook can be used by subclasses to use an alternative to the
+    #     standard :cls:`Page` object.
+    #     """
+    #     return Page(*args, **kwargs)
 
     def get_next_link(self, page, request):
         if not page.has_next():

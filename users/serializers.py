@@ -218,8 +218,11 @@ class UserSerializer(serializers.ModelSerializer):
             self.validate_user_type(user_type, user_groups)
 
             # associating the new user with the same company as of the user which created them
-            if GroupName.ADMIN_GROUP in user_groups and user.is_associated_with_company:
-                attrs["company"] = user.company
+            if GroupName.ADMIN_GROUP in user_groups:
+                if user.is_associated_with_company:
+                    attrs["company"] = user.company
+                if "user_limit" in attrs:
+                    attrs.pop("user_limit")
             if (
                 GroupName.SUPERADMIN_GROUP in user_groups
                 and attrs.get("type") == UserType.ADMIN
