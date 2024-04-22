@@ -104,7 +104,7 @@ def send_initial_data(username=None, company_slug=None):
     async_to_sync(channel_layer.group_send)(
         group_name,
         {
-            "type": "send_initial_data",
+            "type": "send_data",
             "data": json.dumps(sensors_data),
         },
     )

@@ -51,7 +51,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             )
         raise StopConsumer()
 
-    async def send_data(self, event):
+    async def send_live_data(self, event):
         # Send the data to the websocket
         device_id = event["device_id"]
         data = event["data"]
@@ -61,7 +61,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         )
         await self.send(text_data=json.dumps(device_sensor_data))
 
-    async def send_initial_data(self, event):
+    async def send_data(self, event):
         # Send the data to the websocket
         await self.send(text_data=event["data"])
 

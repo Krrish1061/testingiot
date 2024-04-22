@@ -74,7 +74,7 @@ def send_data_to_websocket(
     async_to_sync(channel_layer.group_send)(
         group_name,
         {
-            "type": "send_data",
+            "type": "send_live_data",
             "data": data,
             "device_id": iot_device_id,
             "field_sensor_name_dict": field_sensor_name_dict,

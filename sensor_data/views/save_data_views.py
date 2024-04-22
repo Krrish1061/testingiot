@@ -49,7 +49,7 @@ def save_sensor_data(request):
     async_to_sync(channel_layer.group_send)(
         group_name,
         {
-            "type": "send_data",
+            "type": "send_live_data",
             "data": serializer.validated_data,
             "device_id": iot_device.id,
             "timestamp": timestamp,
