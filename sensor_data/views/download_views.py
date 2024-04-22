@@ -211,11 +211,15 @@ def download_sensor_data(request):
         for group_name in (
             GroupName.ADMIN_GROUP,
             GroupName.SUPERADMIN_GROUP,
+            GroupName.MODERATOR_GROUP,
         )
     ):
         return Response(
             {"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN
         )
+
+    if not user.is_associated_with_company and GroupName.MODERATOR_GROUP in user_groups:
+        user = UserCache.get_user(username=user.created_by)
 
     start_date = request.query_params.get("start_date", None)
     end_date = request.query_params.get("end_date", None)
@@ -290,7 +294,13 @@ def download_sensor_data(request):
             iot_device__in=iot_device,
         )
 
-    if GroupName.ADMIN_GROUP in user_groups:
+    if any(
+        group_name in user_groups
+        for group_name in (
+            GroupName.ADMIN_GROUP,
+            GroupName.MODERATOR_GROUP,
+        )
+    ):
         if start_date.date() < (datetime.now() - timedelta(days=30)).date():
             return Response(
                 {

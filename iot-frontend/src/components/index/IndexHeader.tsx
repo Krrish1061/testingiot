@@ -15,9 +15,10 @@ function IndexHeader() {
     user &&
     user.groups.some(
       (group) =>
-        group === UserGroups.superAdminGroup || group === UserGroups.adminGroup
+        group === UserGroups.superAdminGroup ||
+        group === UserGroups.adminGroup ||
+        group === UserGroups.moderatorGroup
     );
-
   const handleDownloadClick = () => {
     setOpen((prevOpen) => !prevOpen);
   };
