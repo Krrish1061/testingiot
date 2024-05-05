@@ -10,6 +10,9 @@ from iot_devices.auth import DeviceAuthentication
 from iot_devices.cache import IotDeviceCache
 from sensor_data.serializers import IotDeviceSensorDataSerializer
 from sensor_data.tasks import send_live_data_to
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(["POST"])
@@ -17,6 +20,7 @@ from sensor_data.tasks import send_live_data_to
 def save_sensor_data(request):
     iot_device = request.auth
     device_sensors = IotDeviceCache.get_all_device_sensors(iot_device.id)
+    logger.warning(f"inside save send_data method {iot_device.id}")
     if not device_sensors:
         return Response(
             {"error": "No Sensor is associated with the devices"},
