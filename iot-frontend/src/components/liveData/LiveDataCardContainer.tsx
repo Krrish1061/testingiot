@@ -1,22 +1,23 @@
+import ReplayIcon from "@mui/icons-material/Replay";
 import Box from "@mui/material/Box";
-import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
-import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import LiveDataCard from "./LiveDataCard";
-import useWebSocketStore, { Data } from "../../store/webSocketStore";
-import useDrawerStore from "../../store/drawerStore";
-import LiveDataCardButton from "./LiveDataCardButton";
-import IotDeviceDetailDialog from "../iotDevice/IotDeviceDetailDialog";
+import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
 import { useState } from "react";
 import IotDevice from "../../entities/IotDevice";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import { IData } from "../../entities/webSocket/LiveData";
+import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
 import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
-import CircularProgress from "@mui/material/CircularProgress";
-import ReplayIcon from "@mui/icons-material/Replay";
 import useGetWebSocketToken from "../../hooks/webSocket/useGetWebSocketToken";
-import IconButton from "@mui/material/IconButton";
+import useDrawerStore from "../../store/drawerStore";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import IotDeviceDetailDialog from "../iotDevice/IotDeviceDetailDialog";
 import BlinkingDot from "../styledComponents/BlinkingDot";
+import LiveDataCard from "./LiveDataCard";
+import LiveDataCardButton from "./LiveDataCardButton";
 
 function LiveDataCardContainer() {
   const { data: iotDeviceList } = useGetAllIotDevice();
@@ -24,7 +25,9 @@ function LiveDataCardContainer() {
   const { mutateAsync: getWebSocketToken } = useGetWebSocketToken();
   const liveData = useWebSocketStore((state) => state.liveData);
   const connectionState = useWebSocketStore((state) => state.connectionState);
-  const connectWebSocket = useWebSocketStore((state) => state.connectWebSocket);
+  const connectToWebsocket = useWebSocketStore(
+    (state) => state.connectToWebsocket
+  );
   const setConnectionState = useWebSocketStore(
     (state) => state.setConnectionState
   );
@@ -39,7 +42,7 @@ function LiveDataCardContainer() {
 
     const webSocketToken = await getWebSocketToken();
     if (webSocketToken.token) {
-      connectWebSocket(websocketEndpoint + "?token=" + webSocketToken.token);
+      connectToWebsocket(websocketEndpoint + "?token=" + webSocketToken.token);
     }
   };
 
@@ -83,7 +86,7 @@ function LiveDataCardContainer() {
     <>
       {liveData &&
         Object.entries(liveData).map(
-          ([deviceID, value]: [string, Data], index) => (
+          ([deviceID, value]: [string, IData], index) => (
             <Box m={2} p={2} key={index}>
               <Stack direction="row" justifyContent="space-between">
                 <LiveDataCardButton

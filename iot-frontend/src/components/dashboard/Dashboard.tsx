@@ -7,7 +7,7 @@ import UserGroups from "../../constants/userGroups";
 import useConnectWebSocket from "../../hooks/webSocket/useConnectWebSocket";
 import useAuthStore from "../../store/authStore";
 import useDrawerStore from "../../store/drawerStore";
-import useWebSocketStore from "../../store/webSocketStore";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import DesktopDrawer from "../drawer/DesktopDrawer";
 import { SideBarHeader } from "../drawer/DrawerHeader";
 import SwipeableMobileDrawer from "../drawer/MobileDrawer";
@@ -33,12 +33,9 @@ function Dashboard() {
   useEffect(() => {
     if (!isMobile) {
       setDrawerOpen(true);
-    } else {
-      setDrawerOpen(false);
     }
     setIsMobile(isMobile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile]);
+  }, [isMobile, setDrawerOpen, setIsMobile]);
 
   useEffect(() => {
     if (user && user.profile && !user.profile.first_name) {

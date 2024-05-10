@@ -1,13 +1,14 @@
 import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import useWebSocketStore from "../../store/webSocketStore";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
 
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
-import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
+import LineGraphContainer from "../graph/LineGraphContainer";
 import IotDeviceApiSetting from "../iotDevice/IotDeviceApiSetting";
+import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
 import LiveDataCardContainer from "../liveData/LiveDataCardContainer";
 
 interface TabPanelProps {
@@ -103,6 +104,7 @@ function RenderCompanyDashboard() {
       </Tabs>
       <TabPanel value={value} index={0}>
         <LiveDataCardContainer />
+        <LineGraphContainer companySlug={companySlug} />
       </TabPanel>
       <TabPanel value={value} index={1}>
         <IotDeviceSensor companySlug={companySlug} />

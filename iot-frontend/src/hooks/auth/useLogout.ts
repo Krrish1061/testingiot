@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import useAuthStore from "../../store/authStore";
 import { enqueueSnackbar } from "notistack";
-import getCsrf from "../../utilis/getCsrf";
-import CsrfError from "../../errors/csrfError";
-import useAxios from "../../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
-import useWebSocketStore from "../../store/webSocketStore";
+import useAxios from "../../api/axiosInstance";
+import CsrfError from "../../errors/csrfError";
+import useAuthStore from "../../store/authStore";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import getCsrf from "../../utilis/getCsrf";
 
 //  userefresh hook is called 3 times due to react query setting and
 // thats why we are seeing multiple error when we logout.

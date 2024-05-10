@@ -1,7 +1,7 @@
-import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import Sensor from "../../entities/Sensor";
 
 interface Props {
@@ -31,7 +31,7 @@ function LiveDataCard({ sensorName, data, sensors }: Props) {
           paddingBottom: 0,
         }}
       >
-        <Typography variant="h3" fontSize={24} component="h2">
+        <Typography variant="liveCardText">
           {sensorName.charAt(0).toUpperCase() + sensorName.substring(1)}
         </Typography>
         {sensors &&

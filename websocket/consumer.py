@@ -1,20 +1,16 @@
 import json
-from collections import defaultdict
+
 from channels.db import database_sync_to_async
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.db.models import OuterRef, Subquery
-from django.utils import timezone
+
 from company.cache import CompanyCache
 from iot_devices.cache import IotDeviceCache
-from sensor_data.models import SensorData
+from sensor_data.tasks import get_sensor_data
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
 from websocket.tasks import send_initial_data
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class SensorDataConsumer(AsyncWebsocketConsumer):
@@ -59,17 +55,22 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         device_sensor_data = await self.prepare_live_sensors_data(
             device_id, data, timestamp
         )
-        await self.send(text_data=json.dumps(device_sensor_data))
+        await self.send(
+            text_data=json.dumps([{"message_type": "live_data"}, device_sensor_data])
+        )
 
     async def send_data(self, event):
         # Send the data to the websocket
         await self.send(text_data=event["data"])
 
+    async def send_binary_data(self, event):
+        # Send the data to the websocket
+        await self.send(bytes_data=event["data"])
+
     async def receive(self, text_data):
         if self.is_superadmin:
             data = json.loads(text_data)
             message_type = data.get("type")
-
             if message_type == "group_subscribe":
                 company_slug = data.get("company_slug")
                 username = data.get("username")
@@ -93,6 +94,22 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 send_initial_data.delay(username=username, company_slug=company_slug)
                 # initial_data = await self.get_initial_data(user=user, company=company)
                 # await self.send(text_data=json.dumps(initial_data))
+
+            elif message_type == "sensor_data":
+                # company_slug = data.get("company")
+                # username = data.get("username")
+                sensor_name = data.get("sensor_name")
+                iot_device_id = data.get("iot_device_id")
+                start_date = data.get("start_date")
+                end_date = data.get("end_date")
+
+                get_sensor_data.delay(
+                    sensor_name,
+                    iot_device_id,
+                    channel_name=self.channel_name,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
 
     async def subscribe_to_group(self, group_name):
         await self.channel_layer.group_add(group_name, self.channel_name)
@@ -151,57 +168,3 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
 
         sensor_data["timestamp"] = timestamp
         return {device_id: sensor_data}
-
-    @staticmethod
-    @database_sync_to_async
-    def get_initial_data(user, company):
-        logger.warning(
-            f"inside SensorDataConsumer {company.slug if company else user.username} get_initial_data method"
-        )
-        iot_device_list = []
-        if company:
-            iot_device_list = IotDeviceCache.get_all_company_iot_devices(company)
-        elif user.type == "ADMIN":
-            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user)
-        else:
-            # user is of type Viewer or Moderator
-            iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
-
-        # Use annotate to get the latest timestamp for each device_sensor
-        latest_timestamp_subquery = (
-            SensorData.objects.filter(device_sensor=OuterRef("device_sensor"))
-            .order_by("-timestamp")
-            .values("timestamp")[:1]
-        )
-        # Use these latest timestamps to filter the queryset
-        latest_sensor_data_qs = (
-            SensorData.objects.select_related("device_sensor", "iot_device")
-            .filter(iot_device__in=iot_device_list)
-            .filter(timestamp=Subquery(latest_timestamp_subquery))
-            .values(
-                "device_sensor__sensor__name",
-                "iot_device_id",
-                "value",
-                "timestamp",
-            )
-            .order_by("device_sensor__field_number")
-        )
-        logger.warning(
-            f"inside SensorDataConsumer {company.slug if company else user.username} after query method"
-        )
-
-        sensors_data = defaultdict(dict)
-        for data in latest_sensor_data_qs:
-            iot_device_id = data.pop("iot_device_id")
-            data["timestamp"] = timezone.localtime(data.pop("timestamp")).strftime(
-                "%Y/%m/%d %H:%M:%S"
-            )
-            sensor_name = data.pop("device_sensor__sensor__name")
-            sensor_value = data.pop("value")
-            data[sensor_name] = sensor_value
-            sensors_data[iot_device_id].update(data)
-
-        logger.warning(
-            f"inside SensorDataConsumer {company.slug if company else user.username} after executing query method"
-        )
-        return sensors_data

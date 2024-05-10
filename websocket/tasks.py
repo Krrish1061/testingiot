@@ -1,11 +1,13 @@
+import json
+from collections import defaultdict
+
 from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
-from iot_devices.cache import IotDeviceCache
-from django.utils import timezone
 from django.db import connection
-import json
-from collections import defaultdict
+from django.utils import timezone
+
+from iot_devices.cache import IotDeviceCache
 
 
 def dictfetchall(cursor):
@@ -105,6 +107,6 @@ def send_initial_data(username=None, company_slug=None):
         group_name,
         {
             "type": "send_data",
-            "data": json.dumps(sensors_data),
+            "data": json.dumps([{"message_type": "initial_data"}, sensors_data]),
         },
     )

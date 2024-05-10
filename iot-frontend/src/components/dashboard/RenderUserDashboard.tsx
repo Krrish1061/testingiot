@@ -1,13 +1,14 @@
+import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import useWebSocketStore from "../../store/webSocketStore";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import LiveDataCardContainer from "../liveData/LiveDataCardContainer";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
-import Box from "@mui/material/Box";
-import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import LineGraphContainer from "../graph/LineGraphContainer";
 import IotDeviceApiSetting from "../iotDevice/IotDeviceApiSetting";
+import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
+import LiveDataCardContainer from "../liveData/LiveDataCardContainer";
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -106,6 +107,7 @@ function RenderUserDashboard() {
       </Tabs>
       <TabPanel value={value} index={0}>
         <LiveDataCardContainer />
+        <LineGraphContainer username={username} />
       </TabPanel>
       <TabPanel value={value} index={1}>
         <IotDeviceSensor username={username} />

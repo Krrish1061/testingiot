@@ -1,4 +1,4 @@
-interface SendMessage {
+interface ISendMessage {
   type: string;
   company_slug?: string | undefined;
   username?: string | undefined;
@@ -7,4 +7,4 @@ interface SendMessage {
   iot_device_id?: number;
 }
 
-export default SendMessage;
+export default ISendMessage;

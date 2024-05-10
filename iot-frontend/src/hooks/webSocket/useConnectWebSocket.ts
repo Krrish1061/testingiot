@@ -1,9 +1,11 @@
 import { useEffect } from "react";
-import useWebSocketStore from "../../store/webSocketStore";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import useGetWebSocketToken from "./useGetWebSocketToken";
 
 function useConnectWebSocket() {
-  const connectWebSocket = useWebSocketStore((state) => state.connectWebSocket);
+  const connectToWebsocket = useWebSocketStore(
+    (state) => state.connectToWebsocket
+  );
   const websocket = useWebSocketStore((state) => state.websocket);
   const {
     data: webSocketToken,
@@ -15,7 +17,7 @@ function useConnectWebSocket() {
 
   useEffect(() => {
     if (!websocket && isSuccess) {
-      connectWebSocket(websocketEndpoint + "?token=" + webSocketToken.token);
+      connectToWebsocket(websocketEndpoint + "?token=" + webSocketToken.token);
     }
     if (!websocket && !isSuccess) {
       (async () => await getWebSocketToken())();

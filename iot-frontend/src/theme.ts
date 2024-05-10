@@ -1,8 +1,16 @@
 import { PaletteMode } from "@mui/material";
-import { Theme, createTheme } from "@mui/material/styles";
-import { createContext, useMemo, useState } from "react";
+import { Theme, createTheme, responsiveFontSizes } from "@mui/material/styles";
+import { CSSProperties, createContext, useMemo, useState } from "react";
 
 declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    liveCardText: CSSProperties;
+  }
+
+  interface TypographyVariantsOptions {
+    liveCardText?: CSSProperties;
+  }
+
   interface BreakpointOverrides {
     xs: true;
     sm: true;
@@ -10,6 +18,12 @@ declare module "@mui/material/styles" {
     md: true;
     lg: true;
     xl: true;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    liveCardText: true;
   }
 }
 
@@ -26,6 +40,13 @@ const getDesignTokens = (mode: PaletteMode) => ({
     mode,
     primary: {
       main: "#38c5f4",
+    },
+  },
+  typography: {
+    liveCardText: {
+      fontSize: 24,
+      fontWeight: 400,
+      whiteSpace: "nowrap",
     },
   },
   components: {
@@ -47,13 +68,20 @@ const getDesignTokens = (mode: PaletteMode) => ({
         useFlexGap: true,
       },
     },
+
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: {
+          liveCardText: "h2",
+        },
+      },
+    },
   },
 
   breakpoints: {
     values: {
       xs: 0,
       sm: 600,
-      // smaller than medium size
       smd: 700,
       md: 900,
       lg: 1200,
@@ -77,6 +105,10 @@ export const useMode = () => {
     []
   );
 
-  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+  const theme = useMemo(
+    () => responsiveFontSizes(createTheme(getDesignTokens(mode))),
+    [mode]
+  );
+
   return { theme, colorMode };
 };

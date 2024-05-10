@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import useAxios from "../../api/axiosInstance";
 import { enqueueSnackbar } from "notistack";
-import useWebSocketStore from "../../store/webSocketStore";
+import useAxios from "../../api/axiosInstance";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
 
 interface WebsocketToken {
   token: string;
