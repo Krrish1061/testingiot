@@ -93,8 +93,7 @@ function LineGraph({
     },
     scales: {
       x: {
-        type: "timeseries",
-        // type: "time",
+        type: "time",
         title: {
           display: true,
           text: "Date",
