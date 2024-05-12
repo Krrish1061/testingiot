@@ -61,12 +61,10 @@ function LineGraph({
 
   const options: ChartOptions<"line"> = {
     responsive: true,
+    spanGaps: 1000 * 60 * 60 * 24 * 1, // 1 days,
     maintainAspectRatio: false,
-    resizeDelay: 500,
-    interaction: {
-      mode: "nearest",
-    },
-
+    resizeDelay: 250,
+    animation: isMobile ? false : undefined,
     datasets: {
       line: {
         pointStyle: graphData.length === 1 ? "circle" : false,
@@ -136,6 +134,7 @@ function LineGraph({
           padding: 0,
         },
         ticks: {
+          precision: 2,
           stepSize: isSensorValueBoolean ? 1 : undefined,
           callback: isSensorValueBoolean
             ? function (value) {
@@ -158,7 +157,8 @@ function LineGraph({
         fill: false,
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.main,
-        borderWidth: 2,
+        borderWidth: 1,
+        normalized: true,
         stepped: isSensorValueBoolean,
       },
     ],

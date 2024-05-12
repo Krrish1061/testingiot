@@ -48,11 +48,7 @@ function DeviceSensorSelector({
         <InputLabel htmlFor="select-iot-device" sx={{ fontSize: "12px" }}>
           Iot Device:
         </InputLabel>
-        <FormControl
-          sx={{ minWidth: 120, maxWidth: 300 }}
-          size="small"
-          variant="standard"
-        >
+        <FormControl sx={{ maxWidth: 300 }} size="small" variant="standard">
           <Select
             inputProps={{
               id: "select-iot-device",
@@ -88,7 +84,7 @@ function DeviceSensorSelector({
             Sensor:
           </InputLabel>
           <FormControl
-            sx={{ minWidth: 100, maxWidth: { xs: 150, sm: 300 } }}
+            sx={{ maxWidth: { xs: 150, sm: 300 } }}
             size="small"
             variant="standard"
           >

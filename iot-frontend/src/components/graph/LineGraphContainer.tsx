@@ -9,6 +9,8 @@ import useRequestData from "../../hooks/graph/useRequestData";
 import DaysSelectors from "./DaysSelectors";
 import DeviceSensorSelector from "./DeviceSensorSelector";
 import LineGraph from "./LineGraph";
+import minMax from "dayjs/plugin/minMax";
+dayjs.extend(minMax);
 
 interface Props {
   username?: string;
@@ -25,6 +27,7 @@ function LineGraphContainer({ username, companySlug }: Props) {
   useEffect(() => {
     setDevice(null);
     setSensor("");
+    setSelectedDays(1);
   }, [username, companySlug]);
 
   const { iotDevices, deviceSensorList, sensorSymbol, isSensorValueBoolean } =
@@ -126,7 +129,13 @@ function LineGraphContainer({ username, companySlug }: Props) {
         graphData={graphData}
         uptoDays={selectedDays}
         startDate={startDate.format("YYYY-MM-DD")}
-        endDate={endDate.format("YYYY-MM-DD HH:mm:ss")}
+        endDate={
+          selectedDays === 1
+            ? (dayjs.min(dayjs().add(1, "hour"), endDate) || endDate).format(
+                "YYYY-MM-DD HH:mm:ss"
+              )
+            : endDate.add(1, "day").startOf("day").format("YYYY-MM-DD HH:mm:ss")
+        }
       />
     </Box>
   );
