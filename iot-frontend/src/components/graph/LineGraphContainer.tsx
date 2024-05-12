@@ -28,6 +28,7 @@ function LineGraphContainer({ username, companySlug }: Props) {
     setDevice(null);
     setSensor("");
     setSelectedDays(1);
+    setStartDate(dayjs());
   }, [username, companySlug]);
 
   const { iotDevices, deviceSensorList, sensorSymbol, isSensorValueBoolean } =

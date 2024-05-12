@@ -61,10 +61,11 @@ function LineGraph({
 
   const options: ChartOptions<"line"> = {
     responsive: true,
-    spanGaps: 1000 * 60 * 60 * 24 * 1, // 1 days,
+    spanGaps: isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1, // 1 days,
     maintainAspectRatio: false,
     resizeDelay: 250,
     animation: isMobile ? false : undefined,
+
     datasets: {
       line: {
         pointStyle: graphData.length === 1 ? "circle" : false,
@@ -120,8 +121,8 @@ function LineGraph({
         min: startDate,
       },
       y: {
-        // min: 0,
-        // max: 90,
+        min: isSensorValueBoolean ? 0 : undefined,
+        max: isSensorValueBoolean ? 1 : undefined,
         // beginAtZero: true,
         title: {
           display: true,
