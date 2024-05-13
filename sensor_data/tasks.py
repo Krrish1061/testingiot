@@ -67,7 +67,7 @@ def send_live_data_to(username, company_slug, data, iot_device_id, board_id, tim
 def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_date):
     """Used For Fetching data of a specific sensor of a iot device and send data via websocket for graphical representation"""
     kathmandu_tz = zoneinfo.ZoneInfo("Asia/Kathmandu")
-    # make sure this data is less than 1mb
+
     try:
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
@@ -80,8 +80,8 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
     sensor_data_qs = (
         SensorData.objects.filter(
             iot_device__id=iot_device_id,
-            # timestamp__range=(start_date, end_date),
-            # device_sensor__sensor__name=sensor_name,
+            timestamp__range=(start_date, end_date),
+            device_sensor__sensor__name=sensor_name,
         )
         .annotate(
             date_time=Func(
@@ -111,10 +111,12 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
 
     # Convert 1MB to bytes
     ONE_MB = 1024 * 1024
-    # if sys.getsizeof(data) < ONE_MB:
-    async_to_sync(channel_layer.send)(channel_name, {"type": "send_data", "data": data})
-    # else:
-    #     compressed_data = gzip.compress(data.encode("utf-8"))
-    #     async_to_sync(channel_layer.send)(
-    #         channel_name, {"type": "send_binary_data", "data": compressed_data}
-    #     )
+    if sys.getsizeof(data) < ONE_MB:
+        async_to_sync(channel_layer.send)(
+            channel_name, {"type": "send_data", "data": data}
+        )
+    else:
+        compressed_data = gzip.compress(data.encode("utf-8"))
+        async_to_sync(channel_layer.send)(
+            channel_name, {"type": "send_binary_data", "data": compressed_data}
+        )
