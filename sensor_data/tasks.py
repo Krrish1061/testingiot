@@ -111,12 +111,10 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
 
     # Convert 1MB to bytes
     ONE_MB = 1024 * 1024
-    if sys.getsizeof(data) < ONE_MB:
-        async_to_sync(channel_layer.send)(
-            channel_name, {"type": "send_data", "data": data}
-        )
-    else:
-        compressed_data = gzip.compress(data.encode("utf-8"))
-        async_to_sync(channel_layer.send)(
-            channel_name, {"type": "send_binary_data", "data": compressed_data}
-        )
+    # if sys.getsizeof(data) < ONE_MB:
+    async_to_sync(channel_layer.send)(channel_name, {"type": "send_data", "data": data})
+    # else:
+    #     compressed_data = gzip.compress(data.encode("utf-8"))
+    #     async_to_sync(channel_layer.send)(
+    #         channel_name, {"type": "send_binary_data", "data": compressed_data}
+    #     )
