@@ -11,12 +11,13 @@ import {
   TimeScale,
   TimeSeriesScale,
   Title,
+  Plugin,
 } from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
-import { useRef } from "react";
 import { Line } from "react-chartjs-2";
 import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
+import { MutableRefObject } from "react";
 
 ChartJS.register(
   TimeScale,
@@ -30,6 +31,7 @@ ChartJS.register(
 );
 
 interface Props {
+  chartRef: MutableRefObject<ChartJS<"line", ISensorData[], unknown> | null>;
   graphData: ISensorData[] | null;
   sensor: string;
   sensorSymbol: string | null;
@@ -40,6 +42,7 @@ interface Props {
 }
 
 function LineGraph({
+  chartRef,
   sensor,
   sensorSymbol,
   isSensorValueBoolean,
@@ -48,7 +51,6 @@ function LineGraph({
   uptoDays,
   graphData,
 }: Props) {
-  const chartRef = useRef<ChartJS<"line", ISensorData[]> | null>(null);
   const isMobile = useDrawerStore((state) => state.isMobile);
   const theme = useTheme();
 
@@ -59,12 +61,24 @@ function LineGraph({
 
   const titlefontSize = isMobile ? 12 : 15;
 
+  const plugin: Plugin<"line"> = {
+    id: "bgColor",
+    beforeDraw: (chart, _args, options) => {
+      const { ctx, width, height } = chart;
+      ctx.save();
+      ctx.globalCompositeOperation = "destination-over";
+      ctx.fillStyle = options.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+    },
+  };
+
   const options: ChartOptions<"line"> = {
     responsive: true,
     spanGaps: isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1, // 1 days,
     maintainAspectRatio: false,
     resizeDelay: 250,
-    animation: isMobile ? false : undefined,
+    animation: false,
 
     datasets: {
       line: {
@@ -74,6 +88,9 @@ function LineGraph({
     },
 
     plugins: {
+      bgColor: {
+        backgroundColor: theme.palette.background.paper,
+      },
       legend: {
         position: "top",
       },
@@ -158,7 +175,7 @@ function LineGraph({
         fill: false,
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.main,
-        borderWidth: 1,
+        borderWidth: isSensorValueBoolean ? 2 : 1,
         normalized: true,
         stepped: isSensorValueBoolean,
       },
@@ -167,7 +184,12 @@ function LineGraph({
 
   return (
     <Box height={{ xs: 250, sm: 300, md: 450 }}>
-      <Line ref={chartRef} options={options} data={chartData} />
+      <Line
+        ref={chartRef}
+        options={options}
+        data={chartData}
+        plugins={[plugin]}
+      />
     </Box>
   );
 }

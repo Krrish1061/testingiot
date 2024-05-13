@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useGetData from "../../hooks/graph/useGetData";
 import useGetDeviceSensorList from "../../hooks/graph/useGetDeviceSensorList";
 import useRequestData from "../../hooks/graph/useRequestData";
@@ -10,7 +10,9 @@ import DaysSelectors from "./DaysSelectors";
 import DeviceSensorSelector from "./DeviceSensorSelector";
 import LineGraph from "./LineGraph";
 import minMax from "dayjs/plugin/minMax";
+import ISensorData from "../../entities/webSocket/SensorData";
 dayjs.extend(minMax);
+import { Chart as ChartJS } from "chart.js";
 
 interface Props {
   username?: string;
@@ -18,6 +20,7 @@ interface Props {
 }
 
 function LineGraphContainer({ username, companySlug }: Props) {
+  const chartRef = useRef<ChartJS<"line", ISensorData[]> | null>(null);
   const [selectedDays, setSelectedDays] = useState<1 | 7 | 15>(1);
   const [device, setDevice] = useState<number | null>(null);
   const [sensor, setSensor] = useState<string>("");
@@ -88,6 +91,21 @@ function LineGraphContainer({ username, companySlug }: Props) {
   const handleSensorChange = (event: SelectChangeEvent) =>
     setSensor(event.target.value);
 
+  const handleDownloadClick = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      console.log("click");
+      const link = document.createElement("a");
+      link.download =
+        sensor.charAt(0).toUpperCase() +
+        sensor.substring(1) +
+        " " +
+        "Sensor Chart.jpeg";
+      link.href = chart.toBase64Image("image/jpeg", 1);
+      link.click();
+    }
+  };
+
   if (
     iotDevices.length === 0 ||
     (iotDevices.length === 1 && deviceSensorList.length === 0) ||
@@ -122,8 +140,10 @@ function LineGraphContainer({ username, companySlug }: Props) {
         isLoading={isLoading}
         handleDeviceChange={handleDeviceChange}
         handleSensorChange={handleSensorChange}
+        handleDownloadClick={handleDownloadClick}
       />
       <LineGraph
+        chartRef={chartRef}
         sensor={sensor}
         sensorSymbol={sensorSymbol}
         isSensorValueBoolean={isSensorValueBoolean}

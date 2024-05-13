@@ -80,7 +80,7 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
     sensor_data_qs = (
         SensorData.objects.filter(
             iot_device__id=iot_device_id,
-            timestamp__range=(start_date, end_date),
+            # timestamp__range=(start_date, end_date),
             device_sensor__sensor__name=sensor_name,
         )
         .annotate(

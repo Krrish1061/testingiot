@@ -18,6 +18,7 @@ interface Props {
   sensorList: string[] | undefined;
   handleDeviceChange: (event: SelectChangeEvent) => void;
   handleSensorChange: (event: SelectChangeEvent) => void;
+  handleDownloadClick: () => void;
 }
 
 function DeviceSensorSelector({
@@ -28,6 +29,7 @@ function DeviceSensorSelector({
   isLoading,
   handleDeviceChange,
   handleSensorChange,
+  handleDownloadClick,
 }: Props) {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
   return (
@@ -123,20 +125,26 @@ function DeviceSensorSelector({
           disableTouchListener
           placement="top"
           arrow
+          enterDelay={500}
           slotProps={{
             popper: {
               modifiers: [
                 {
                   name: "offset",
                   options: {
-                    offset: [0, -14],
+                    offset: [0, -5],
                   },
                 },
               ],
             },
           }}
         >
-          <IconButton color="primary" sx={{ padding: 0, marginLeft: "auto" }}>
+          <IconButton
+            color="primary"
+            disabled={!sensor}
+            sx={{ padding: 0, marginLeft: "auto" }}
+            onClick={handleDownloadClick}
+          >
             <DownloadIcon fontSize="medium" />
           </IconButton>
         </Tooltip>
