@@ -111,9 +111,9 @@ function LineGraph({
 
     plugins: {
       decimation: {
-        enabled: false,
+        enabled: true,
         algorithm: "lttb",
-        samples: 100,
+        samples: 50,
         threshold: 500,
       },
       bgColor: {
