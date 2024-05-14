@@ -17,7 +17,7 @@ import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
 import { Line } from "react-chartjs-2";
 import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
-import { MutableRefObject, useMemo } from "react";
+import { MutableRefObject, useEffect, useMemo } from "react";
 import dayjs from "dayjs";
 
 ChartJS.register(
@@ -59,13 +59,21 @@ function LineGraph({
     () =>
       sensor
         ? graphData?.map((data) => ({
-            x: dayjs(data.date_time).unix(),
+            x: dayjs(data.date_time).valueOf(),
             y: data.value,
           })) || []
         : [],
 
     [graphData, sensor]
   );
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (chart) {
+      chart.data.datasets[0].data = chartDataArr;
+      chart.update();
+    }
+  }, [chartDataArr, chartRef, startDate]);
 
   if (graphData === null)
     return (
