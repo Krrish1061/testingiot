@@ -94,7 +94,6 @@ function LineGraphContainer({ username, companySlug }: Props) {
   const handleDownloadClick = () => {
     const chart = chartRef.current;
     if (chart) {
-      console.log("click");
       const link = document.createElement("a");
       link.download =
         sensor.charAt(0).toUpperCase() +

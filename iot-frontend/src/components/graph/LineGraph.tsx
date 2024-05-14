@@ -17,7 +17,7 @@ import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
 import { Line } from "react-chartjs-2";
 import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
-import { MutableRefObject } from "react";
+import { MutableRefObject, useMemo } from "react";
 import dayjs from "dayjs";
 
 ChartJS.register(
@@ -55,6 +55,18 @@ function LineGraph({
   const isMobile = useDrawerStore((state) => state.isMobile);
   const theme = useTheme();
 
+  const chartDataArr = useMemo(
+    () =>
+      sensor
+        ? graphData?.map((data) => ({
+            x: dayjs(data.date_time).unix(),
+            y: data.value,
+          })) || []
+        : [],
+
+    [graphData, sensor]
+  );
+
   if (graphData === null)
     return (
       <Skeleton variant="rounded" animation="wave" width="100%" height={200} />
@@ -90,6 +102,12 @@ function LineGraph({
     },
 
     plugins: {
+      decimation: {
+        enabled: false,
+        algorithm: "lttb",
+        samples: 100,
+        threshold: 500,
+      },
       bgColor: {
         backgroundColor: theme.palette.background.paper,
       },
@@ -107,11 +125,6 @@ function LineGraph({
           size: titlefontSize,
           weight: "bold",
         },
-      },
-      decimation: {
-        enabled: true,
-        algorithm: "lttb",
-        samples: 100,
       },
     },
     scales: {
@@ -169,21 +182,12 @@ function LineGraph({
         },
       },
     },
-    // parsing: {
-    //   xAxisKey: "date_time",
-    //   yAxisKey: "value",
-    // },
   };
 
   const chartData = {
     datasets: [
       {
-        data: sensor
-          ? graphData.map((data) => ({
-              x: dayjs(data.date_time).valueOf(),
-              y: data.value,
-            }))
-          : [],
+        data: chartDataArr,
         fill: false,
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.main,
