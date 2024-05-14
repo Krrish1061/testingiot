@@ -18,6 +18,7 @@ import { Line } from "react-chartjs-2";
 import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
 import { MutableRefObject } from "react";
+import dayjs from "dayjs";
 
 ChartJS.register(
   TimeScale,
@@ -31,7 +32,7 @@ ChartJS.register(
 );
 
 interface Props {
-  chartRef: MutableRefObject<ChartJS<"line", ISensorData[], unknown> | null>;
+  chartRef: MutableRefObject<ChartJS<"line", unknown, unknown> | null>;
   graphData: ISensorData[] | null;
   sensor: string;
   sensorSymbol: string | null;
@@ -79,6 +80,7 @@ function LineGraph({
     maintainAspectRatio: false,
     resizeDelay: 250,
     animation: false,
+    parsing: false,
 
     datasets: {
       line: {
@@ -105,6 +107,11 @@ function LineGraph({
           size: titlefontSize,
           weight: "bold",
         },
+      },
+      decimation: {
+        enabled: true,
+        algorithm: "lttb",
+        samples: 100,
       },
     },
     scales: {
@@ -162,16 +169,21 @@ function LineGraph({
         },
       },
     },
-    parsing: {
-      xAxisKey: "date_time",
-      yAxisKey: "value",
-    },
+    // parsing: {
+    //   xAxisKey: "date_time",
+    //   yAxisKey: "value",
+    // },
   };
 
   const chartData = {
     datasets: [
       {
-        data: sensor ? graphData : [],
+        data: sensor
+          ? graphData.map((data) => ({
+              x: dayjs(data.date_time).valueOf(),
+              y: data.value,
+            }))
+          : [],
         fill: false,
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.main,

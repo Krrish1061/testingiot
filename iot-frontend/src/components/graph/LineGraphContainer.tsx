@@ -152,9 +152,9 @@ function LineGraphContainer({ username, companySlug }: Props) {
         startDate={startDate.format("YYYY-MM-DD")}
         endDate={
           selectedDays === 1
-            ? (dayjs.min(dayjs().add(1, "hour"), endDate) || endDate).format(
-                "YYYY-MM-DD HH:mm:ss"
-              )
+            ? (dayjs.min(dayjs().add(2, "hour"), endDate) || endDate)
+                .startOf("hour")
+                .format("YYYY-MM-DD HH:mm:ss")
             : endDate.add(1, "day").startOf("day").format("YYYY-MM-DD HH:mm:ss")
         }
       />
