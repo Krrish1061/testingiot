@@ -20,6 +20,8 @@ import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
 import { MutableRefObject, useMemo } from "react";
 import dayjs from "dayjs";
+import zoomPlugin from "chartjs-plugin-zoom";
+import { ZoomPluginOptions } from "chartjs-plugin-zoom/types/options";
 
 ChartJS.register(
   TimeScale,
@@ -29,7 +31,8 @@ ChartJS.register(
   TimeSeriesScale,
   CategoryScale,
   Title,
-  Decimation
+  Decimation,
+  zoomPlugin
   // Legend
 );
 
@@ -44,6 +47,15 @@ interface Props {
   uptoDays: 1 | 7 | 15;
 }
 
+function toggleZoom(chart: ChartJS) {
+  const zoomOptions = chart.options.plugins?.zoom?.zoom?.wheel;
+
+  if (zoomOptions) {
+    zoomOptions.enabled = !zoomOptions.enabled; // Toggle the zoom enabled state
+    chart.update();
+  }
+}
+
 function LineGraph({
   chartRef,
   sensor,
@@ -51,7 +63,7 @@ function LineGraph({
   isSensorValueBoolean,
   startDate,
   endDate,
-  uptoDays,
+  // uptoDays,
   graphData,
 }: Props) {
   const isMobile = useDrawerStore((state) => state.isMobile);
@@ -88,6 +100,46 @@ function LineGraph({
     },
   };
 
+  const borderPlugin: Plugin<"line"> = {
+    id: "chartAreaBorder",
+    beforeDraw(chart) {
+      const {
+        ctx,
+        chartArea: { left, top, width, height },
+      } = chart;
+      if (chart.options.plugins?.zoom?.zoom?.wheel?.enabled) {
+        ctx.save();
+        ctx.strokeStyle = theme.palette.primary.main;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(left, top, width, height);
+        ctx.restore();
+      }
+    },
+  };
+
+  const zoomOptions: ZoomPluginOptions = {
+    limits: {
+      x: {
+        min: dayjs(startDate).valueOf(),
+        max: dayjs(endDate).valueOf(),
+        minRange: 60 * 60 * 1000,
+      },
+    },
+    pan: {
+      enabled: true,
+      mode: "x",
+    },
+    zoom: {
+      wheel: {
+        enabled: false,
+      },
+      pinch: {
+        enabled: false,
+      },
+      mode: "x",
+    },
+  };
+
   const options: ChartOptions<"line"> = {
     responsive: true,
     spanGaps: isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1, // 1 days,
@@ -113,6 +165,7 @@ function LineGraph({
       bgColor: {
         backgroundColor: theme.palette.background.paper,
       },
+
       legend: {
         position: "top",
       },
@@ -128,6 +181,7 @@ function LineGraph({
           weight: "bold",
         },
       },
+      zoom: zoomOptions,
     },
     scales: {
       x: {
@@ -141,9 +195,9 @@ function LineGraph({
             weight: "bold",
           },
         },
-        time: {
-          unit: uptoDays === 1 ? "minute" : uptoDays === 7 ? "hour" : "day",
-        },
+        // time: {
+        //   unit: uptoDays === 1 ? "minute" : uptoDays === 7 ? "hour" : "day",
+        // },
 
         ticks: {
           maxRotation: 0,
@@ -184,6 +238,9 @@ function LineGraph({
         },
       },
     },
+    onClick(_event, _elements, chart) {
+      toggleZoom(chart);
+    },
   };
 
   const chartData = {
@@ -206,7 +263,7 @@ function LineGraph({
         ref={chartRef}
         options={options}
         data={chartData}
-        plugins={[plugin]}
+        plugins={[plugin, borderPlugin]}
       />
     </Box>
   );
