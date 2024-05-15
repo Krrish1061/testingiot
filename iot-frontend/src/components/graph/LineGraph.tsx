@@ -106,8 +106,8 @@ function LineGraph({
     plugins: {
       decimation: {
         enabled: true,
-        algorithm: "min-max",
-        // samples: 1000,
+        algorithm: "lttb",
+        samples: 1000,
         threshold: 1000,
       },
       bgColor: {
