@@ -12,12 +12,13 @@ import {
   TimeSeriesScale,
   Title,
   Plugin,
+  Decimation,
 } from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
 import { Line } from "react-chartjs-2";
 import ISensorData from "../../entities/webSocket/SensorData";
 import useDrawerStore from "../../store/drawerStore";
-import { MutableRefObject, useEffect, useMemo } from "react";
+import { MutableRefObject, useMemo } from "react";
 import dayjs from "dayjs";
 
 ChartJS.register(
@@ -27,7 +28,8 @@ ChartJS.register(
   LineElement,
   TimeSeriesScale,
   CategoryScale,
-  Title
+  Title,
+  Decimation
   // Legend
 );
 
@@ -67,14 +69,6 @@ function LineGraph({
     [graphData, sensor]
   );
 
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (chart) {
-      chart.data.datasets[0].data = chartDataArr;
-      chart.update();
-    }
-  }, [chartDataArr, chartRef, startDate]);
-
   if (graphData === null)
     return (
       <Skeleton variant="rounded" animation="wave" width="100%" height={200} />
@@ -111,10 +105,10 @@ function LineGraph({
 
     plugins: {
       decimation: {
-        enabled: true,
-        algorithm: "lttb",
-        samples: 50,
-        threshold: 500,
+        enabled: false,
+        algorithm: "min-max",
+        // samples: 10,
+        threshold: 1000,
       },
       bgColor: {
         backgroundColor: theme.palette.background.paper,
