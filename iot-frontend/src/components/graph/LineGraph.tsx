@@ -107,7 +107,7 @@ function LineGraph({
       decimation: {
         enabled: true,
         algorithm: "lttb",
-        samples: 1000,
+        samples: 50,
         threshold: 1000,
       },
       bgColor: {
