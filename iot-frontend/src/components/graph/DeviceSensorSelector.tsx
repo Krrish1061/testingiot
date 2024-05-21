@@ -1,4 +1,7 @@
+import CloseIcon from "@mui/icons-material/Close";
+import CompareIcon from "@mui/icons-material/Compare";
 import DownloadIcon from "@mui/icons-material/Download";
+import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
@@ -7,6 +10,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
+import { RefObject } from "react";
 import IotDevice from "../../entities/IotDevice";
 import useDrawerStore from "../../store/drawerStore";
 
@@ -16,9 +20,16 @@ interface Props {
   sensor: string;
   isLoading: boolean;
   sensorList: string[] | undefined;
+  anchorRef: RefObject<HTMLButtonElement>;
   handleDeviceChange: (event: SelectChangeEvent) => void;
   handleSensorChange: (event: SelectChangeEvent) => void;
   handleDownloadClick: () => void;
+  handleCompareClick: () => void;
+  handleCompareClearClick: () => void;
+  compareTo: {
+    deviceId: number;
+    sensor: string;
+  } | null;
 }
 
 function DeviceSensorSelector({
@@ -27,9 +38,13 @@ function DeviceSensorSelector({
   sensor,
   sensorList,
   isLoading,
+  anchorRef,
+  compareTo,
   handleDeviceChange,
   handleSensorChange,
   handleDownloadClick,
+  handleCompareClick,
+  handleCompareClearClick,
 }: Props) {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
   return (
@@ -111,7 +126,16 @@ function DeviceSensorSelector({
                 <em>None</em>
               </MenuItem>
               {sensorList?.map((sensor, index) => (
-                <MenuItem key={index} value={sensor}>
+                <MenuItem
+                  key={index}
+                  value={sensor}
+                  disabled={
+                    compareTo
+                      ? compareTo.deviceId === device &&
+                        compareTo.sensor === sensor
+                      : false
+                  }
+                >
                   {sensor}
                 </MenuItem>
               ))}
@@ -119,35 +143,103 @@ function DeviceSensorSelector({
           </FormControl>
         </Stack>
         {isLoading && <CircularProgress variant="indeterminate" size={20} />}
-        <Tooltip
-          title="Download Chart"
-          disableFocusListener
-          disableTouchListener
-          placement="top"
-          arrow
-          enterDelay={500}
-          slotProps={{
-            popper: {
-              modifiers: [
-                {
-                  name: "offset",
-                  options: {
-                    offset: [0, -5],
-                  },
+        <Box marginLeft="auto">
+          {!!compareTo && (
+            <Tooltip
+              title="Clear Compare chart"
+              disableFocusListener
+              disableTouchListener
+              placement="top"
+              arrow
+              enterDelay={500}
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -5],
+                      },
+                    },
+                  ],
                 },
-              ],
-            },
-          }}
-        >
-          <IconButton
-            color="primary"
-            disabled={!sensor}
-            sx={{ padding: 0, marginLeft: "auto" }}
-            onClick={handleDownloadClick}
+              }}
+            >
+              <span>
+                <IconButton
+                  color="primary"
+                  sx={{ padding: 0, marginRight: 1 }}
+                  onClick={handleCompareClearClick}
+                >
+                  <CloseIcon fontSize="medium" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+          <Tooltip
+            title="Compare chart"
+            disableFocusListener
+            disableTouchListener
+            placement="top"
+            arrow
+            enterDelay={500}
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, -5],
+                    },
+                  },
+                ],
+              },
+            }}
           >
-            <DownloadIcon fontSize="medium" />
-          </IconButton>
-        </Tooltip>
+            <span>
+              <IconButton
+                color="primary"
+                disabled={!sensor || isLoading}
+                sx={{ padding: 0, marginRight: 1 }}
+                ref={anchorRef}
+                onClick={handleCompareClick}
+              >
+                <CompareIcon fontSize="medium" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip
+            title="Download Chart"
+            disableFocusListener
+            disableTouchListener
+            placement="top"
+            arrow
+            enterDelay={500}
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, -5],
+                    },
+                  },
+                ],
+              },
+            }}
+          >
+            <span>
+              <IconButton
+                color="primary"
+                disabled={!sensor}
+                sx={{ padding: 0 }}
+                onClick={handleDownloadClick}
+              >
+                <DownloadIcon fontSize="medium" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
       </Stack>
     </Stack>
   );

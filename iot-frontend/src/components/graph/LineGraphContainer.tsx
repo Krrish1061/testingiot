@@ -1,18 +1,18 @@
 import Box from "@mui/material/Box";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
+import { Chart as ChartJS } from "chart.js";
 import dayjs from "dayjs";
+import minMax from "dayjs/plugin/minMax";
 import { useEffect, useRef, useState } from "react";
-import useGetData from "../../hooks/graph/useGetData";
 import useGetDeviceSensorList from "../../hooks/graph/useGetDeviceSensorList";
 import useRequestData from "../../hooks/graph/useRequestData";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import CompareSensorSelector from "./CompareSensorSelector";
 import DaysSelectors from "./DaysSelectors";
 import DeviceSensorSelector from "./DeviceSensorSelector";
 import LineGraph from "./LineGraph";
-import minMax from "dayjs/plugin/minMax";
-import ISensorData from "../../entities/webSocket/SensorData";
 dayjs.extend(minMax);
-import { Chart as ChartJS } from "chart.js";
 
 interface Props {
   username?: string;
@@ -20,27 +20,26 @@ interface Props {
 }
 
 function LineGraphContainer({ username, companySlug }: Props) {
-  const chartRef = useRef<ChartJS<"line", ISensorData[]> | null>(null);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const chartRef = useRef<ChartJS<"line"> | null>(null);
   const [selectedDays, setSelectedDays] = useState<1 | 7 | 15>(1);
   const [device, setDevice] = useState<number | null>(null);
   const [sensor, setSensor] = useState<string>("");
+  const [compareTo, setCompareTo] = useState<{
+    deviceId: number;
+    sensor: string;
+  } | null>(null);
+  // graphdata loading state -- fetching done via websocket
+  const isLoading = useWebSocketStore((state) => state.isLoading);
   const [startDate, setStartDate] = useState(dayjs());
-  const endDate = dayjs().endOf("day");
+  const [endDate] = useState(() => dayjs().endOf("day"));
 
-  useEffect(() => {
-    setDevice(null);
-    setSensor("");
-    setSelectedDays(1);
-    setStartDate(dayjs());
-  }, [username, companySlug]);
-
-  const { iotDevices, deviceSensorList, sensorSymbol, isSensorValueBoolean } =
-    useGetDeviceSensorList({
-      username: username,
-      companySlug: companySlug,
-      device: device,
-      sensor: sensor,
-    });
+  const { iotDevices, deviceSensorList } = useGetDeviceSensorList({
+    username: username,
+    companySlug: companySlug,
+    device: device,
+  });
 
   useRequestData({
     sensor: sensor,
@@ -48,19 +47,24 @@ function LineGraphContainer({ username, companySlug }: Props) {
     startDate: startDate,
     endDate: endDate,
     selectedDays: selectedDays,
+    compareTo: compareTo,
   });
 
-  const { graphData, isLoading } = useGetData({
-    sensor: sensor,
-    deviceId: device,
-  });
+  useEffect(() => {
+    setDevice(null);
+    setSensor("");
+    setCompareTo(null);
+    setSelectedDays(1);
+    setStartDate(dayjs());
+  }, [username, companySlug]);
 
   useEffect(() => {
     if (iotDevices.length > 0) {
       const iotDevice = iotDevices[0];
       setDevice(iotDevice.id);
-      if (iotDevice.sensor_name_list.length > 0)
+      if (iotDevice.sensor_name_list.length > 0) {
         setSensor(iotDevice.sensor_name_list[0]);
+      }
     }
   }, [iotDevices]);
 
@@ -84,25 +88,41 @@ function LineGraphContainer({ username, companySlug }: Props) {
       event.target.value === "" ? null : parseInt(event.target.value);
     if (value !== null && value !== device) {
       setSensor("");
+      setCompareTo(null);
     }
     setDevice(value);
   };
 
-  const handleSensorChange = (event: SelectChangeEvent) =>
-    setSensor(event.target.value);
+  const handleSensorChange = (event: SelectChangeEvent) => {
+    const sensorName = event.target.value;
+    setSensor(sensorName);
+    if (!sensorName) setCompareTo(null);
+  };
 
   const handleDownloadClick = () => {
     const chart = chartRef.current;
     if (chart) {
       const link = document.createElement("a");
-      link.download =
-        sensor.charAt(0).toUpperCase() +
-        sensor.substring(1) +
-        " " +
-        "Sensor Chart.jpeg";
+      const sensorName = sensor.charAt(0).toUpperCase() + sensor.substring(1);
+      const compareSensorName =
+        compareTo &&
+        compareTo.sensor.charAt(0).toUpperCase() +
+          compareTo.sensor.substring(1);
+      const downloadName = compareSensorName
+        ? sensorName + " vs " + compareSensorName
+        : sensorName;
+      link.download = downloadName + " " + "Sensor Chart.jpeg";
       link.href = chart.toBase64Image("image/jpeg", 1);
       link.click();
     }
+  };
+
+  const handleCompareClick = () => {
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleCompareClearClick = () => {
+    setCompareTo(null);
   };
 
   if (
@@ -135,27 +155,34 @@ function LineGraphContainer({ username, companySlug }: Props) {
         device={device}
         iotDevices={iotDevices}
         sensor={sensor}
+        compareTo={compareTo}
         sensorList={deviceSensorList}
         isLoading={isLoading}
+        anchorRef={anchorRef}
         handleDeviceChange={handleDeviceChange}
         handleSensorChange={handleSensorChange}
         handleDownloadClick={handleDownloadClick}
+        handleCompareClick={handleCompareClick}
+        handleCompareClearClick={handleCompareClearClick}
       />
       <LineGraph
         chartRef={chartRef}
         sensor={sensor}
-        sensorSymbol={sensorSymbol}
-        isSensorValueBoolean={isSensorValueBoolean}
-        graphData={graphData}
+        device={device}
+        startDate={startDate}
+        compareTo={compareTo}
         uptoDays={selectedDays}
-        startDate={startDate.format("YYYY-MM-DD")}
-        endDate={
-          selectedDays === 1
-            ? (dayjs.min(dayjs().add(2, "hour"), endDate) || endDate)
-                .startOf("hour")
-                .format("YYYY-MM-DD HH:mm:ss")
-            : endDate.add(1, "day").startOf("day").format("YYYY-MM-DD HH:mm:ss")
-        }
+        endDate={endDate}
+      />
+      <CompareSensorSelector
+        open={open}
+        setOpen={setOpen}
+        anchorRef={anchorRef}
+        iotDevices={iotDevices}
+        deviceSensorList={deviceSensorList}
+        selectedSensor={sensor}
+        selectedDevice={device}
+        setCompareTo={setCompareTo}
       />
     </Box>
   );

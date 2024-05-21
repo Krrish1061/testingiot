@@ -8,6 +8,10 @@ interface Props {
   startDate: Dayjs;
   endDate: Dayjs;
   selectedDays: 1 | 7 | 15;
+  compareTo: {
+    deviceId: number;
+    sensor: string;
+  } | null;
 }
 
 function useRequestData({
@@ -16,6 +20,7 @@ function useRequestData({
   startDate,
   endDate,
   selectedDays,
+  compareTo,
 }: Props) {
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
@@ -23,10 +28,8 @@ function useRequestData({
   const sensorDataUpToDays = useWebSocketStore(
     (state) => state.sensorDataUpToDays
   );
-
   const setIsLoading = useWebSocketStore((state) => state.setIsLoading);
   const connectionState = useWebSocketStore((state) => state.connectionState);
-
   const setSensorDataUpToDays = useWebSocketStore(
     (state) => state.setSensorDataUpToDays
   );
@@ -38,68 +41,96 @@ function useRequestData({
   );
 
   const sendMessage = useCallback(
-    (startDate: Dayjs, endDate: Dayjs) => {
-      if (sensor && deviceId !== null) {
+    (
+      startDate: Dayjs,
+      endDate: Dayjs,
+      iotDeviceId: number,
+      sensorName: string
+    ) => {
+      if (sensorName) {
         const message = {
           type: "sensor_data",
-          sensor_name: sensor,
-          iot_device_id: deviceId,
+          sensor_name: sensorName,
+          iot_device_id: iotDeviceId,
           start_date: startDate.format("YYYY-MM-DD"),
           end_date: endDate.format("YYYY-MM-DD"),
         };
-        setIsLoading(true);
-        setSensorDataUpToDays(deviceId, sensor, selectedDays);
         sendWebSocketMessage(message);
       }
     },
+    [sendWebSocketMessage]
+  );
+
+  const handleRequestingDataFromWebSocket = useCallback(
+    (
+      sensor: string,
+      deviceId: number,
+      startDate: Dayjs,
+      endDate: Dayjs,
+      selectedDays: 1 | 7 | 15
+    ) => {
+      const deviceData = sensorDataUpToDays[deviceId];
+      const sensorUptoDays = deviceData?.[sensor];
+
+      if (connectionState === "connected") {
+        if ((!sensorUptoDays || selectedDays > sensorUptoDays) && sensor) {
+          setIsLoading(true);
+          const subtractDays =
+            sensorUptoDays === 1 ? 1 : sensorUptoDays === 7 ? 7 : 0;
+          sendMessage(
+            startDate,
+            endDate.subtract(subtractDays, "day"),
+            deviceId,
+            sensor
+          );
+          setSensorDataUpToDays(deviceId, sensor, selectedDays);
+        }
+      } else if (connectionState === "disconnected") {
+        setIsLoading(false);
+        if (Object.keys(sensorDataUpToDays).length !== 0) {
+          setEmptySensorDataUpToDays();
+          setSensorDataToNull();
+        }
+      }
+    },
     [
-      deviceId,
-      selectedDays,
-      sensor,
-      sendWebSocketMessage,
+      connectionState,
+      sensorDataUpToDays,
+      sendMessage,
       setIsLoading,
+      setEmptySensorDataUpToDays,
+      setSensorDataToNull,
       setSensorDataUpToDays,
     ]
   );
 
   useEffect(() => {
-    if (!deviceId) return;
-    const deviceData = sensorDataUpToDays[deviceId];
-    const sensorUptoDays = deviceData && deviceData[sensor];
-    if (
-      connectionState === "connected" &&
-      (!sensorUptoDays || selectedDays > sensorUptoDays)
-    ) {
-      switch (sensorUptoDays) {
-        case 1:
-          sendMessage(startDate, endDate.subtract(1, "day"));
-          break;
-        case 7:
-          sendMessage(startDate, endDate.subtract(7, "day"));
-          break;
-
-        default:
-          sendMessage(startDate, endDate);
-      }
-    } else if (connectionState === "disconnected") {
-      setIsLoading(false);
-      if (Object.keys(sensorDataUpToDays).length !== 0) {
-        setEmptySensorDataUpToDays();
-        setSensorDataToNull();
-      }
+    if (deviceId) {
+      handleRequestingDataFromWebSocket(
+        sensor,
+        deviceId,
+        startDate,
+        endDate,
+        selectedDays
+      );
+    }
+    if (compareTo) {
+      handleRequestingDataFromWebSocket(
+        compareTo.sensor,
+        compareTo.deviceId,
+        startDate,
+        endDate,
+        selectedDays
+      );
     }
   }, [
     sensor,
+    deviceId,
     startDate,
     endDate,
     selectedDays,
-    deviceId,
-    sensorDataUpToDays,
-    connectionState,
-    sendMessage,
-    setIsLoading,
-    setEmptySensorDataUpToDays,
-    setSensorDataToNull,
+    compareTo,
+    handleRequestingDataFromWebSocket,
   ]);
 }
 

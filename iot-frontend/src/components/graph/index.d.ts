@@ -6,5 +6,8 @@ declare module "chart.js" {
     bgColor?: {
       backgroundColor?: string;
     };
+    chartAreaBorder?: {
+      borderColor?: string;
+    };
   }
 }

@@ -68,48 +68,44 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         await self.send(bytes_data=event["data"])
 
     async def receive(self, text_data):
-        if self.is_superadmin:
-            data = json.loads(text_data)
-            message_type = data.get("type")
-            if message_type == "group_subscribe":
-                company_slug = data.get("company_slug")
-                username = data.get("username")
-                # handle case when both username and company_slug is send
-                group_type = data.get("group_type")
-                user, company = await self.get_user_or_company(
-                    group_type, username=username, company_slug=company_slug
-                )
-                # here user is the admin user
-                group_name = user.username if user else company.slug
-                await self.unsubscribe_from_group()
-                await self.subscribe_to_group(group_name)
-                username = None
-                company_slug = company.slug if company else None
-                if company is None:
-                    username = (
-                        user.username
-                        if user.type == "ADMIN"
-                        else user.created_by.username
-                    )
-                send_initial_data.delay(username=username, company_slug=company_slug)
-                # initial_data = await self.get_initial_data(user=user, company=company)
-                # await self.send(text_data=json.dumps(initial_data))
+        data = json.loads(text_data)
+        message_type = data.get("type")
 
-            elif message_type == "sensor_data":
-                # company_slug = data.get("company")
-                # username = data.get("username")
-                sensor_name = data.get("sensor_name")
-                iot_device_id = data.get("iot_device_id")
-                start_date = data.get("start_date")
-                end_date = data.get("end_date")
-
-                get_sensor_data.delay(
-                    sensor_name,
-                    iot_device_id,
-                    channel_name=self.channel_name,
-                    start_date=start_date,
-                    end_date=end_date,
+        if message_type == "group_subscribe" and self.is_superadmin:
+            company_slug = data.get("company_slug")
+            username = data.get("username")
+            # handle case when both username and company_slug is send
+            group_type = data.get("group_type")
+            user, company = await self.get_user_or_company(
+                group_type, username=username, company_slug=company_slug
+            )
+            # here user is the admin user
+            group_name = user.username if user else company.slug
+            await self.unsubscribe_from_group()
+            await self.subscribe_to_group(group_name)
+            username = None
+            company_slug = company.slug if company else None
+            if company is None:
+                username = (
+                    user.username if user.type == "ADMIN" else user.created_by.username
                 )
+            send_initial_data.delay(username=username, company_slug=company_slug)
+            # initial_data = await self.get_initial_data(user=user, company=company)
+            # await self.send(text_data=json.dumps(initial_data))
+
+        elif message_type == "sensor_data":
+            sensor_name = data.get("sensor_name")
+            iot_device_id = data.get("iot_device_id")
+            start_date = data.get("start_date")
+            end_date = data.get("end_date")
+
+            get_sensor_data.delay(
+                sensor_name,
+                iot_device_id,
+                channel_name=self.channel_name,
+                start_date=start_date,
+                end_date=end_date,
+            )
 
     async def subscribe_to_group(self, group_name):
         await self.channel_layer.group_add(group_name, self.channel_name)

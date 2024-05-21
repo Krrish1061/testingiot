@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +21,14 @@ const useLogout = () => {
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
   );
+  const setSensorDataToNull = useWebSocketStore(
+    (state) => state.setSensorDataToNull
+  );
+  const setEmptySensorDataUpToDays = useWebSocketStore(
+    (state) => state.setEmptySensorDataUpToDays
+  );
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const logoutUser = async (username: string | undefined) => {
     const csrfToken = await getCsrf();
@@ -40,6 +47,9 @@ const useLogout = () => {
       setToken(null);
       setIsUserSuperAdmin(false);
       setliveDataToNull();
+      setSensorDataToNull();
+      setEmptySensorDataUpToDays();
+      queryClient.clear();
       enqueueSnackbar("Logout sucessfull", { variant: "success" });
       navigate("/login", {
         state: { from: "logout" },

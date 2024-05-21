@@ -3,25 +3,27 @@ import Skeleton from "@mui/material/Skeleton";
 import { useTheme } from "@mui/material/styles";
 import {
   CategoryScale,
+  ChartData,
   Chart as ChartJS,
-  ChartOptions,
+  Decimation,
+  Legend,
   LineElement,
   LinearScale,
   PointElement,
   TimeScale,
   TimeSeriesScale,
   Title,
-  Plugin,
-  Decimation,
 } from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm";
-import { Line } from "react-chartjs-2";
-import ISensorData from "../../entities/webSocket/SensorData";
-import useDrawerStore from "../../store/drawerStore";
-import { MutableRefObject, useMemo } from "react";
-import dayjs from "dayjs";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { ZoomPluginOptions } from "chartjs-plugin-zoom/types/options";
+import dayjs, { Dayjs } from "dayjs";
+import { MutableRefObject, useMemo } from "react";
+import { Line } from "react-chartjs-2";
+import useGetData from "../../hooks/graph/useGetData";
+import useDrawerStore from "../../store/drawerStore";
+import createChartOptions from "./ChartConfig";
+import { backgroundColorPlugin, chartBorderLinePlugin } from "./ChartPlugins";
+import createZoomOptions from "./ZoomPluginConfig";
 
 ChartJS.register(
   TimeScale,
@@ -31,54 +33,94 @@ ChartJS.register(
   TimeSeriesScale,
   CategoryScale,
   Title,
+  Legend,
   Decimation,
   zoomPlugin
-  // Legend
 );
 
 interface Props {
-  chartRef: MutableRefObject<ChartJS<"line", unknown, unknown> | null>;
-  graphData: ISensorData[] | null;
+  chartRef: MutableRefObject<ChartJS<"line", unknown> | null>;
   sensor: string;
-  sensorSymbol: string | null;
-  isSensorValueBoolean: boolean;
-  startDate: string;
-  endDate: string;
+  startDate: Dayjs;
+  endDate: Dayjs;
+  device: number;
   uptoDays: 1 | 7 | 15;
-}
-
-function toggleZoom(chart: ChartJS) {
-  const zoomOptions = chart.options.plugins?.zoom?.zoom?.wheel;
-
-  if (zoomOptions) {
-    zoomOptions.enabled = !zoomOptions.enabled; // Toggle the zoom enabled state
-    chart.update();
-  }
+  compareTo: {
+    deviceId: number;
+    sensor: string;
+  } | null;
 }
 
 function LineGraph({
   chartRef,
   sensor,
-  sensorSymbol,
-  isSensorValueBoolean,
   startDate,
   endDate,
-  // uptoDays,
-  graphData,
+  device,
+  compareTo,
+  uptoDays,
 }: Props) {
   const isMobile = useDrawerStore((state) => state.isMobile);
   const theme = useTheme();
 
-  const chartDataArr = useMemo(
-    () =>
-      sensor
-        ? graphData?.map((data) => ({
-            x: dayjs(data.date_time).valueOf(),
-            y: data.value,
-          })) || []
-        : [],
+  const {
+    graphData,
+    compareData,
+    sensorSymbol,
+    isSensorValueBoolean,
+    compareSensorSymbol,
+    isCompareSensorValueBoolean,
+  } = useGetData({
+    sensor: sensor,
+    deviceId: device,
+    compareTo: compareTo,
+  });
 
-    [graphData, sensor]
+  const isCompareEnabled = !!compareTo;
+
+  const chartEndDate = useMemo(
+    () =>
+      uptoDays === 1
+        ? (dayjs.min(dayjs().add(2, "hour"), endDate) || endDate).startOf(
+            "hour"
+          )
+        : endDate.add(1, "day").startOf("day"),
+    [endDate, uptoDays]
+  );
+
+  const zoomOptions = useMemo(
+    () => createZoomOptions(startDate, chartEndDate),
+    [chartEndDate, startDate]
+  );
+
+  const chartOptions = useMemo(
+    () =>
+      createChartOptions(
+        theme,
+        isMobile,
+        isSensorValueBoolean,
+        isCompareEnabled,
+        sensor,
+        startDate,
+        chartEndDate,
+        sensorSymbol,
+        compareSensorSymbol,
+        isCompareSensorValueBoolean,
+        zoomOptions
+      ),
+    [
+      theme,
+      isMobile,
+      isSensorValueBoolean,
+      isCompareEnabled,
+      sensor,
+      startDate,
+      chartEndDate,
+      sensorSymbol,
+      compareSensorSymbol,
+      isCompareSensorValueBoolean,
+      zoomOptions,
+    ]
   );
 
   if (graphData === null)
@@ -86,173 +128,36 @@ function LineGraph({
       <Skeleton variant="rounded" animation="wave" width="100%" height={200} />
     );
 
-  const titlefontSize = isMobile ? 12 : 15;
-
-  const plugin: Plugin<"line"> = {
-    id: "bgColor",
-    beforeDraw: (chart, _args, options) => {
-      const { ctx, width, height } = chart;
-      ctx.save();
-      ctx.globalCompositeOperation = "destination-over";
-      ctx.fillStyle = options.backgroundColor;
-      ctx.fillRect(0, 0, width, height);
-      ctx.restore();
-    },
-  };
-
-  const borderPlugin: Plugin<"line"> = {
-    id: "chartAreaBorder",
-    beforeDraw(chart) {
-      const {
-        ctx,
-        chartArea: { left, top, width, height },
-      } = chart;
-      if (chart.options.plugins?.zoom?.zoom?.wheel?.enabled) {
-        ctx.save();
-        ctx.strokeStyle = theme.palette.primary.main;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(left, top, width, height);
-        ctx.restore();
-      }
-    },
-  };
-
-  const zoomOptions: ZoomPluginOptions = {
-    limits: {
-      x: {
-        min: dayjs(startDate).valueOf(),
-        max: dayjs(endDate).valueOf(),
-        minRange: 60 * 60 * 1000,
-      },
-    },
-    pan: {
-      enabled: true,
-      mode: "x",
-    },
-    zoom: {
-      wheel: {
-        enabled: false,
-      },
-      pinch: {
-        enabled: false,
-      },
-      mode: "x",
-    },
-  };
-
-  const options: ChartOptions<"line"> = {
-    responsive: true,
-    spanGaps: isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1, // 1 days,
-    maintainAspectRatio: false,
-    resizeDelay: 250,
-    animation: false,
-    parsing: false,
-
-    datasets: {
-      line: {
-        pointStyle: graphData.length === 1 ? "circle" : false,
-        pointRadius: graphData.length === 1 ? 3 : 0,
-      },
-    },
-
-    plugins: {
-      decimation: {
-        enabled: true,
-        algorithm: "lttb",
-        samples: 500,
-        threshold: 1000,
-      },
-      bgColor: {
-        backgroundColor: theme.palette.background.paper,
-      },
-
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: sensor
-          ? sensor.charAt(0).toUpperCase() + sensor.substring(1) + " Sensor"
-          : undefined,
-
-        color: theme.palette.primary.main,
-        font: {
-          size: titlefontSize,
-          weight: "bold",
-        },
-      },
-      zoom: zoomOptions,
-    },
-    scales: {
-      x: {
-        type: "time",
-        title: {
-          display: true,
-          text: "Date",
-          color: theme.palette.primary.main,
-          font: {
-            size: titlefontSize,
-            weight: "bold",
-          },
-        },
-        // time: {
-        //   unit: uptoDays === 1 ? "minute" : uptoDays === 7 ? "hour" : "day",
-        // },
-
-        ticks: {
-          maxRotation: 0,
-          autoSkip: true,
-          major: {
-            enabled: true,
-          },
-          font: function (context) {
-            if (context.tick && context.tick.major) return { weight: "bold" };
-          },
-        },
-
-        max: endDate,
-        min: startDate,
-      },
-      y: {
-        min: isSensorValueBoolean ? 0 : undefined,
-        max: isSensorValueBoolean ? 1 : undefined,
-        // beginAtZero: true,
-        title: {
-          display: true,
-          text: "Value" + (sensorSymbol ? `(${sensorSymbol})` : ""),
-          color: theme.palette.primary.main,
-          font: {
-            size: titlefontSize,
-            weight: "bold",
-          },
-          padding: 0,
-        },
-        ticks: {
-          precision: 2,
-          stepSize: isSensorValueBoolean ? 1 : undefined,
-          callback: isSensorValueBoolean
-            ? function (value) {
-                return value === 1 ? "ON" : "OFF";
-              }
-            : undefined,
-        },
-      },
-    },
-    onClick(_event, _elements, chart) {
-      toggleZoom(chart);
-    },
-  };
-
-  const chartData = {
+  const chartData: ChartData<"line"> = {
     datasets: [
       {
-        data: chartDataArr,
+        data: sensor ? graphData : [],
         fill: false,
+        label: sensor.charAt(0).toUpperCase() + sensor.substring(1),
         borderColor: theme.palette.primary.main,
         backgroundColor: theme.palette.primary.main,
         borderWidth: isSensorValueBoolean ? 2 : 1,
         normalized: true,
+        pointStyle: graphData.length === 1 ? "circle" : false,
+        pointRadius: graphData.length === 1 ? 3 : 0,
         stepped: isSensorValueBoolean,
+        yAxisID: "y",
+      },
+      {
+        data: compareTo && compareData ? compareData : [],
+        fill: false,
+        label: compareTo
+          ? compareTo.sensor.charAt(0).toUpperCase() +
+            compareTo.sensor.substring(1)
+          : "",
+        borderColor: theme.palette.success.main,
+        backgroundColor: theme.palette.success.main,
+        borderWidth: isCompareSensorValueBoolean ? 2 : 1,
+        normalized: true,
+        pointStyle: compareData?.length === 1 ? "circle" : false,
+        pointRadius: compareData?.length === 1 ? 3 : 0,
+        stepped: isCompareSensorValueBoolean,
+        yAxisID: "y1",
       },
     ],
   };
@@ -261,9 +166,9 @@ function LineGraph({
     <Box height={{ xs: 250, sm: 300, md: 450 }}>
       <Line
         ref={chartRef}
-        options={options}
+        options={chartOptions}
         data={chartData}
-        plugins={[plugin, borderPlugin]}
+        plugins={[backgroundColorPlugin, chartBorderLinePlugin]}
       />
     </Box>
   );
