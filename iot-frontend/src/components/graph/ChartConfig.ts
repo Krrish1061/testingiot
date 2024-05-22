@@ -19,9 +19,10 @@ const createChartOptions = (
 ) => {
   const titlefontSize = isMobile ? 12 : 15;
   const spanGaps = isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1; // 1 days,
-  const sensorName = sensor
-    ? sensor.charAt(0).toUpperCase() + sensor.substring(1) + " Sensor"
-    : undefined;
+  const sensorName =
+    sensor && !isCompareEnabled
+      ? sensor.charAt(0).toUpperCase() + sensor.substring(1) + " Sensor"
+      : undefined;
 
   const options: ChartOptions<"line"> = {
     responsive: true,

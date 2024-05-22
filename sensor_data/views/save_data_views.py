@@ -10,12 +10,16 @@ from iot_devices.auth import DeviceAuthentication
 from iot_devices.cache import IotDeviceCache
 from sensor_data.serializers import IotDeviceSensorDataSerializer
 from sensor_data.tasks import send_live_data_to
+from sensor_data.utilis import strtobool
 
 
 @api_view(["POST"])
 @authentication_classes([DeviceAuthentication])
 def save_sensor_data(request):
     iot_device = request.auth
+    if strtobool(request.data.get("is_error", "")):
+        return Response(status=status.HTTP_200_OK)
+
     device_sensors = IotDeviceCache.get_all_device_sensors(iot_device.id)
     if not device_sensors:
         return Response(
