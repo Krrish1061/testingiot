@@ -29,6 +29,8 @@ interface Props {
   deviceSensorList: string[];
   selectedSensor: string;
   selectedDevice: number;
+  selectedIndex: number;
+  setSelectedIndex: Dispatch<SetStateAction<number>>;
   setCompareTo: Dispatch<
     SetStateAction<{
       deviceId: number;
@@ -46,9 +48,10 @@ function CompareSensorSelector({
   deviceSensorList,
   selectedSensor,
   selectedDevice,
+  selectedIndex,
+  setSelectedIndex,
 }: Props) {
   const [deviceId, setDeviceId] = useState<null | number>(null);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const handleClose = (event: Event | SyntheticEvent) => {
     if (

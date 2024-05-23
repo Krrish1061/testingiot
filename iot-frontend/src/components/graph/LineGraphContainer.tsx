@@ -23,6 +23,8 @@ function LineGraphContainer({ username, companySlug }: Props) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const chartRef = useRef<ChartJS<"line"> | null>(null);
+  const [compareSensorSelectedIndex, setCompareSensorSelectedIndex] =
+    useState(-1);
   const [selectedDays, setSelectedDays] = useState<1 | 7 | 15>(1);
   const [device, setDevice] = useState<number | null>(null);
   const [sensor, setSensor] = useState<string>("");
@@ -123,6 +125,7 @@ function LineGraphContainer({ username, companySlug }: Props) {
 
   const handleCompareClearClick = () => {
     setCompareTo(null);
+    setCompareSensorSelectedIndex(-1);
   };
 
   if (
@@ -176,13 +179,15 @@ function LineGraphContainer({ username, companySlug }: Props) {
       />
       <CompareSensorSelector
         open={open}
-        setOpen={setOpen}
         anchorRef={anchorRef}
         iotDevices={iotDevices}
         deviceSensorList={deviceSensorList}
         selectedSensor={sensor}
         selectedDevice={device}
+        selectedIndex={compareSensorSelectedIndex}
+        setOpen={setOpen}
         setCompareTo={setCompareTo}
+        setSelectedIndex={setCompareSensorSelectedIndex}
       />
     </Box>
   );
