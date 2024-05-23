@@ -28,8 +28,7 @@ function CompanyColumns() {
         editable: false,
         sortable: false,
         filterable: false,
-        renderCell: (index) =>
-          index.api.getRowIndexRelativeToVisibleRows(index.row.id) + 1,
+        renderCell: (index) => index.api.getAllRowIds().indexOf(index.id) + 1,
       },
       {
         field: "logo",

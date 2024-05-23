@@ -30,8 +30,6 @@ function useGetIotDeviceSensor({ companySlug, username }: Props) {
       ? ["device-sensors", companySlug]
       : ["device-sensors", username],
     queryFn: getIotDeviceSensor,
-    cacheTime: Infinity,
-    staleTime: Infinity,
   });
 }
 

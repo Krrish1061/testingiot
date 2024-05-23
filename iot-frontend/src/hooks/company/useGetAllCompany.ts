@@ -13,8 +13,6 @@ function useGetAllCompany(isEnabled: boolean = true) {
     queryKey: ["companyList"],
     queryFn: fetchCompanies,
     enabled: isEnabled,
-    cacheTime: Infinity,
-    staleTime: Infinity,
   });
 }
 

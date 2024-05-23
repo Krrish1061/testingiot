@@ -47,6 +47,7 @@ function DeviceSensorSelector({
   handleCompareClearClick,
 }: Props) {
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
+  const isMobile = useDrawerStore((state) => state.isMobile);
   return (
     <Stack
       direction={{
@@ -143,6 +144,7 @@ function DeviceSensorSelector({
           </FormControl>
         </Stack>
         {isLoading && <CircularProgress variant="indeterminate" size={20} />}
+
         <Box marginLeft="auto">
           {!!compareTo && (
             <Tooltip
@@ -176,38 +178,40 @@ function DeviceSensorSelector({
               </span>
             </Tooltip>
           )}
-          <Tooltip
-            title="Compare chart"
-            disableFocusListener
-            disableTouchListener
-            placement="top"
-            arrow
-            enterDelay={500}
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: "offset",
-                    options: {
-                      offset: [0, -5],
+          {!isMobile && (
+            <Tooltip
+              title="Compare chart"
+              disableFocusListener
+              disableTouchListener
+              placement="top"
+              arrow
+              enterDelay={500}
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    {
+                      name: "offset",
+                      options: {
+                        offset: [0, -5],
+                      },
                     },
-                  },
-                ],
-              },
-            }}
-          >
-            <span>
-              <IconButton
-                color="primary"
-                disabled={!sensor || isLoading}
-                sx={{ padding: 0, marginRight: 1 }}
-                ref={anchorRef}
-                onClick={handleCompareClick}
-              >
-                <CompareIcon fontSize="medium" />
-              </IconButton>
-            </span>
-          </Tooltip>
+                  ],
+                },
+              }}
+            >
+              <span>
+                <IconButton
+                  color="primary"
+                  disabled={!sensor || isLoading}
+                  sx={{ padding: 0, marginRight: 1 }}
+                  ref={anchorRef}
+                  onClick={handleCompareClick}
+                >
+                  <CompareIcon fontSize="medium" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           <Tooltip
             title="Download Chart"
             disableFocusListener

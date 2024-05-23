@@ -47,7 +47,9 @@ function SensorEditableField({
           Max Limit:
         </Typography>
         {!isEditMode ? (
-          <Typography>{maxLimit}</Typography>
+          <Typography>
+            {maxLimit === null || maxLimit === undefined ? "N/A" : maxLimit}
+          </Typography>
         ) : (
           <TextField
             inputProps={{
@@ -80,7 +82,9 @@ function SensorEditableField({
           Min Limit:
         </Typography>
         {!isEditMode ? (
-          <Typography>{minLimit} </Typography>
+          <Typography>
+            {minLimit === null || minLimit === undefined ? "N/A" : minLimit}
+          </Typography>
         ) : (
           <TextField
             id={minLimitId}

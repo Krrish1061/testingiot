@@ -12,8 +12,6 @@ function useGetAllIotDevice() {
   return useQuery<IotDevice[], AxiosError>({
     queryKey: ["iotDeviceList"],
     queryFn: fetchIotDevices,
-    cacheTime: Infinity,
-    staleTime: Infinity,
   });
 }
 

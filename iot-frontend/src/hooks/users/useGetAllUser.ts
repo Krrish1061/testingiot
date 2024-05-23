@@ -16,8 +16,6 @@ function useGetAllUser(isEnabled: boolean = true) {
     queryKey: ["userList"],
     queryFn: fetchUsers,
     enabled: isEnabled,
-    cacheTime: Infinity,
-    staleTime: Infinity,
   });
 }
 

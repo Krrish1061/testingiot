@@ -38,9 +38,10 @@ function UserRow({ row, index }: Props) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const user = useAuthStore((state) => state.user);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
   const { mutate: editUser } = useEditUser();
   const { mutate: deleteuser } = useDeleteUser();
-  const { data: companyList } = useGetAllCompany();
+  const { data: companyList } = useGetAllCompany(isUserSuperAdmin);
 
   const companyName = useMemo(
     () => companyList?.find((company) => company.slug === row.company)?.name,

@@ -12,7 +12,7 @@ import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 function DesktopManageUser() {
   // to handle user do work in backend
   const { data, isError, isSuccess, isLoading } = useGetAllUser();
-  const user = useAuthStore((state) => state.user);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   const {
     processRowUpdate,
@@ -58,7 +58,7 @@ function DesktopManageUser() {
               // Hide columns status and traderName, the other columns will remain visible
               serial_number: false,
               date_joined: false,
-              company: user?.is_associated_with_company ? false : true,
+              company: isUserSuperAdmin || false,
             },
           },
           pagination: { paginationModel: { pageSize: 20 } },

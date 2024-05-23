@@ -19,6 +19,8 @@ import useUserDataGridStore from "../../../store/datagrid/userDataGridStore";
 import useUserDataGrid from "../../../hooks/muiDataGrid/useUserDataGrid";
 import UserProfileModel from "./UserProfileModel";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
+import useCompanyStore from "../../../store/companyStore";
+import useCompany from "../../../hooks/company/useCompany";
 
 interface Props {
   users?: User[];
@@ -63,8 +65,12 @@ const getUserTypeOptions = (user: User | null, row: User | undefined) => {
 
 function UserColumns({ users }: Props) {
   const user = useAuthStore((state) => state.user);
-  const { data: companyList } = useGetAllCompany();
-  const isUserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
+  const userCompany = useCompanyStore((state) => state.company);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const { data: companyList } = useGetAllCompany(isUserSuperAdmin);
+  // fetching the user company detail
+  useCompany(!isUserSuperAdmin && user?.is_associated_with_company);
+
   const {
     handleEditClick,
     handleSaveClick,
@@ -83,8 +89,8 @@ function UserColumns({ users }: Props) {
         editable: false,
         sortable: false,
         filterable: false,
-        renderCell: (index) =>
-          index.api.getRowIndexRelativeToVisibleRows(index.row.id) + 1,
+        renderCell: (index: GridRenderCellParams<User>) =>
+          index.api.getAllRowIds().indexOf(index.id) + 1,
       },
       {
         field: "avatar",
@@ -154,9 +160,14 @@ function UserColumns({ users }: Props) {
         flex: 0.75,
         editable: false,
         valueGetter: (params: GridValueGetterParams<User>) => {
-          return companyList?.find(
-            (company) => company.slug === params.row?.company
-          )?.name;
+          if (isUserSuperAdmin)
+            return (
+              companyList?.find(
+                (company) => company.slug === params.row?.company
+              )?.name || "-"
+            );
+          else if (user?.is_associated_with_company) return userCompany.name;
+          else return "-";
         },
         renderCell: RenderCellExpand,
       },
@@ -238,6 +249,7 @@ function UserColumns({ users }: Props) {
       rowModesModel,
       isUserSuperAdmin,
       companyList,
+      userCompany,
     ]
   );
 

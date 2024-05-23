@@ -5,7 +5,7 @@ import Company from "../../entities/Company";
 import useAuthStore from "../../store/authStore";
 import useCompanyStore from "../../store/companyStore";
 
-function useCompany() {
+function useCompany(isEnabled: boolean = true) {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
   const setCompany = useCompanyStore((state) => state.setCompany);
@@ -18,8 +18,7 @@ function useCompany() {
   return useQuery<Company, AxiosError, Company>({
     queryKey: user ? ["company", user.company] : ["company"],
     queryFn: fetchCompanies,
-    cacheTime: Infinity,
-    staleTime: Infinity,
+    enabled: isEnabled,
     onSuccess: (company) => setCompany(company),
   });
 }

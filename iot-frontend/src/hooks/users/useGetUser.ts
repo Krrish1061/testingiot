@@ -15,8 +15,6 @@ function useGetUser(isEnabled: boolean = true) {
     queryKey: user ? ["users", user.username] : ["user"],
     queryFn: fetchUser,
     enabled: isEnabled,
-    cacheTime: Infinity,
-    staleTime: Infinity,
     onSuccess: (data) => {
       if (data.profile?.date_of_birth) {
         data.profile.date_of_birth = new Date(data.profile.date_of_birth);
