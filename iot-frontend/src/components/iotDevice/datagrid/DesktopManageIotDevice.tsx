@@ -5,11 +5,11 @@ import useIotDeviceDataGridStore from "../../../store/datagrid/iotDeviceDataGrid
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
 import IotDeviceColumns from "./IotDeviceColumns";
-import Box from "@mui/material/Box";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
+import ErrorReload from "../../ErrorReload";
 
 function DesktopManageIotDevice() {
-  const { data, isError, isSuccess, isLoading } = useGetAllIotDevice();
+  const { data, isError, isSuccess, isLoading, refetch } = useGetAllIotDevice();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -42,7 +42,13 @@ function DesktopManageIotDevice() {
 
   const columns = IotDeviceColumns();
 
-  if (isError) return <Box>Error Ocurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Iot Device List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   return (
     <>
       <BaseMuiGrid

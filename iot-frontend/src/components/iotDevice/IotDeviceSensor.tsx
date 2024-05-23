@@ -7,6 +7,8 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
 import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
+import LoadingSpinner from "../LoadingSpinner";
+import ErrorReload from "../ErrorReload";
 
 interface IProps {
   companySlug?: string;
@@ -19,9 +21,17 @@ function IotDeviceSensor(Props: IProps) {
     data: iotDeviceSensors,
     isError,
     isLoading,
+    refetch,
   } = useGetIotDeviceSensor(Props);
-  if (isError) return <div>Error occured</div>;
-  if (isLoading) return <div>Loading</div>;
+
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Iot Device associated Sensor details!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
+  if (isLoading) return <LoadingSpinner />;
 
   const deviceName = (key: number) => {
     return iotDeviceList?.find((iotDevice) => iotDevice.id === +key)

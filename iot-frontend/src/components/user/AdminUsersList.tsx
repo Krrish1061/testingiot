@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -8,6 +7,8 @@ import { Link as RouterLink } from "react-router-dom";
 import User from "../../entities/User";
 import UserTypes from "../../constants/userTypes";
 import { useMemo } from "react";
+import ErrorReload from "../ErrorReload";
+import LoadingSpinner from "../LoadingSpinner";
 
 function getAdminUsers(users: User[] | undefined) {
   if (!users) return null;
@@ -18,11 +19,17 @@ function getAdminUsers(users: User[] | undefined) {
 }
 
 function AdminUsersList() {
-  const { data, isError, isLoading } = useGetAllUser();
+  const { data, isError, isLoading, refetch } = useGetAllUser();
   const adminUsersList = useMemo(() => getAdminUsers(data), [data]);
 
-  if (isError) return <Box>Error Ocurred</Box>;
-  if (isLoading) return <Box>Loading</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve user List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <List disablePadding>

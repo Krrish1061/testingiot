@@ -6,14 +6,20 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import useGetAllUser from "../../../hooks/users/useGetAllUser";
-import Box from "@mui/material/Box";
 import LoadingSpinner from "../../LoadingSpinner";
 import UserRow from "./UserRow";
+import ErrorReload from "../../ErrorReload";
 
 function MobileManageUsers() {
-  const { data: users, isError, isLoading } = useGetAllUser();
+  const { data: users, isError, isLoading, refetch } = useGetAllUser();
 
-  if (isError) return <Box> Error Occurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the users List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   if (isLoading) return <LoadingSpinner />;
 
   return (

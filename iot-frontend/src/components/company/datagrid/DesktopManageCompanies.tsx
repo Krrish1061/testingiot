@@ -3,13 +3,13 @@ import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useCompanyDataGrid from "../../../hooks/muiDataGrid/useCompanyDataGrid";
 import useCompanyDataGridStore from "../../../store/datagrid/companyDataGridStore";
 import CompanyColumns from "./CompanyColumns";
-import Box from "@mui/material/Box";
 import DeleteDialog from "../../datagrid/DeleteDialog";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
+import ErrorReload from "../../ErrorReload";
 
 function DesktopManageCompanies() {
-  const { data, isError, isSuccess, isLoading } = useGetAllCompany();
+  const { data, isError, isSuccess, isLoading, refetch } = useGetAllCompany();
 
   const {
     processRowUpdate,
@@ -41,7 +41,13 @@ function DesktopManageCompanies() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess]);
 
-  if (isError) return <Box>Error Ocurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Company List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   return (
     <>
       <BaseMuiGrid

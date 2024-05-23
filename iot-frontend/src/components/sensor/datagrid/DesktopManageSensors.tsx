@@ -4,13 +4,13 @@ import useGetAllSensors from "../../../hooks/sensor/useGetAllSensors";
 import useSensorDataGridStore from "../../../store/datagrid/sensorDataGridStore";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
-import Box from "@mui/material/Box";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import SensorColumns from "./SensorColumns";
 import SensorToolBar from "./SensorToolBar";
+import ErrorReload from "../../ErrorReload";
 
 function DesktopManageSensors() {
-  const { data, isError, isSuccess, isLoading } = useGetAllSensors();
+  const { data, isError, isSuccess, isLoading, refetch } = useGetAllSensors();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -41,7 +41,13 @@ function DesktopManageSensors() {
 
   const columns = SensorColumns();
 
-  if (isError) return <Box>Error Ocurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Sensors List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   return (
     <>
       <BaseMuiGrid

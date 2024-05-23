@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import { useEffect } from "react";
 import useGetAllUser from "../../../hooks/users/useGetAllUser";
 import useAuthStore from "../../../store/authStore";
@@ -8,10 +7,11 @@ import UserColumns from "./UserColumns";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
+import ErrorReload from "../../ErrorReload";
 
 function DesktopManageUser() {
   // to handle user do work in backend
-  const { data, isError, isSuccess, isLoading } = useGetAllUser();
+  const { data, isError, isSuccess, isLoading, refetch } = useGetAllUser();
   const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   const {
@@ -45,7 +45,13 @@ function DesktopManageUser() {
   // columns for the data grid for the Users
   const columns = UserColumns({ users: data });
 
-  if (isError) return <Box>Error Ocurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the users List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   return (
     <>
       <BaseMuiGrid

@@ -5,13 +5,19 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Box from "@mui/material/Box";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
-import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
+import ErrorReload from "../ErrorReload";
 
 // pass the linkto props or implement tab
 const CompanyList = () => {
-  const { data, error } = useGetAllCompany();
-  if (error) return <Typography>{error.message}</Typography>;
+  const { data, error, refetch } = useGetAllCompany();
+  if (error)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Company List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
 
   return (
     <Box>

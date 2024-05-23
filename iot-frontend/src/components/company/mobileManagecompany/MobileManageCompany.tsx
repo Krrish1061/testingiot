@@ -5,15 +5,21 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
 import LoadingSpinner from "../../LoadingSpinner";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import CompanyRow from "./CompanyRow";
+import ErrorReload from "../../ErrorReload";
 
 function MobileManageCompanies() {
-  const { data: companies, isError, isLoading } = useGetAllCompany();
+  const { data: companies, isError, isLoading, refetch } = useGetAllCompany();
 
-  if (isError) return <Box> Error Occurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Company details!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   if (isLoading) return <LoadingSpinner />;
 
   return (

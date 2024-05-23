@@ -1,18 +1,29 @@
-import Box from "@mui/material/Box";
-import useGetAllIotDevice from "../../../hooks/iotDevice/useGetAllIotDevice";
+import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
+import useGetAllIotDevice from "../../../hooks/iotDevice/useGetAllIotDevice";
+import ErrorReload from "../../ErrorReload";
 import LoadingSpinner from "../../LoadingSpinner";
 import IotDeviceRow from "./IotDeviceRow";
 
 function MobileManageIotDevice() {
-  const { data: iotDevices, isError, isLoading } = useGetAllIotDevice();
-  if (isError) return <Box> Error Occurred</Box>;
+  const {
+    data: iotDevices,
+    isError,
+    isLoading,
+    refetch,
+  } = useGetAllIotDevice();
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Iot Device List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   if (isLoading) return <LoadingSpinner />;
 
   return (

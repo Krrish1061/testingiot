@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import useSendLiveDataDataGrid from "../../../hooks/muiDataGrid/useSendLiveDataDataGrid";
 import useGetAllSendLiveData from "../../../hooks/sendLiveData/useGetAllSendLiveData";
 import useSendLiveDataDataGridStore from "../../../store/datagrid/sendLiveDataDataGrid";
@@ -8,9 +7,11 @@ import DeleteDialog from "../../datagrid/DeleteDialog";
 import { useEffect } from "react";
 import SendLiveDataColumns from "./SendLiveDataColumns";
 import SendLiveDataToolBar from "./SendLiveDataToolBar";
+import ErrorReload from "../../ErrorReload";
 
 function DesktopSendLiveData() {
-  const { data, isError, isSuccess, isLoading } = useGetAllSendLiveData();
+  const { data, isError, isSuccess, isLoading, refetch } =
+    useGetAllSendLiveData();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -43,7 +44,13 @@ function DesktopSendLiveData() {
 
   const columns = SendLiveDataColumns();
 
-  if (isError) return <Box>Error Ocurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the SendLive Data List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
 
   return (
     <>

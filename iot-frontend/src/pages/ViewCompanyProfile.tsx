@@ -12,10 +12,12 @@ import useCompany from "../hooks/company/useCompany";
 import useUpdateCompanyLogo from "../hooks/company/useUploadCompanyLogo";
 import useCompanyStore from "../store/companyStore";
 import useDrawerStore from "../store/drawerStore";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorReload from "../components/ErrorReload";
 
 function ViewCompanyProfile() {
   const [open, setOpen] = useState(false);
-  const { isError, isLoading } = useCompany();
+  const { isError, isLoading, refetch } = useCompany();
   const company = useCompanyStore((state) => state.company);
   const [file, setFile] = useState<string>("");
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
@@ -33,8 +35,14 @@ function ViewCompanyProfile() {
     }
   };
 
-  if (isError) return <div> error occured</div>;
-  if (isLoading) return <div>Loading...</div>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the Company details!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
+  if (isLoading) return <LoadingSpinner size={40} />;
 
   return (
     <Box>

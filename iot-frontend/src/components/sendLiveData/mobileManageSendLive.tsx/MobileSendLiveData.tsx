@@ -1,31 +1,38 @@
-import useGetAllSendLiveData from "../../../hooks/sendLiveData/useGetAllSendLiveData";
-import LoadingSpinner from "../../LoadingSpinner";
-import Box from "@mui/material/Box";
+import AddIcon from "@mui/icons-material/Add";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import SendLiveDataRow from "./SendLiveDataRow";
-import Button from "@mui/material/Button";
-import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
-import Stack from "@mui/material/Stack";
+import useGetAllSendLiveData from "../../../hooks/sendLiveData/useGetAllSendLiveData";
+import ErrorReload from "../../ErrorReload";
+import LoadingSpinner from "../../LoadingSpinner";
 import AddSendLiveData from "../AddSendLiveData";
+import SendLiveDataRow from "./SendLiveDataRow";
 
 function MobileSendLiveData() {
   const {
     data: sendLiveDataList,
     isError,
     isLoading,
+    refetch,
   } = useGetAllSendLiveData();
 
   const [open, setOpen] = useState(false);
   const handleClick = () => setOpen(true);
 
-  if (isError) return <Box> Error Occurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the SendLive Data List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   if (isLoading) return <LoadingSpinner />;
 
   return (

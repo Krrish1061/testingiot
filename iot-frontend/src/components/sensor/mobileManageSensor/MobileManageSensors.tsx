@@ -5,15 +5,21 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
 import LoadingSpinner from "../../LoadingSpinner";
 import useGetAllSensors from "../../../hooks/sensor/useGetAllSensors";
 import SensorRow from "./SensorRow";
+import ErrorReload from "../../ErrorReload";
 
 function MobileManageSensors() {
-  const { data: sensors, isError, isLoading } = useGetAllSensors();
+  const { data: sensors, isError, isLoading, refetch } = useGetAllSensors();
 
-  if (isError) return <Box> Error Occurred</Box>;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the sensors List!!!"
+        handleRefetch={() => refetch()}
+      />
+    );
   if (isLoading) return <LoadingSpinner />;
   return (
     <TableContainer component={Paper}>

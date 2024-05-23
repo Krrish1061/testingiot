@@ -14,6 +14,8 @@ import Button from "@mui/material/Button";
 import useGetIotDeviceApiKey from "../../hooks/iotDevice/useGetIotDeviceApiKey";
 import CircularProgress from "@mui/material/CircularProgress";
 import ApiKeyDialog from "./ApiKeyDialog";
+import LoadingSpinner from "../LoadingSpinner";
+import ErrorReload from "../ErrorReload";
 
 interface Props {
   companySlug?: string;
@@ -41,7 +43,12 @@ function OwnedIotDevices(
 
 function IotDeviceApiSetting({ companySlug, username }: Props) {
   const [open, setOpen] = useState(false);
-  const { data: iotDevices, isLoading, isError } = useGetAllIotDevice();
+  const {
+    data: iotDevices,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetAllIotDevice();
   const [deviceId, setDeviceId] = useState<number | null>(null);
   const {
     data: apiKey,
@@ -61,8 +68,14 @@ function IotDeviceApiSetting({ companySlug, username }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKeySuccess]);
 
-  if (isLoading) return <Box>Loading...</Box>;
-  if (isError) return <Box>Error occured...</Box>;
+  if (isLoading) return <LoadingSpinner />;
+  if (isError)
+    return (
+      <ErrorReload
+        text="Could not Retrieve the IotDeviceList !!!"
+        handleRefetch={() => refetch()}
+      />
+    );
 
   const handleApiKeyButton = (id: number) => {
     setDeviceId(id);
