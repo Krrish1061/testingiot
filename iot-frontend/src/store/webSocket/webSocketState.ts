@@ -5,6 +5,9 @@ import webSocketService from "../../services/websocketService";
 const webSocketState: StateCreator<IWebSocketStateStore> = (set) => ({
   websocket: null,
   connectionState: "closed",
+  subscribedGroup: null,
+
+  setSubscribedGroup: (group_name) => set({ subscribedGroup: group_name }),
 
   setConnectionState: (webSocketState) =>
     set({ connectionState: webSocketState }),

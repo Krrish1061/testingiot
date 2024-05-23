@@ -46,6 +46,11 @@ function RenderUserDashboard() {
   );
   const websocket = useWebSocketStore((state) => state.websocket);
 
+  const subscribedGroup = useWebSocketStore((state) => state.subscribedGroup);
+  const setSubscribedGroup = useWebSocketStore(
+    (state) => state.setSubscribedGroup
+  );
+
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
   );
@@ -63,23 +68,23 @@ function RenderUserDashboard() {
 
   useEffect(() => {
     setValue(0);
-    setliveDataToNull();
-    sendWebSocketMessage({
-      type: "group_subscribe",
-      username: username,
-      group_type: "user",
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
-
-  useEffect(() => {
-    sendWebSocketMessage({
-      type: "group_subscribe",
-      username: username,
-      group_type: "user",
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [websocket]);
+    if (websocket && subscribedGroup !== username) {
+      setliveDataToNull();
+      sendWebSocketMessage({
+        type: "group_subscribe",
+        username: username,
+        group_type: "user",
+      });
+      setSubscribedGroup(username || null);
+    }
+  }, [
+    websocket,
+    username,
+    subscribedGroup,
+    setliveDataToNull,
+    sendWebSocketMessage,
+    setSubscribedGroup,
+  ]);
 
   return (
     <>

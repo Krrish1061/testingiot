@@ -132,7 +132,9 @@ function LiveDataCardContainer() {
                     <Typography
                     // sx={{ display: { xs: "none", sm: "inherit" } }}
                     >
-                      {connectionState}
+                      {connectionState === "disconnected"
+                        ? "refresh"
+                        : connectionState}
                     </Typography>
                   </Stack>
                 )}

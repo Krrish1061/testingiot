@@ -46,6 +46,10 @@ function RenderCompanyDashboard() {
     (state) => state.sendWebSocketMessage
   );
   const websocket = useWebSocketStore((state) => state.websocket);
+  const subscribedGroup = useWebSocketStore((state) => state.subscribedGroup);
+  const setSubscribedGroup = useWebSocketStore(
+    (state) => state.setSubscribedGroup
+  );
 
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
@@ -63,27 +67,23 @@ function RenderCompanyDashboard() {
   };
   useEffect(() => {
     setValue(0);
-    setliveDataToNull();
-    if (websocket) {
+    if (websocket && subscribedGroup !== companySlug) {
+      setliveDataToNull();
       sendWebSocketMessage({
         type: "group_subscribe",
         company_slug: companySlug,
         group_type: "company",
       });
+      setSubscribedGroup(companySlug || null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companySlug]);
-
-  useEffect(() => {
-    if (websocket) {
-      sendWebSocketMessage({
-        type: "group_subscribe",
-        company_slug: companySlug,
-        group_type: "company",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [websocket]);
+  }, [
+    websocket,
+    companySlug,
+    subscribedGroup,
+    setliveDataToNull,
+    sendWebSocketMessage,
+    setSubscribedGroup,
+  ]);
 
   return (
     <>
