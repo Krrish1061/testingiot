@@ -1,28 +1,31 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
-import User from "../../../entities/User";
-import Button from "@mui/material/Button";
-import { forwardRef, useState } from "react";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import ImageAvatar from "../../ImageAvatar";
-import Stack from "@mui/material/Stack";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
-import Divider from "@mui/material/Divider";
 import CloseIcon from "@mui/icons-material/Close";
-import IconButton from "@mui/material/IconButton";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import Slide from "@mui/material/Slide";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { TransitionProps } from "@mui/material/transitions";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { GridRenderCellParams } from "@mui/x-data-grid";
 import dayjs from "dayjs";
+import { forwardRef, useMemo, useState } from "react";
 import UserGroups from "../../../constants/userGroups";
+import Company from "../../../entities/Company";
+import User from "../../../entities/User";
+import ImageAvatar from "../../ImageAvatar";
 
 interface Props {
   params: GridRenderCellParams<User>;
   isUserSuperAdmin: boolean | undefined;
+  userCompanyName?: string;
+  companyList: Company[] | undefined;
 }
 
 const SlideTransition = forwardRef(function Transition(
@@ -34,7 +37,12 @@ const SlideTransition = forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-function UserProfileModel({ params, isUserSuperAdmin }: Props) {
+function UserProfileModel({
+  params,
+  isUserSuperAdmin,
+  userCompanyName,
+  companyList,
+}: Props) {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -42,6 +50,15 @@ function UserProfileModel({ params, isUserSuperAdmin }: Props) {
   const handleClose = () => setOpen(false);
   const user = params.row;
   const noValue = "N/A";
+
+  const companyName = useMemo(
+    () =>
+      isUserSuperAdmin
+        ? companyList?.find((company) => company.slug === user.company)?.name ||
+          user.company
+        : userCompanyName,
+    [companyList, isUserSuperAdmin, user.company, userCompanyName]
+  );
 
   return (
     <>
@@ -194,16 +211,18 @@ function UserProfileModel({ params, isUserSuperAdmin }: Props) {
                 </Box>
               </Grid>
 
-              <Grid item xs={4} sm={4} md={6}>
-                <Box>
-                  <Typography color="inherit" fontWeight="bold" gutterBottom>
-                    Affiliated Company:
-                  </Typography>
-                  <Typography color="inherit" gutterBottom>
-                    {user.company || noValue}
-                  </Typography>
-                </Box>
-              </Grid>
+              {(isUserSuperAdmin || user.is_associated_with_company) && (
+                <Grid item xs={4} sm={4} md={6}>
+                  <Box>
+                    <Typography color="inherit" fontWeight="bold" gutterBottom>
+                      Affiliated Company:
+                    </Typography>
+                    <Typography color="inherit" gutterBottom>
+                      {companyName || noValue}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
               {isUserSuperAdmin &&
                 !user.is_associated_with_company &&
                 user.groups.includes(UserGroups.adminGroup) && (

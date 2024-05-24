@@ -1,11 +1,12 @@
-import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import useWebSocketStore from "../../store/webSocket/webSocketStore";
-
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
+import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 import LineGraphContainer from "../graph/LineGraphContainer";
 import IotDeviceApiSetting from "../iotDevice/IotDeviceApiSetting";
 import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
@@ -42,6 +43,7 @@ function a11yProps(index: number) {
 
 function RenderCompanyDashboard() {
   const { companySlug } = useParams();
+  const { data: iotDeviceList } = useGetAllIotDevice();
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
@@ -84,6 +86,14 @@ function RenderCompanyDashboard() {
     sendWebSocketMessage,
     setSubscribedGroup,
   ]);
+
+  const companyIotDeviceList = useMemo(
+    () => iotDeviceList?.filter((device) => device.company === companySlug),
+    [iotDeviceList, companySlug]
+  );
+
+  if (companyIotDeviceList?.length === 0)
+    return <CustomNoRowsOverlay text="No Iot Device Asscociated" />;
 
   return (
     <>

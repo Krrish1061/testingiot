@@ -3,8 +3,10 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 import LineGraphContainer from "../graph/LineGraphContainer";
 import IotDeviceApiSetting from "../iotDevice/IotDeviceApiSetting";
 import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
@@ -41,6 +43,7 @@ function a11yProps(index: number) {
 
 function RenderUserDashboard() {
   const { username } = useParams();
+  const { data: iotDeviceList } = useGetAllIotDevice();
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
@@ -85,6 +88,14 @@ function RenderUserDashboard() {
     sendWebSocketMessage,
     setSubscribedGroup,
   ]);
+
+  const userIotDeviceList = useMemo(
+    () => iotDeviceList?.filter((device) => device.user === username),
+    [iotDeviceList, username]
+  );
+
+  if (userIotDeviceList?.length === 0)
+    return <CustomNoRowsOverlay text="No Iot Device Asscociated" />;
 
   return (
     <>

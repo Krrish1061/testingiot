@@ -120,6 +120,8 @@ function UserColumns({ users }: Props) {
           <UserProfileModel
             params={params}
             isUserSuperAdmin={isUserSuperAdmin}
+            userCompanyName={userCompany.name}
+            companyList={companyList}
           />
         ),
       },

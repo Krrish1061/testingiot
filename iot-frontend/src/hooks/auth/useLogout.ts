@@ -7,6 +7,7 @@ import CsrfError from "../../errors/csrfError";
 import useAuthStore from "../../store/authStore";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import getCsrf from "../../utilis/getCsrf";
+import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
 
 //  userefresh hook is called 3 times due to react query setting and
 // thats why we are seeing multiple error when we logout.
@@ -27,6 +28,7 @@ const useLogout = () => {
   const setEmptySensorDataUpToDays = useWebSocketStore(
     (state) => state.setEmptySensorDataUpToDays
   );
+  const setRows = useUserDataGridStore((state) => state.setRows);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -49,6 +51,7 @@ const useLogout = () => {
       setliveDataToNull();
       setSensorDataToNull();
       setEmptySensorDataUpToDays();
+      setRows([]);
       queryClient.clear();
       enqueueSnackbar("Logout sucessfull", { variant: "success" });
       navigate("/login", {

@@ -18,6 +18,8 @@ import IotDeviceDetailDialog from "../iotDevice/IotDeviceDetailDialog";
 import BlinkingDot from "../styledComponents/BlinkingDot";
 import LiveDataCard from "./LiveDataCard";
 import LiveDataCardButton from "./LiveDataCardButton";
+import LoadingSpinner from "../LoadingSpinner";
+import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 
 function LiveDataCardContainer() {
   const { data: iotDeviceList } = useGetAllIotDevice();
@@ -70,17 +72,9 @@ function LiveDataCardContainer() {
     );
   }
 
-  if (liveData === null) {
-    return (
-      <Box
-        margin={2}
-        padding={2}
-        sx={{ display: "flex", justifyContent: "center" }}
-      >
-        <CircularProgress variant="indeterminate" size={40} />
-      </Box>
-    );
-  }
+  if (liveData === null) return <LoadingSpinner />;
+
+  if (Object.keys(liveData).length === 0) return <CustomNoRowsOverlay />;
 
   return (
     <>
