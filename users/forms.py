@@ -12,9 +12,11 @@ class UserCreationForm(BaseUserCreationForm):
     """A form for creating new users. Includes all the required
     fields, plus a repeated password."""
 
-    password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
+    password1 = forms.CharField(
+        label="Password", widget=forms.PasswordInput, required=False
+    )
     password2 = forms.CharField(
-        label="Password confirmation", widget=forms.PasswordInput
+        label="Password confirmation", widget=forms.PasswordInput, required=False
     )
 
     class Meta:
@@ -31,7 +33,11 @@ class UserCreationForm(BaseUserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password1"])
+        print(self.cleaned_data["password1"])
+        if self.cleaned_data["password1"]:
+            user.set_password(self.cleaned_data["password1"])
+        else:
+            user.set_unusable_password()
         user.save()
         return user
 
