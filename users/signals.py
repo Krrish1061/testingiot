@@ -25,4 +25,4 @@ def handle_user_registered(sender, created, instance, *args, **kwargs):
         UserProfile.objects.create(user=instance)
 
         # calling celery task to send to send veirification email to the new user
-        sending_verify_email.delay(instance.username)
+        # sending_verify_email.delay(instance.username)
