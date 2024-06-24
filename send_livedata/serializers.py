@@ -1,6 +1,6 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from company.cache import CompanyCache
-from users.cache import UserCache
+from company.models import Company
 from utils.constants import UserType
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
@@ -12,11 +12,26 @@ from utils.error_message import (
 
 from .models import SendLiveDataList
 
+User = get_user_model()
+
 
 class SendLiveDataListSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        queryset=User.objects.all(), slug_field="username", allow_null=True
+    )
+    company = serializers.SlugRelatedField(
+        queryset=Company.objects.all(), slug_field="slug", allow_null=True
+    )
+
     class Meta:
         model = SendLiveDataList
-        fields = ["id", "company", "user", "endpoint", "send_device_board_id"]
+        fields = [
+            "id",
+            "company",
+            "user",
+            "endpoint",
+            "send_device_board_id",
+        ]
         extra_kwargs = {
             "company": {
                 "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},
@@ -51,30 +66,8 @@ class SendLiveDataListSerializer(serializers.ModelSerializer):
         company = instance.company
 
         if user:
-            representation["user"] = user.username
-            # removing company field from response
             representation.pop("company")
         if company:
-            representation["company"] = company.slug
-            # removing user field from response
             representation.pop("user")
 
         return representation
-
-    def to_internal_value(self, data):
-        # Replace the company slug with the corresponding Company instance
-        company_slug = data.get("company")
-        if company_slug:
-            company_instance = CompanyCache.get_company(company_slug)
-            if company_instance is None:
-                raise serializers.ValidationError({"error": "Company not found."})
-            data["company"] = company_instance.id
-
-        username = data.get("user")
-        if username:
-            user_instance = UserCache.get_user(username)
-            if user_instance is None:
-                raise serializers.ValidationError({"error": "User not found."})
-            data["user"] = user_instance.id
-
-        return super().to_internal_value(data)

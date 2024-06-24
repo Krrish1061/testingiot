@@ -1,10 +1,11 @@
-import useAxios from "../../api/axiosInstance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import IotDeviceDetail from "../../entities/IotDeviceDetail";
-import { IDeviceDetailFormInputs } from "../../components/iotDevice/zodSchema/IotDeviceDetailSchema";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
+import { IDeviceDetailFormInputs } from "../../components/iotDevice/zodSchema/IotDeviceDetailSchema";
 import IotDevice from "../../entities/IotDevice";
+import IotDeviceDetail from "../../entities/IotDeviceDetail";
+import useIotDeviceDataGridStore from "../../store/datagrid/iotDeviceDataGridStore";
 
 interface FormsInputs {
   device_id: number | undefined;
@@ -23,6 +24,8 @@ interface IError {
 function useUpdateIotDeviceDetail() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
+  const rows = useIotDeviceDataGridStore((state) => state.rows);
+  const setRows = useIotDeviceDataGridStore((state) => state.setRows);
 
   const updateIotDeviceDetail = async ({
     device_id,
@@ -60,10 +63,18 @@ function useUpdateIotDeviceDetail() {
 
       return { previousIotDeviceList };
     },
-    onSuccess: () => {
+    onSuccess: (newIotDeviceDetail, { device_id }) => {
       enqueueSnackbar("Iot Device Detail's sucessfully Updated", {
         variant: "success",
       });
+      if (rows.length !== 0) {
+        const newRows = rows.map((row) =>
+          row.id === device_id
+            ? { ...row, iot_device_details: newIotDeviceDetail }
+            : row
+        );
+        setRows(newRows);
+      }
     },
     onError: (error, _iotDevice, context) => {
       let errorMessage = "";

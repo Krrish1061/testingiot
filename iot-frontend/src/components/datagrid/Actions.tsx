@@ -1,3 +1,7 @@
+import CancelIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import {
   GridActionsCellItem,
   GridRowId,
@@ -5,13 +9,10 @@ import {
   GridRowModes,
   GridRowModesModel,
 } from "@mui/x-data-grid";
-import CancelIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
 
 interface Props {
   row: GridRowModel;
+  isUserDealer?: boolean;
   isDisabled?: boolean;
   handleEditClick: (id: GridRowId) => () => void;
   handleSaveClick: (id: GridRowId) => () => void;
@@ -22,6 +23,7 @@ interface Props {
 
 function Actions({
   row,
+  isUserDealer,
   isDisabled,
   handleEditClick,
   handleSaveClick,
@@ -29,22 +31,26 @@ function Actions({
   handleCancelClick,
   rowModesModel,
 }: Props) {
+  if (isUserDealer) {
+    return [
+      <GridActionsCellItem
+        icon={<DeleteIcon />}
+        label="Delete"
+        disabled={isDisabled}
+        sx={{
+          color: "error.main",
+        }}
+        onClick={handleDeleteClick(row)}
+        color="inherit"
+      />,
+    ];
+  }
+
   const isInEditMode = rowModesModel[row.id]?.mode === GridRowModes.Edit;
   if (isInEditMode) {
     return [
       <GridActionsCellItem
-        icon={
-          // <Tooltip
-          //   title="Save"
-          //   placement="top"
-          //   arrow
-          //   enterDelay={500}
-          //   leaveDelay={0}
-          // >
-          //   <SaveIcon />
-          // </Tooltip>
-          <SaveIcon />
-        }
+        icon={<SaveIcon />}
         label="Save"
         sx={{
           color: "primary.main",

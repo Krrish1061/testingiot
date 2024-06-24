@@ -1,17 +1,19 @@
+import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import LoadingSpinner from "../../LoadingSpinner";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
-import CompanyRow from "./CompanyRow";
+import useAuthStore from "../../../store/authStore";
 import ErrorReload from "../../ErrorReload";
+import LoadingSpinner from "../../LoadingSpinner";
+import CompanyRow from "./CompanyRow";
 
 function MobileManageCompanies() {
   const { data: companies, isError, isLoading, refetch } = useGetAllCompany();
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   if (isError)
     return (
@@ -33,7 +35,7 @@ function MobileManageCompanies() {
             </TableCell>
             <TableCell>Avatar</TableCell>
             <TableCell>Name</TableCell>
-            <TableCell>User Limit</TableCell>
+            {isUserSuperAdmin && <TableCell>User Limit</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>

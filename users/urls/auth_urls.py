@@ -22,7 +22,17 @@ auth_urlpatterns = [
         settings_views.set_user_password,
         name="set-user-password",
     ),
-    path("<str:username>/logout/", auth_views.logout_user, name="logout"),
+    path(
+        "resend-email-confirmation/",
+        settings_views.resend_confirmation_email,
+        name="resend-email-confirmation",
+    ),
+    path(
+        "resend-set-password-email/",
+        settings_views.resend_set_password_email,
+        name="resend-set-password-email",
+    ),
+    path("logout/", auth_views.logout_user, name="logout"),
 ]
 
 

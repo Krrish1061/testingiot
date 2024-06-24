@@ -25,7 +25,7 @@ class IotDeviceCaching(Cache):
 
     def __get_queryset(self, iot_device_id: int):
         return IotDevice.objects.select_related(
-            "user", "company", "iot_device_details"
+            "user", "company", "dealer", "iot_device_details"
         ).filter(pk=iot_device_id)
 
     def __get_iot_device_by_id(self, iot_device_id: int) -> object | None:
@@ -42,12 +42,28 @@ class IotDeviceCaching(Cache):
             return result
         return None
 
+    def get_user_or_company_device_cache_key(
+        self,
+        company=None,
+        company_slug: str | None = None,
+        user=None,
+        username: str | None = None,
+    ) -> str | None:
+        company_slug = company.slug if company else None
+        username = user.username if user else None
+        if company_slug:
+            return self.__get_company_device_cache_key(company_slug)
+        elif username:
+            return self.__get__user_device_cache_key(username)
+        else:
+            return None
+
     def get_iot_device(self, iot_device_id):
         iot_device = self.__get_iot_device_by_id(iot_device_id)
         if iot_device is None:
             try:
                 iot_device = IotDevice.objects.select_related(
-                    "user", "company", "iot_device_details"
+                    "user", "company", "dealer", "iot_device_details"
                 ).get(pk=iot_device_id)
                 self.set_to_list(
                     cache_key=self.cache_key,
@@ -64,6 +80,7 @@ class IotDeviceCaching(Cache):
             iot_devices = IotDevice.objects.select_related(
                 "user",
                 "company",
+                "dealer",
                 "iot_device_details",
             ).all()
             # prefetch related for iot_device_sensors
@@ -78,12 +95,11 @@ class IotDeviceCaching(Cache):
     def set_iot_device(self, iot_device):
         queryset = self.__get_queryset(iot_device.id)
         self.set_to_list(self.cache_key, self.app_name, queryset)
-        cache_key = (
-            self.__get_company_device_cache_key(iot_device.company.slug)
-            if iot_device.company
-            else self.__get__user_device_cache_key(iot_device.user.username)
+        cache_key = self.get_user_or_company_device_cache_key(
+            company_slug=iot_device.company, username=iot_device.user
         )
-        self.delete(cache_key)
+        if cache_key:
+            self.delete(cache_key)
 
     def delete_iot_device(
         self, iot_device_id: int, system_delete=False, company_slug=None, username=None
@@ -95,12 +111,11 @@ class IotDeviceCaching(Cache):
 
         self.delete_from_list(self.cache_key, self.app_name, id=iot_device_id)
 
-        cache_key = (
-            self.__get_company_device_cache_key(company_slug)
-            if company_slug
-            else self.__get__user_device_cache_key(username)
+        cache_key = self.get_user_or_company_device_cache_key(
+            company_slug=company_slug, username=username
         )
-        self.delete(cache_key)
+        if cache_key:
+            self.delete(cache_key)
 
     def get_all_device_sensors(self, device_id):
         """Returns the IotDeviceSensor Models, all instances associated with the Iot device"""
@@ -152,7 +167,7 @@ class IotDeviceCaching(Cache):
         return user_devices
 
     def get_all_company_iot_devices(self, company=None, company_slug=None):
-        """Return the list of all the iot devices that company owns"""
+        """Return the list of all the iot devices id that company owns"""
         company_slug = company.slug if company else company_slug
         cache_key = self.__get_company_device_cache_key(company_slug)
         company_devices = self.get(cache_key)
@@ -162,6 +177,15 @@ class IotDeviceCaching(Cache):
             company_devices = company.iot_device.values_list("id", flat=True)
             self.set(cache_key=cache_key, data=company_devices)
         return company_devices
+
+    def dealer_associated_iot_device(self, dealer):
+        """Returns the list of the iot device id that are associated with the specific dealer"""
+        iot_devices = self.get_all_iot_devices()
+        dealer_iot_devices = [
+            iot_device.id for iot_device in iot_devices if iot_device.dealer == dealer
+        ]
+
+        return dealer_iot_devices
 
 
 IotDeviceCache = IotDeviceCaching()

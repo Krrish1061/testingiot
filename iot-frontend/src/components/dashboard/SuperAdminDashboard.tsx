@@ -1,27 +1,31 @@
-import { useMemo } from "react";
-import useGetAllUser from "../../hooks/users/useGetAllUser";
-import UserGroups from "../../constants/userGroups";
-import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
-import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
-import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import DevicesIcon from "@mui/icons-material/Devices";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import PeopleIcon from "@mui/icons-material/People";
 import SensorsIcon from "@mui/icons-material/Sensors";
-import ApartmentIcon from "@mui/icons-material/Apartment";
-import DashboardCard from "./DashboardCard";
 import Grid from "@mui/material/Grid";
+import { useMemo } from "react";
+import UserGroups from "../../constants/userGroups";
+import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import useGetAllDealer from "../../hooks/dealer/useGetAllDealer";
+import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
+import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
+import useGetAllUser from "../../hooks/users/useGetAllUser";
 import useDrawerStore from "../../store/drawerStore";
+import DashboardCard from "./DashboardCard";
 
 function SuperAdminDashboard() {
   const { data: userList } = useGetAllUser();
   const { data: sensorList } = useGetAllSensors();
   const { data: iotDeviceList } = useGetAllIotDevice();
   const { data: companyList } = useGetAllCompany();
+  const { data: dealerList } = useGetAllDealer();
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
 
   const sensorCount = useMemo(() => sensorList?.length, [sensorList]);
   const iotDeviceCount = useMemo(() => iotDeviceList?.length, [iotDeviceList]);
   const companyCount = useMemo(() => companyList?.length, [companyList]);
+  const dealerCount = useMemo(() => dealerList?.length, [dealerList]);
   const userCount = useMemo(() => userList?.length, [userList]);
 
   const superAdminUserCount = useMemo(
@@ -129,6 +133,11 @@ function SuperAdminDashboard() {
       icon: <ApartmentIcon sx={{ fontSize: 40 }} />,
       title: "Total Company",
       content: companyCount,
+    },
+    {
+      icon: <ManageAccountsIcon sx={{ fontSize: 40 }} />,
+      title: "Total Dealer",
+      content: dealerCount,
     },
     {
       icon: <PeopleIcon sx={{ fontSize: 40 }} />,

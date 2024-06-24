@@ -7,8 +7,10 @@ export const toggleZoom = (
   isMobile: boolean
 ) => {
   const zoomOptions = chart.options.plugins?.zoom?.zoom?.wheel;
-  if (zoomOptions && !isMobile) {
+  const pinchOptions = chart.options.plugins?.zoom?.zoom?.pinch;
+  if (zoomOptions && pinchOptions && !isMobile) {
     zoomOptions.enabled = !zoomOptions.enabled;
+    pinchOptions.enabled = !pinchOptions.enabled;
     chart.update();
   }
 };

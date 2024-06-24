@@ -115,3 +115,29 @@ class ViewerManager(UserManager):
             .get_queryset(*args, **kwargs)
             .filter(type=self.model.UserTypes.VIEWER)
         )
+
+
+# Modifying the query set for proxy Dealer model
+class DealerUserManager(UserManager):
+    """Defining the Model Manager for the Dealer user Proxy Model"""
+
+    def get_queryset(self, *args, **kwargs):
+        """Filtering the queryset by the user which belongs to dealer groups"""
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(groups__name=GroupName.DEALER_GROUP)
+        )
+
+
+# Modifying the query set for proxy Dealer model
+class CompanySuperAdminUserManager(UserManager):
+    """Defining the Model Manager for the Company SuperAdmin user Proxy Model"""
+
+    def get_queryset(self, *args, **kwargs):
+        """Filtering the queryset by the user which belongs to company super admin groups"""
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(groups__name=GroupName.COMPANY_SUPERADMIN_GROUP)
+        )

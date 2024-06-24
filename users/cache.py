@@ -49,7 +49,9 @@ class UserCaching(Cache):
         if user is None:
             try:
                 user = (
-                    User.objects.select_related("company", "created_by", "profile")
+                    User.objects.select_related(
+                        "company", "dealer", "created_by", "profile"
+                    )
                     .prefetch_related("groups")
                     .get(username=username)
                 )
@@ -69,7 +71,9 @@ class UserCaching(Cache):
         if user is None:
             try:
                 user = (
-                    User.objects.select_related("company", "created_by", "profile")
+                    User.objects.select_related(
+                        "company", "dealer", "created_by", "profile"
+                    )
                     .prefetch_related("groups")
                     .get(email=email)
                 )
@@ -87,7 +91,9 @@ class UserCaching(Cache):
         users = self.get_all(self.cache_key, self.app_name)
         if users is None:
             users = (
-                User.objects.select_related("company", "created_by", "profile")
+                User.objects.select_related(
+                    "company", "dealer", "created_by", "profile"
+                )
                 .prefetch_related("groups")
                 .all()
             )
@@ -116,6 +122,16 @@ class UserCaching(Cache):
 
     def delete_profile(self, user_id):
         self.delete_user(user_id)
+
+    def dealer_associated_user(self, dealer):
+        """Returns the list of the user that are associated with the specific dealer.
+        It also Include the user which also belong to the dealer group(i.e specfic dealer main account ).
+
+        """
+        users = self.get_all_users()
+        dealer_users = (user for user in users if user.dealer == dealer)
+
+        return dealer_users
 
     def get_user_by_api_key(self, api_key: str):
         cache_key = self.__generate_cache_key_from_api_key(api_key)

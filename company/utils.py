@@ -1,4 +1,3 @@
-from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName
 
 

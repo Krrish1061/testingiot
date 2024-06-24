@@ -85,5 +85,14 @@ class CompanyCaching(Cache):
 
         return user_sensor
 
+    def dealer_associated_company(self, dealer):
+        """Returns the list of the company that are associated with the specific dealer"""
+        companies = self.get_all_company()
+        dealer_companies = (
+            company for company in companies if company.dealer == dealer
+        )
+
+        return dealer_companies
+
 
 CompanyCache = CompanyCaching()

@@ -1,12 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile
 from .forms import UserChangeForm, UserCreationForm
+from users.models.user_models import User, UserProfile
 
 
 # Register your models here.
-
-
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
@@ -17,6 +15,7 @@ class UserAdmin(BaseUserAdmin):
         "email",
         "username",
         "company",
+        "dealer",
         "is_associated_with_company",
         "type",
         "is_staff",
@@ -34,6 +33,7 @@ class UserAdmin(BaseUserAdmin):
             {
                 "fields": (
                     "company",
+                    "dealer",
                     "is_associated_with_company",
                     "created_by",
                     "user_limit",
@@ -66,6 +66,7 @@ class UserAdmin(BaseUserAdmin):
                     "password2",
                     "type",
                     "company",
+                    "dealer",
                     "is_associated_with_company",
                     "created_by",
                     "user_limit",
@@ -87,17 +88,6 @@ class UserAdmin(BaseUserAdmin):
         "company",
         "username",
     )
-
-
-# @admin.register(UserAdditionalField)
-# class UserAdditionalFieldAdmin(admin.ModelAdmin):
-#     list_display = (
-#         "id",
-#         "user",
-#         "created_by",
-#         "user_count",
-#         "user_limit",
-#     )
 
 
 @admin.register(UserProfile)

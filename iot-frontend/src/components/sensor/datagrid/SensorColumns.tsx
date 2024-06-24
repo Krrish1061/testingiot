@@ -1,17 +1,12 @@
+import Box from "@mui/material/Box";
+import Tooltip from "@mui/material/Tooltip";
+import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import dayjs from "dayjs";
 import { useMemo } from "react";
-import {
-  GridColDef,
-  GridRenderCellParams,
-  GridValueGetterParams,
-} from "@mui/x-data-grid";
 import useSensorDataGrid from "../../../hooks/muiDataGrid/useSensorDataGrid";
 import useSensorDataGridStore from "../../../store/datagrid/sensorDataGridStore";
-import Tooltip from "@mui/material/Tooltip";
-import Box from "@mui/material/Box";
-import dayjs from "dayjs";
 import Actions from "../../datagrid/Actions";
 import RenderCellExpand from "../../datagrid/RenderCellExpand";
-import Sensor from "../../../entities/Sensor";
 
 function SensorColumns() {
   const rowModesModel = useSensorDataGridStore((state) => state.rowModesModel);
@@ -70,10 +65,6 @@ function SensorColumns() {
         align: "center",
         editable: true,
         hideable: true,
-        valueGetter: (params: GridValueGetterParams<Sensor>) => {
-          const minLimit = params.row?.min_limit;
-          return minLimit === null || minLimit === undefined ? "-" : minLimit;
-        },
       },
       {
         field: "max_limit",
@@ -82,10 +73,6 @@ function SensorColumns() {
         align: "center",
         editable: true,
         hideable: true,
-        valueGetter: (params: GridValueGetterParams<Sensor>) => {
-          const maxLimit = params.row?.max_limit;
-          return maxLimit === null || maxLimit === undefined ? "-" : maxLimit;
-        },
       },
       {
         field: "created_at",

@@ -14,6 +14,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import useLogout from "../../hooks/auth/useLogout";
 
 const schema = z.object({
   username: z
@@ -29,13 +30,13 @@ function ChangeUsernameForm() {
   const user = useAuthStore((state) => state.user);
   const { mutateAsync, isSuccess, isLoading } = useChangeUsername();
   const [isEditMode, setIsEditMode] = useState(false);
+  const { mutate, isLoading: isUserloggingOut } = useLogout();
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-    setError,
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
     defaultValues: { username: user?.username },
@@ -43,20 +44,16 @@ function ChangeUsernameForm() {
 
   useEffect(() => {
     if (isSuccess) {
-      setIsEditMode(false);
-      reset();
+      mutate();
     }
-  }, [isSuccess, reset]);
+  }, [isSuccess, mutate]);
 
   const onSubmit: SubmitHandler<IFormInputs> = async (data) => {
     if (data.username !== user?.username) {
       // mutating the data
       await mutateAsync(data);
     } else {
-      setError("username", {
-        type: "custom",
-        message: "Username is already assigned to your account.",
-      });
+      setIsEditMode(false);
     }
   };
 
@@ -87,6 +84,7 @@ function ChangeUsernameForm() {
         <Box sx={{ alignSelf: "flex-end" }}>
           <Button
             size="small"
+            disabled={isUserloggingOut}
             startIcon={<SaveIcon />}
             onClick={handleSubmit(onSubmit)}
           >
@@ -109,6 +107,7 @@ function ChangeUsernameForm() {
           <Button
             size="small"
             startIcon={<CancelIcon />}
+            disabled={isLoading || isUserloggingOut}
             onClick={() => {
               reset({ username: user?.username });
               setIsEditMode(!isEditMode);
@@ -148,9 +147,14 @@ function ChangeUsernameForm() {
 
       {!isEditMode && (
         <Typography fontSize={12} marginLeft={1} color="info.main">
-          {user?.profile?.is_username_modified
-            ? "You have already changed your Username."
-            : "You can only change your Username once"}
+          {user?.profile?.is_username_modified ? (
+            "You have already changed your Username."
+          ) : (
+            <>
+              You can only change your Username once. <br /> Afterwards you will
+              be logged out
+            </>
+          )}
         </Typography>
       )}
     </Paper>

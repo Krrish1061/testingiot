@@ -1,10 +1,10 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import Company from "../../entities/Company";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { enqueueSnackbar } from "notistack";
-import slugify from "../../utilis/slugifyName";
 import useCompanyDataGridStore from "../../store/datagrid/companyDataGridStore";
+import slugify from "../../utilis/slugifyName";
 
 interface IFormInputs {
   email: string;
@@ -13,6 +13,7 @@ interface IFormInputs {
 }
 
 interface IError {
+  errors?: string[];
   error?: string;
   name?: string[];
   email?: string[];
@@ -48,6 +49,7 @@ function useAddCompany() {
       const newCompany: Company = {
         ...formInputs,
         id: newCompanyId,
+        dealer: null,
         slug: slugify(formInputs.name),
         created_at: Date.now().toLocaleString(),
       };
@@ -77,6 +79,7 @@ function useAddCompany() {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
           (error.response?.data.email && error.response.data.email[0]) ||
           (error.response?.data.name && error.response.data.name[0]) ||
           "Failed to Create Company";

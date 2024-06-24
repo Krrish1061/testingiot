@@ -1,31 +1,58 @@
-import Button, { ButtonProps } from "@mui/material/Button";
-import styled from "@mui/material/styles/styled";
+import Typography from "@mui/material/Typography";
+import { RefObject } from "react";
+import ImageAvatar from "../ImageAvatar";
+import StyledNavButton from "./StyledNavButton";
 
-interface NavButtonProps extends ButtonProps {
-  isAvatar?: boolean;
+interface Props {
+  open: boolean;
+  imgUrl: string | null | undefined;
+  altText: string;
+  navButtonText: string;
+  anchorRef: RefObject<HTMLButtonElement>;
+  handleToggle: () => void;
 }
 
-const NavButton = styled(Button, {
-  shouldForwardProp: (prop) => prop !== "isAvatar",
-})<NavButtonProps>(({ theme, isAvatar = false }) => ({
-  ...(isAvatar && {
-    display: "flex",
-    justifyContent: "center",
-    gap: 8,
-    [theme.breakpoints.down("md")]: {
-      justifyContent: "center",
-    },
-  }),
-
-  // For smaller screens (smaller than 900px width)
-  [theme.breakpoints.down("md")]: {
-    border: "none",
-    margin: 0,
-    padding: 0,
-    "&:hover ": {
-      border: "none",
-    },
-  },
-}));
+function NavButton({
+  open,
+  imgUrl,
+  altText,
+  navButtonText,
+  anchorRef,
+  handleToggle,
+}: Props) {
+  return (
+    <StyledNavButton
+      variant="outlined"
+      disableElevation
+      isAvatar={true}
+      ref={anchorRef}
+      onClick={handleToggle}
+      aria-controls={open ? "menu" : undefined}
+      aria-expanded={open ? "true" : undefined}
+      aria-haspopup="true"
+    >
+      <ImageAvatar
+        imgUrl={imgUrl}
+        altText={altText}
+        height={{
+          xs: 50,
+          md: 30,
+        }}
+        width={{
+          xs: 50,
+          md: 30,
+        }}
+      />
+      <Typography
+        display={{
+          xs: "none",
+          md: "inherit",
+        }}
+      >
+        {navButtonText}
+      </Typography>
+    </StyledNavButton>
+  );
+}
 
 export default NavButton;

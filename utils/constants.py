@@ -46,3 +46,4 @@ class GroupName:
     MODERATOR_GROUP = "moderator"
     VIEWER_GROUP = "viewer"
     COMPANY_SUPERADMIN_GROUP = "company_super_admin"
+    DEALER_GROUP = "dealer"

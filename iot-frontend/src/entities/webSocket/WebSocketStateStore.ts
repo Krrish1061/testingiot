@@ -1,6 +1,10 @@
 import ISendMessage from "./SendMessage";
 
-type IwebSocketState = "connecting" | "connected" | "disconnected" | "closed";
+export type IwebSocketState =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "closed";
 
 interface IWebSocketStateStore {
   websocket: WebSocket | null;

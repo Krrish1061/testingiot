@@ -1,5 +1,6 @@
 from caching.cache import Cache
 from company.cache import CompanyCache
+from dealer.cache import DealerCache
 from sensors.models import Sensor
 from users.cache import UserCache
 
@@ -13,6 +14,9 @@ class SensorCaching(Cache):
 
     def __get_company_sensor_cache_key(self, company_slug):
         return f"company_sensor_{company_slug}"
+
+    def __get_dealer_sensor_cache_key(self, dealer_slug):
+        return f"dealer_sensor_{dealer_slug}"
 
     def __get_admin_user_sensor_cache_key(self, username):
         return f"admin_user_sensor_{username}"
@@ -99,6 +103,24 @@ class SensorCaching(Cache):
             self.set(cache_key=cache_key, data=user_sensors)
 
         return user_sensors
+
+    def get_all_dealer_sensor(self, dealer=None, dealer_slug=None) -> list:
+        """Return the list of all the sensor name that dealer user owns"""
+        dealer_slug = dealer.slug if dealer else dealer_slug
+        cache_key = self.__get_dealer_sensor_cache_key(dealer_slug)
+        dealer_sensors = self.get(cache_key=cache_key)
+        if dealer_sensors is None:
+            if dealer is None:
+                dealer = DealerCache.get_dealer(dealer_slug)
+
+            dealer_sensors = (
+                dealer.iot_device.prefetch_related("iot_device_sensors")
+                .exclude(iot_device_sensors__sensor__name__isnull=True)
+                .values_list("iot_device_sensors__sensor__name", flat=True)
+                .distinct()
+            )
+            self.set(cache_key=cache_key, data=dealer_sensors)
+        return dealer_sensors
 
 
 SensorCache = SensorCaching()

@@ -1,12 +1,12 @@
 from django.contrib.auth import password_validation
-
-# from django.core.validators import validate_email
+from django.contrib.auth.models import Group
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth.models import Group
-from company.cache import CompanyCache
-from users.cache import UserCache
+
+from company.models import Company
+from dealer.models import Dealer
+from users.models.user_models import User, UserProfile
 from users.utilis import get_group_name
 from utils.constants import GroupName, UserType
 from utils.error_message import (
@@ -15,13 +15,8 @@ from utils.error_message import (
     ERROR_UPDATING_OTHER_ADMIN_USER,
     ERROR_UPDATING_OTHER_COMPANY_USER,
     ERROR_UPDATING_OTHER_USER,
-    ERROR_UPDATING_OWN_ACCOUNT_IS_ACTIVE_TO_FALSE,
-    ERROR_UPDATING_OWN_ACCOUNT_USER_TYPE,
     error_setting_invalid_user_type_message,
 )
-
-from .models import User, UserProfile
-from company.models import Company
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -108,6 +103,23 @@ class UserPasswordSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     groups = GroupSerializer(many=True, read_only=True)
     profile = UserProfileSerializer(read_only=True)
+    company = serializers.SlugRelatedField(
+        queryset=Company.objects.all(),
+        slug_field="slug",
+        allow_null=True,
+        required=False,
+    )
+    dealer = serializers.SlugRelatedField(
+        queryset=Dealer.objects.all(),
+        slug_field="slug",
+        allow_null=True,
+        required=False,
+    )
+    created_by = serializers.SlugRelatedField(
+        slug_field="username",
+        allow_null=True,
+        read_only=True,
+    )
 
     class Meta:
         model = User
@@ -116,6 +128,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "username",
             "company",
+            "dealer",
             "is_associated_with_company",
             "type",
             "groups",
@@ -131,42 +144,14 @@ class UserSerializer(serializers.ModelSerializer):
             "date_joined",
             "username",
             "groups",
+            "profile",
+            "created_by",
         )
         extra_kwargs = {
             "company": {
                 "error_messages": {"does_not_exist": ERROR_COMPANY_NOT_FOUND},
             },
         }
-
-    def to_internal_value(self, data):
-        # Replace the company slug with the corresponding Company instance
-        company_slug = data.get("company")
-        if company_slug:
-            company_instance = CompanyCache.get_company(company_slug)
-            if company_instance is None:
-                raise serializers.ValidationError({"error": "Company not found."})
-            data["company"] = company_instance.id
-
-        user_created_by = data.get("created_by")
-        if user_created_by:
-            user_created_instance = UserCache.get_user(user_created_by)
-            if user_created_instance is None:
-                raise serializers.ValidationError(
-                    {"error": "Invalid created_by user not found."}
-                )
-            else:
-                data["created_by"] = user_created_instance.id
-
-        return super().to_internal_value(data)
-
-    def to_representation(self, instance):
-        # replace company instance with the company slug
-        representation = super().to_representation(instance)
-        if instance.is_associated_with_company:
-            representation["company"] = instance.company.slug
-        if instance.created_by:
-            representation["created_by"] = instance.created_by.username
-        return representation
 
     def validate_password(self, value):
         # Password validator
@@ -178,7 +163,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def user_type_validation(self, user_groups, user_type):
         # return true if user type is invalid
-
+        # user_groups is the groups list that the requested user belongs
+        # user Type is the type of the new user that needs to be created
         if any(
             group_name in user_groups
             for group_name in (
@@ -193,6 +179,10 @@ class UserSerializer(serializers.ModelSerializer):
             ):
                 return True
 
+        elif GroupName.DEALER_GROUP in user_groups:
+            if user_type != UserType.ADMIN:
+                return True
+
         else:
             if user_type not in (
                 UserType.MODERATOR,
@@ -205,7 +195,7 @@ class UserSerializer(serializers.ModelSerializer):
         if self.user_type_validation(user_groups, user_type):
             raise serializers.ValidationError(
                 {
-                    "error": f"{ERROR_PERMISSION_DENIED} {error_setting_invalid_user_type_message(user_type)}"
+                    "errors": f"{ERROR_PERMISSION_DENIED} {error_setting_invalid_user_type_message(user_type)}"
                 }
             )
 
@@ -230,13 +220,24 @@ class UserSerializer(serializers.ModelSerializer):
                 and attrs.get("user_limit") is None
             ):
                 attrs["user_limit"] = 5
+
+            if GroupName.DEALER_GROUP in user_groups:
+                if attrs.get("company") is not None:
+                    raise serializers.ValidationError(
+                        {
+                            "errors": f"{ERROR_PERMISSION_DENIED} You cannot create a user that is associated with company",
+                        },
+                    )
+                attrs["user_limit"] = 5
+                attrs["dealer"] = user.dealer
+
             attrs["created_by"] = user
 
         elif request.method == "PATCH":
             if user == self.instance:
                 raise serializers.ValidationError(
                     {
-                        "error": f"{ERROR_PERMISSION_DENIED} You can't update your own account"
+                        "errors": f"{ERROR_PERMISSION_DENIED} You can't update your own account"
                     }
                 )
             if GroupName.ADMIN_GROUP in user_groups:
@@ -245,7 +246,7 @@ class UserSerializer(serializers.ModelSerializer):
                     group.name for group in self.instance.groups.all()
                 ]:
                     raise serializers.ValidationError(
-                        {"error": ERROR_PERMISSION_DENIED}
+                        {"errors": ERROR_PERMISSION_DENIED}
                     )
 
                 # is admin user belongs to a company
@@ -254,7 +255,7 @@ class UserSerializer(serializers.ModelSerializer):
                     if user.company != self.instance.company:
                         raise serializers.ValidationError(
                             {
-                                "error": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_COMPANY_USER}"
+                                "errors": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_COMPANY_USER}"
                             },
                         )
 
@@ -266,7 +267,7 @@ class UserSerializer(serializers.ModelSerializer):
                     ):
                         raise serializers.ValidationError(
                             {
-                                "error": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_ADMIN_USER}"
+                                "errors": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_ADMIN_USER}"
                             },
                         )
 
@@ -275,14 +276,14 @@ class UserSerializer(serializers.ModelSerializer):
                     if self.instance.type == UserType.ADMIN:
                         raise serializers.ValidationError(
                             {
-                                "error": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_ADMIN_USER}"
+                                "errors": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_ADMIN_USER}"
                             },
                         )
 
                     if self.instance.created_by != user:
                         raise serializers.ValidationError(
                             {
-                                "error": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_USER}"
+                                "errors": f"{ERROR_PERMISSION_DENIED} {ERROR_UPDATING_OTHER_USER}"
                             },
                         )
 
@@ -298,17 +299,10 @@ class UserSerializer(serializers.ModelSerializer):
                 ]:
                     raise serializers.ValidationError(
                         {
-                            "error": f"{ERROR_PERMISSION_DENIED} You cannot update the type of the Company's SuperAdmin",
+                            "errors": f"{ERROR_PERMISSION_DENIED} You cannot update the type of the Company's SuperAdmin",
                         },
                     )
 
-        if "user_limit" in attrs:
-            if not GroupName.SUPERADMIN_GROUP in user_groups:
-                raise serializers.ValidationError(
-                    {
-                        "error": f"{ERROR_PERMISSION_DENIED} You cannot update the user limit",
-                    },
-                )
         return attrs
 
     def handle_user_type_change(self, user, old_user_type, new_user_type):
@@ -323,15 +317,17 @@ class UserSerializer(serializers.ModelSerializer):
         user.groups.add(new_group)
 
     def update(self, instance, validated_data):
+        user_groups = self.context["user_groups"]
         user_type = validated_data.get("type")
-        is_active = validated_data.get("is_active")
-        user_limit = validated_data.get("user_limit")
 
-        if is_active is not None and is_active != instance.is_active:
-            instance.is_active = is_active
+        if GroupName.SUPERADMIN_GROUP in user_groups:
+            is_active = validated_data.get("is_active")
+            user_limit = validated_data.get("user_limit")
+            if is_active is not None and is_active != instance.is_active:
+                instance.is_active = is_active
 
-        if user_limit is not None and user_limit != instance.user_limit:
-            instance.user_limit = user_limit
+            if user_limit is not None and user_limit != instance.user_limit:
+                instance.user_limit = user_limit
 
         if user_type and user_type != instance.type:
             old_user_type = instance.type

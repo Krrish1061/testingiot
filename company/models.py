@@ -11,17 +11,39 @@ class Company(models.Model):
     Company model representing company in the system.
     """
 
+    user = models.OneToOneField(
+        "users.CompanySuperAdminUser",
+        on_delete=models.SET_NULL,
+        related_name="company_profile",
+        blank=True,
+        null=True,
+    )
+
     name = models.CharField(max_length=250, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     user_limit = models.PositiveSmallIntegerField(default=5, blank=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    dealer = models.ForeignKey(
+        "dealer.Dealer",
+        on_delete=models.PROTECT,
+        related_name="companies",
+        null=True,
+        blank=True,
+    )
     api_key = models.CharField(
         verbose_name="Company Authentication Api key",
         max_length=32,
         unique=True,
         null=True,
         blank=True,
+    )
+    created_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        related_name="company_created_by",
+        blank=True,
+        null=True,
     )
 
     def __str__(self):

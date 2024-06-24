@@ -1,35 +1,37 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import {
   Dispatch,
   SetStateAction,
   SyntheticEvent,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import UserTypes from "../../constants/userTypes";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import useAddUser from "../../hooks/users/useAddUser";
-import Autocomplete from "@mui/material/Autocomplete";
-import Button from "@mui/material/Button";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import InputLabel from "@mui/material/InputLabel";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import UserTypes from "../../constants/userTypes";
-import Stack from "@mui/material/Stack";
 
 interface Props {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   isUserSuperAdmin: boolean;
+  isUserDealer: boolean;
   isUserCompanySuperAdmin: boolean;
 }
 
@@ -46,8 +48,8 @@ const schema = z.object({
       value === "" || value === "null" ? null : Number(value)
     )
     .nullish()
-    .refine((val) => val === null || !isNaN(Number(val)), {
-      message: "Invalid Number",
+    .refine((val) => val === null || (typeof val === "number" && val >= 0), {
+      message: "Enter Positive Number",
     }),
 });
 
@@ -57,6 +59,7 @@ const AddUserForm = ({
   open,
   setOpen,
   isUserSuperAdmin,
+  isUserDealer,
   isUserCompanySuperAdmin,
 }: Props) => {
   const { data } = useGetAllCompany(isUserSuperAdmin);
@@ -73,6 +76,7 @@ const AddUserForm = ({
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
     defaultValues: {
+      type: isUserDealer ? "ADMIN" : "VIEWER",
       user_limit: null,
     },
   });
@@ -83,6 +87,7 @@ const AddUserForm = ({
   const [showUserLimit, setShowUserLimit] = useState(false);
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
+    if (data.user_limit === null) delete data.user_limit;
     addUser.mutate(data);
     reset();
     setOpen(false);
@@ -94,7 +99,35 @@ const AddUserForm = ({
     }
     reset();
     setOpen(false);
+    setShowUserLimit(false);
   };
+
+  const userTypeOptions = useMemo(() => {
+    if (isUserDealer) {
+      return [
+        <MenuItem key="admin" value={UserTypes.admin}>
+          ADMIN
+        </MenuItem>,
+      ];
+    }
+    const options = [
+      <MenuItem key="viewer" value={UserTypes.viewer}>
+        VIEWER
+      </MenuItem>,
+      <MenuItem key="moderator" value={UserTypes.moderator}>
+        MODERATOR
+      </MenuItem>,
+    ];
+
+    if (isUserCompanySuperAdmin || isUserSuperAdmin) {
+      options.push(
+        <MenuItem key="admin" value={UserTypes.admin}>
+          ADMIN
+        </MenuItem>
+      );
+    }
+    return options;
+  }, [isUserDealer, isUserCompanySuperAdmin, isUserSuperAdmin]);
 
   useEffect(() => {
     if (showUserLimit && (!!companyValue || typeValue !== UserTypes.admin)) {
@@ -107,9 +140,7 @@ const AddUserForm = ({
     ) {
       setShowUserLimit(true);
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typeValue, companyValue]);
+  }, [typeValue, companyValue, showUserLimit, setValue]);
 
   return (
     <Dialog
@@ -199,17 +230,15 @@ const AddUserForm = ({
                 }}
               >
                 <Select
-                  defaultValue={UserTypes.viewer}
+                  defaultValue={
+                    isUserDealer ? UserTypes.admin : UserTypes.viewer
+                  }
                   inputProps={{
                     ...register("type"),
                     id: "user-type",
                   }}
                 >
-                  <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
-                  <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
-                  {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
-                    <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
-                  )}
+                  {userTypeOptions}
                 </Select>
               </FormControl>
             </Box>
@@ -226,9 +255,10 @@ const AddUserForm = ({
                 <TextField
                   inputProps={{
                     ...register("user_limit"),
+                    min: 0,
                   }}
                   id="user_limit"
-                  type="text"
+                  type="number"
                   fullWidth
                   error={!!errors.user_limit}
                   helperText={errors.user_limit && errors.user_limit.message}

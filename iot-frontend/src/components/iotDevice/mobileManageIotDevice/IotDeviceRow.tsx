@@ -13,6 +13,7 @@ import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useDeleteIotDevice from "../../../hooks/iotDevice/useDeleteIotDevice";
 import useUpdateIotDevice from "../../../hooks/iotDevice/useUpdateIotDevice";
 import useGetAllUser from "../../../hooks/users/useGetAllUser";
+import useAuthStore from "../../../store/authStore";
 import MobileActions from "../../mobileTable/MobileActions";
 import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
 import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
@@ -35,6 +36,8 @@ function IotDeviceRow({ row, index }: Props) {
   const { mutate: deleteIotDevice } = useDeleteIotDevice();
   const { data: companyList } = useGetAllCompany();
   const { data: userList } = useGetAllUser();
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
 
   const companyName = useMemo(
     () => companyList?.find((company) => company.slug === row.company)?.name,
@@ -163,6 +166,8 @@ function IotDeviceRow({ row, index }: Props) {
 
               <MobileActions
                 isEditMode={isEditMode}
+                isUserDealer={isUserDealer}
+                enableOnlyEditForDealerUser={true}
                 handleEditClick={handleEditClick}
                 handleDeleteClick={handleDeleteClick}
                 handleCancelClick={handleCancelClick}
@@ -178,6 +183,7 @@ function IotDeviceRow({ row, index }: Props) {
               companyList={companyList}
               companyName={companyName}
               userName={userName || row.user}
+              isUserSuperAdmin={isUserSuperAdmin}
             />
           </Collapse>
         </TableCell>

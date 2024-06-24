@@ -13,7 +13,7 @@ interface IFormInputs {
 }
 
 interface ChangeCompanyProfileContext {
-  previousCompany: Company;
+  previousCompany: Company | null;
 }
 
 interface IError {
@@ -29,7 +29,7 @@ function useUpdateCompanyProfile() {
 
   const UpdateCompanyProfile = async (data: IFormInputs) =>
     axiosInstance
-      .patch<CompanyProfile>(`company/${company.slug}/profile/`, data)
+      .patch<CompanyProfile>(`company/${company?.slug}/profile/`, data)
       .then((res) => res.data);
 
   return useMutation<
@@ -41,21 +41,22 @@ function useUpdateCompanyProfile() {
     mutationFn: UpdateCompanyProfile,
     onMutate: (newCompanyProfile) => {
       const previousCompany = company;
+      if (company) {
+        const newProfile: CompanyProfile = {
+          ...company?.profile,
+          ...newCompanyProfile,
+        } as CompanyProfile;
 
-      const newProfile: CompanyProfile = {
-        ...company?.profile,
-        ...newCompanyProfile,
-      } as CompanyProfile;
+        setCompany({ ...company, profile: newProfile });
 
-      setCompany({ ...company, profile: newProfile });
-
-      queryClient.setQueryData<Company>(
-        ["company", company.slug],
-        (cachedCompany = {} as Company) => ({
-          ...cachedCompany,
-          profile: newProfile,
-        })
-      );
+        queryClient.setQueryData<Company>(
+          ["company", company.slug],
+          (cachedCompany = {} as Company) => ({
+            ...cachedCompany,
+            profile: newProfile,
+          })
+        );
+      }
 
       return { previousCompany };
     },
@@ -81,10 +82,11 @@ function useUpdateCompanyProfile() {
 
       if (!context) return;
       setCompany(context.previousCompany);
-      queryClient.setQueryData<Company>(
-        ["company", company.slug],
-        context.previousCompany
-      );
+      if (context.previousCompany)
+        queryClient.setQueryData<Company>(
+          ["company", company?.slug],
+          context.previousCompany
+        );
     },
   });
 }

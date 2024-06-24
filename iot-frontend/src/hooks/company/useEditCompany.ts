@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useAxios from "../../api/axiosInstance";
-import Company from "../../entities/Company";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
+import Company from "../../entities/Company";
 
 interface EditCompanyContext {
   previousCompanyList: Company[];
+  previousCompanySlug: string;
 }
 
 interface IError {
@@ -29,21 +30,28 @@ function useEditCompany() {
       const previousCompanyList =
         queryClient.getQueryData<Company[]>(["companyList"]) || [];
 
+      const previousCompanySlug = editingCompany.slug;
+
       queryClient.setQueryData<Company[]>(["companyList"], (companies = []) =>
         companies.map((company) =>
           company.slug === editingCompany.slug ? editingCompany : company
         )
       );
 
-      return { previousCompanyList };
+      return { previousCompanyList, previousCompanySlug };
     },
-    onSuccess: (newCompany) => {
+    onSuccess: (newCompany, _, context) => {
       enqueueSnackbar("Company sucessfully Edited", { variant: "success" });
-      queryClient.setQueryData<Company[]>(["companyList"], (companies) =>
-        companies?.map((company) =>
-          company.id === newCompany.id ? newCompany : company
-        )
-      );
+
+      if (context && context.previousCompanySlug !== newCompany.slug) {
+        queryClient.invalidateQueries();
+      } else {
+        queryClient.setQueryData<Company[]>(["companyList"], (companies) =>
+          companies?.map((company) =>
+            company.id === newCompany.id ? newCompany : company
+          )
+        );
+      }
     },
     onError: (error, _editedCompany, context) => {
       let errorMessage = "";

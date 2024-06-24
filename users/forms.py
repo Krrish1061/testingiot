@@ -1,11 +1,11 @@
-from django.contrib.auth.forms import (
-    UserCreationForm as BaseUserCreationForm,
-    UserChangeForm as BaseUserChangeForm,
-)
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
+from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.core.exceptions import ValidationError
-from .models import User
+
+User = get_user_model()
 
 
 class UserCreationForm(BaseUserCreationForm):

@@ -28,7 +28,7 @@ class Sensor(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        self.name = self.name.lower()
+        self.name = self.name.strip().lower()
         return super().save(*args, **kwargs)
 
     class Meta:

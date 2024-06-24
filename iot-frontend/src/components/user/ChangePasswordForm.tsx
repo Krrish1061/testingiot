@@ -25,7 +25,7 @@ const schema = z
       .max(32, "The password must be a maximun 32 characters")
       .refine(
         (value) =>
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W\w])(?!.*\s)[\W\w]{8,32}$/.test(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,32}$/.test(
             value
           ),
         {
@@ -36,8 +36,8 @@ const schema = z
     confirmNewPassword: z.string().min(1, "This field is required"),
   })
   .refine((data) => data.new_password === data.confirmNewPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
+    message: "Passwords didn't match",
+    path: ["confirmNewPassword"],
   });
 
 type IFormInputs = z.infer<typeof schema>;
@@ -178,8 +178,6 @@ function ChangePasswordForm() {
               type="password"
               autoComplete="new-password"
               variant="outlined"
-              // error={!!errors.new_password}
-              // helperText={errors.new_password?.message}
             />
             {!!errors.new_password && (
               <Typography

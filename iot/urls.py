@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/iot-device/", include("iot_devices.urls")),
     path("api/sensor-data/", include("sensor_data.urls")),
     path("api/company/", include("company.urls")),
+    path("api/dealer/", include("dealer.urls")),
     path("api/websocket/", include("websocket.urls")),
     path("api/api/", include("api.urls")),
     path("api/send-data/", include("send_livedata.urls")),

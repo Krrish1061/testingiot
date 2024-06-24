@@ -1,12 +1,15 @@
-import useGetAllUser from "../../hooks/users/useGetAllUser";
-import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import { Link as RouterLink } from "react-router-dom";
-import User from "../../entities/User";
-import UserTypes from "../../constants/userTypes";
 import { useMemo } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import {
+  ListChildComponentProps,
+  FixedSizeList as VirtualizedList,
+} from "react-window";
+import UserTypes from "../../constants/userTypes";
+import User from "../../entities/User";
+import useGetAllUser from "../../hooks/users/useGetAllUser";
 import ErrorReload from "../ErrorReload";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -29,16 +32,21 @@ function AdminUsersList() {
         handleRefetch={() => refetch()}
       />
     );
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner size={20} />;
 
-  return (
-    <List disablePadding>
-      {adminUsersList?.map((adminUser, index: number) => (
+  const arrayLength = adminUsersList?.length || 0;
+
+  const renderRow = (props: ListChildComponentProps) => {
+    const { index, style } = props;
+    if (adminUsersList) {
+      const adminUser = adminUsersList[index];
+      return (
         <ListItem
           disableGutters
           disablePadding
+          style={style}
           key={index}
-          divider={index !== adminUsersList.length - 1}
+          divider={index !== arrayLength - 1}
         >
           <ListItemButton
             disableGutters
@@ -55,8 +63,24 @@ function AdminUsersList() {
             />
           </ListItemButton>
         </ListItem>
-      ))}
-    </List>
+      );
+    }
+  };
+
+  return (
+    <>
+      {adminUsersList ? (
+        <VirtualizedList
+          height={arrayLength < 8 ? arrayLength * 50 : 400}
+          itemCount={arrayLength}
+          itemSize={50}
+          overscanCount={5}
+          width={"100%"}
+        >
+          {renderRow}
+        </VirtualizedList>
+      ) : null}
+    </>
   );
 }
 

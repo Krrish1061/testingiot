@@ -1,15 +1,16 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
+
 from company.models import Company
 from sensors.models import Sensor
-from users.models import AdminUser
+from users.models.proxy_models import AdminUser
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
     ERROR_DEVICE_NO_VALID_ASSOCIATION,
     ERROR_INVALID_FIELD_NAME,
 )
-from django.core.validators import RegexValidator
 
 
 # Create your models here.
@@ -41,9 +42,16 @@ class IotDevice(models.Model):
         blank=True,
         null=True,
     )
+    dealer = models.ForeignKey(
+        "dealer.Dealer",
+        on_delete=models.PROTECT,
+        related_name="iot_device",
+        null=True,
+        blank=True,
+    )
     is_active = models.BooleanField(default=True, blank=True)
     api_key = models.CharField(
-        verbose_name=" Iot device authentication Api key",
+        verbose_name="Iot device authentication Api key",
         max_length=32,
         unique=True,
         blank=True,
@@ -68,7 +76,9 @@ class IotDevice(models.Model):
         if self.user and self.user.is_associated_with_company:
             raise ValidationError(ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY)
 
-        if (self.company and self.user) or (not self.company and not self.user):
+        if (self.company and self.user) or (
+            not self.company and not self.user and not self.dealer
+        ):
             raise ValidationError(ERROR_DEVICE_NO_VALID_ASSOCIATION)
 
 

@@ -18,8 +18,90 @@ from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName
 
 
-def get_users_to_download_data(users):
-    user_list = UserCache.get_all_users()
+def get_owned_iot_device_list(user):
+    return (
+        IotDeviceCache.get_all_company_iot_devices(company=user.company)
+        if user.is_associated_with_company
+        else IotDeviceCache.get_all_user_iot_devices(user=user)
+    )
+
+
+def get_and_validate_date(start_date, end_date, is_user_superadmin):
+    date_error_message = ""
+    try:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+    except ValueError:
+        date_error_message = "Invalid date format! format must be YYYY-MM-DD"
+
+    if start_date > end_date:
+        date_error_message = (
+            "Invalid Start date! Start date must be smaller than End Date"
+        )
+
+    if not is_user_superadmin and (
+        start_date.date() < (datetime.now() - timedelta(days=30)).date()
+    ):
+        date_error_message = "Invalid Start date! Start date must not be earlier than 1 month from the current date."
+
+    return (start_date, end_date, date_error_message)
+
+
+def get_and_validate_iot_device(user, user_groups, iot_device):
+    """
+    Checks IoT device validation and returns the set of IoT devices or an error message.
+    Superadmin users can access all devices.
+
+    Args:
+        user: The user object containing user details.
+        user_groups: A list of groups the user belongs to.
+        iot_device: A string of comma-separated IoT device IDs or "all".
+
+    Returns:
+        tuple: A tuple containing:
+            - set or str: A set of validated IoT device IDs, or "all" for superadmin users.
+            - str: An error message if validation fails, otherwise an empty string.
+    """
+    if not iot_device:
+        return (None, "Iot device is not provided!")
+
+    iot_Device_error_message = ""
+    if iot_device != "all":
+        try:
+            iot_device = {int(device_id) for device_id in iot_device.split(",")}
+        except ValueError:
+            return (None, "Invalid! IoT device provided")
+
+    if GroupName.SUPERADMIN_GROUP not in user_groups:
+        owned_iot_device = []
+        if GroupName.DEALER_GROUP in user_groups:
+            owned_iot_device = IotDeviceCache.dealer_associated_iot_device(
+                dealer=user.dealer
+            )
+        else:
+            owned_iot_device = get_owned_iot_device_list(user)
+
+        if iot_device == "all":
+            iot_device = set(owned_iot_device)
+
+        elif not iot_device.issubset(set(owned_iot_device)):
+            iot_device = None
+            iot_Device_error_message = (
+                "Permission denied! Unknown iot Device is provided"
+            )
+
+    return (iot_device, iot_Device_error_message)
+
+
+def get_users_to_download_data(users, user, is_user_superadmin=False):
+    """Return the user list for superadmin user and dealer user"""
+    user_list = (
+        UserCache.get_all_users()
+        if is_user_superadmin
+        else UserCache.dealer_associated_user(user.dealer)
+    )
     username_set = {
         user.username
         for user in user_list
@@ -36,8 +118,13 @@ def get_users_to_download_data(users):
             return users
 
 
-def get_companies_to_download_data(companies):
-    company_list = CompanyCache.get_all_company()
+def get_companies_to_download_data(companies, user, is_user_superadmin=False):
+    """Return the company list for superadmin user and dealer user"""
+    company_list = (
+        CompanyCache.get_all_company()
+        if is_user_superadmin
+        else CompanyCache.dealer_associated_company(user.dealer)
+    )
     slug_set = {company.slug for company in company_list}
     if companies == "all":
         return slug_set
@@ -74,6 +161,8 @@ def get_sensor_dict(user, user_groups, sensors: set | str):
     owned_sensor_list = []
     if GroupName.SUPERADMIN_GROUP in user_groups:
         owned_sensor_list = [sensor.name for sensor in all_sensor_list]
+    elif GroupName.DEALER_GROUP in user_groups:
+        owned_sensor_list = SensorCache.get_all_dealer_sensor(user.dealer)
     else:
         owned_sensor_list = (
             SensorCache.get_all_company_sensor(user.company)
@@ -89,14 +178,6 @@ def get_sensor_dict(user, user_groups, sensors: set | str):
         for sensor in all_sensor_list
         if sensor.name in sensor_list
     }
-
-
-def get_owned_iot_device_list(user):
-    return (
-        IotDeviceCache.get_all_company_iot_devices(company=user.company)
-        if user.is_associated_with_company
-        else IotDeviceCache.get_all_user_iot_devices(user=user)
-    )
 
 
 def get_dataframe(queryset):
@@ -206,6 +287,7 @@ def users_and_company_data_to_excel(
 def download_sensor_data(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
+    is_user_superadmin = GroupName.SUPERADMIN_GROUP in user_groups
     if not any(
         group_name in user_groups
         for group_name in (
@@ -235,34 +317,28 @@ def download_sensor_data(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    try:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
-            hour=23, minute=59, second=59, microsecond=999999
-        )
-    except ValueError:
-        return Response(
-            {"error": "Invalid date format! format must be YYYY-MM-DD"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    start_date, end_date, date_error_message = get_and_validate_date(
+        start_date, end_date, is_user_superadmin
+    )
 
-    if start_date > end_date:
+    if date_error_message:
         return Response(
-            {"error": "Invalid Start date! Start date must be smaller than End Date"},
+            {"error": date_error_message},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if sensors and sensors != "all":
         sensors = set(sensors.split(","))
 
-    if iot_device and iot_device != "all":
-        try:
-            iot_device = {int(device_id) for device_id in iot_device.split(",")}
-        except ValueError:
-            return Response(
-                {"error": "Invalid Iot device Id!"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    iot_device, iot_device_error_message = get_and_validate_iot_device(
+        user, user_groups, iot_device
+    )
+
+    if iot_device_error_message:
+        return Response(
+            {"error": iot_device_error_message},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     sensor_dict = get_sensor_dict(user, user_groups, sensors)
 
@@ -297,78 +373,18 @@ def download_sensor_data(request):
     if any(
         group_name in user_groups
         for group_name in (
-            GroupName.ADMIN_GROUP,
-            GroupName.MODERATOR_GROUP,
+            GroupName.DEALER_GROUP,
+            GroupName.SUPERADMIN_GROUP,
         )
     ):
-        if start_date.date() < (datetime.now() - timedelta(days=30)).date():
-            return Response(
-                {
-                    "error": "Invalid Start date! Start date must not be earlier than 1 month from the current date."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        owned_iot_device_list = get_owned_iot_device_list(user)
-
-        sensor_data_qs = sensor_data.filter(
-            # timestamp__range=(start_date, end_date),
-            iot_device__in=owned_iot_device_list,
-        )
-
-        df = get_dataframe(sensor_data_qs)
-
-        if df is None:
-            return Response(
-                {"message": "No data is present to download"},
-                status=status.HTTP_204_NO_CONTENT,
-            )
-
-        bio = BytesIO()
-        if file_type == "excel":
-            with pd.ExcelWriter(
-                bio,
-                engine="xlsxwriter",
-                datetime_format="mmm d yyyy hh:mm:ss",
-            ) as writer:
-                workbook = writer.book
-                value_column_format = workbook.add_format({"num_format": "0.00"})
-                header_format = workbook.add_format(
-                    {"align": "center", "bold": True, "font_size": 12}
-                )
-
-                sensor_data_to_excel(
-                    sensor_dict,
-                    df,
-                    writer,
-                    workbook,
-                    header_format,
-                    value_column_format,
-                )
-        else:
-            # file type is equal to csv
-            df.sort_values(
-                by=["Sensor Name", "Timestamp"],
-                ascending=[True, False],
-                inplace=True,
-                ignore_index=True,
-            )
-            df["Timestamp"] = df["Timestamp"].dt.strftime("%b %d %Y %H:%M:%S")
-            df.to_csv(
-                bio,
-                index=False,
-                float_format="%.2f",
-                columns=["Sensor Name", "Timestamp", "value", "Device Name"],
-            )
-
-    else:
-        # user is super-admin user
         users = request.query_params.get("user", None)
         companies = request.query_params.get("company", None)
         device_list = []
         device_dict = {}
-
         if companies:
-            companies = get_companies_to_download_data(companies)
+            companies = get_companies_to_download_data(
+                companies, user, is_user_superadmin
+            )
             if companies is None:
                 return Response(
                     {
@@ -384,7 +400,7 @@ def download_sensor_data(request):
                 device_dict[slug] = iot_device_list
 
         if users:
-            users = get_users_to_download_data(users)
+            users = get_users_to_download_data(users, user, is_user_superadmin)
             if users is None:
                 return Response(
                     {
@@ -399,7 +415,8 @@ def download_sensor_data(request):
                 device_list.extend(iot_device_list)
                 device_dict[username] = iot_device_list
 
-        sensor_data = sensor_data.filter(iot_device__in=device_list)
+        if users or companies:
+            sensor_data = sensor_data.filter(iot_device__in=device_list)
 
         df = get_dataframe(sensor_data)
         if df is None:
@@ -429,7 +446,11 @@ def download_sensor_data(request):
                             user_owned_sensor_list = SensorCache.get_all_user_sensor(
                                 user=user
                             )
-                            name = f"{user.profile.first_name} {user.profile.last_name}"
+                            name = (
+                                f"{user.profile.first_name} {user.profile.last_name}"
+                                if user.profile.first_name
+                                else username
+                            )
                             worksheet_name = get_worksheet_name(name, is_user=True)
                             worksheet = workbook.add_worksheet(worksheet_name)
                             users_and_company_data_to_excel(
@@ -600,6 +621,58 @@ def download_sensor_data(request):
                     columns=columns,
                 )
 
+    elif any(
+        group_name in user_groups
+        for group_name in (
+            GroupName.ADMIN_GROUP,
+            GroupName.MODERATOR_GROUP,
+        )
+    ):
+        df = get_dataframe(sensor_data)
+
+        if df is None:
+            return Response(
+                {"message": "No data is present to download"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+
+        bio = BytesIO()
+        if file_type == "excel":
+            with pd.ExcelWriter(
+                bio,
+                engine="xlsxwriter",
+                datetime_format="mmm d yyyy hh:mm:ss",
+            ) as writer:
+                workbook = writer.book
+                value_column_format = workbook.add_format({"num_format": "0.00"})
+                header_format = workbook.add_format(
+                    {"align": "center", "bold": True, "font_size": 12}
+                )
+
+                sensor_data_to_excel(
+                    sensor_dict,
+                    df,
+                    writer,
+                    workbook,
+                    header_format,
+                    value_column_format,
+                )
+        else:
+            # file type is equal to csv
+            df.sort_values(
+                by=["Sensor Name", "Timestamp"],
+                ascending=[True, False],
+                inplace=True,
+                ignore_index=True,
+            )
+            df["Timestamp"] = df["Timestamp"].dt.strftime("%b %d %Y %H:%M:%S")
+            df.to_csv(
+                bio,
+                index=False,
+                float_format="%.2f",
+                columns=["Sensor Name", "Timestamp", "value", "Device Name"],
+            )
+
     # Seek to the beginning and read/or getValue to copy the workbook to a variable in memory
     bio.seek(0)
     downloadable_file = bio.getvalue()
@@ -610,5 +683,4 @@ def download_sensor_data(request):
         content_type=content_type,
     )
     response["Content-Disposition"] = f"attachment; filename={file_name}"
-
     return response

@@ -13,6 +13,7 @@ interface Props {
 function useGetDeviceSensorList({ username, companySlug, device }: Props) {
   const user = useAuthStore((state) => state.user);
   const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
   const { data: iotDeviceList } = useGetAllIotDevice();
   const [iotDevices, setIotDevices] = useState<IotDevice[]>([]);
 
@@ -26,7 +27,7 @@ function useGetDeviceSensorList({ username, companySlug, device }: Props) {
     if (!iotDeviceList) return;
     let filteredDevices: IotDevice[] = [];
 
-    if (isUserSuperAdmin) {
+    if (isUserSuperAdmin || isUserDealer) {
       if (companySlug) {
         filteredDevices = iotDeviceList.filter(
           (iotDevice) => iotDevice.company === companySlug
@@ -60,9 +61,16 @@ function useGetDeviceSensorList({ username, companySlug, device }: Props) {
     }
 
     setIotDevices(filteredDevices);
-  }, [iotDeviceList, username, companySlug, isUserSuperAdmin, user]);
+  }, [
+    iotDeviceList,
+    username,
+    companySlug,
+    isUserSuperAdmin,
+    user,
+    isUserDealer,
+  ]);
 
-  return { iotDeviceList, iotDevices, deviceSensorList };
+  return { iotDevices, deviceSensorList };
 }
 
 export default useGetDeviceSensorList;

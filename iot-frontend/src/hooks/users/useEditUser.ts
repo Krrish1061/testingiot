@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import User from "../../entities/User";
 import useAuthStore from "../../store/authStore";
-import { enqueueSnackbar } from "notistack";
 
 interface EditUserContext {
   previousUserList: User[];
@@ -11,6 +11,7 @@ interface EditUserContext {
 
 interface IError {
   error: string;
+  errors: string[];
 }
 
 function useEditUser() {
@@ -53,7 +54,10 @@ function useEditUser() {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data.error || "User Modification failed";
+        errorMessage =
+          error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
+          "User Modification failed";
       }
       enqueueSnackbar(errorMessage, { variant: "error" });
 

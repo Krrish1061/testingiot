@@ -11,7 +11,13 @@ import ErrorReload from "../../ErrorReload";
 
 function DesktopManageUser() {
   // to handle user do work in backend
-  const { data, isError, isSuccess, isLoading, refetch } = useGetAllUser();
+  const {
+    data: userList,
+    isError,
+    isSuccess,
+    isLoading,
+    refetch,
+  } = useGetAllUser();
   const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   const {
@@ -36,14 +42,13 @@ function DesktopManageUser() {
   );
 
   useEffect(() => {
-    if (isSuccess && rows.length === 0) {
-      setRows(data);
+    if (isSuccess) {
+      setRows(userList);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
+  }, [isSuccess, setRows, userList]);
 
   // columns for the data grid for the Users
-  const columns = UserColumns({ users: data });
+  const columns = UserColumns({ users: userList });
 
   if (isError)
     return (
@@ -65,6 +70,7 @@ function DesktopManageUser() {
               serial_number: false,
               date_joined: false,
               company: isUserSuperAdmin || false,
+              dealer: false,
             },
           },
           pagination: { paginationModel: { pageSize: 20 } },

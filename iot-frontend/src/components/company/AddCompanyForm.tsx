@@ -1,21 +1,22 @@
-import Box from "@mui/material/Box";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import { Dispatch, SetStateAction, SyntheticEvent } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import InputLabel from "@mui/material/InputLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { Dispatch, SetStateAction, SyntheticEvent } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
 import useAddCompany from "../../hooks/company/useAddCompany";
 
 interface Props {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  isUserSuperAdmin: boolean;
 }
 
 const schema = z.object({
@@ -29,7 +30,7 @@ const schema = z.object({
 
 type IFormInputs = z.infer<typeof schema>;
 
-function AddCompanyForm({ open, setOpen }: Props) {
+function AddCompanyForm({ open, setOpen, isUserSuperAdmin }: Props) {
   const { mutate } = useAddCompany();
   const {
     register,
@@ -38,6 +39,9 @@ function AddCompanyForm({ open, setOpen }: Props) {
     reset,
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      user_limit: 5,
+    },
   });
 
   const onSubmit: SubmitHandler<IFormInputs> = (data) => {
@@ -60,7 +64,7 @@ function AddCompanyForm({ open, setOpen }: Props) {
       onClose={handleClose}
       PaperProps={{
         sx: {
-          width: 350, // Adjust the width as needed
+          width: 350,
         },
       }}
     >
@@ -111,39 +115,40 @@ function AddCompanyForm({ open, setOpen }: Props) {
             />
           </Box>
 
-          <Box marginBottom={2}>
-            <Typography
-              component={InputLabel}
-              htmlFor="user_limit"
-              gutterBottom
-              color="inherit"
-            >
-              User Limit:
-            </Typography>
-            <TextField
-              inputProps={{
-                ...register("user_limit"),
-                min: 0,
-                defaultValue: 5,
-              }}
-              id="user_limit"
-              type="number"
-              fullWidth
-              error={!!errors.user_limit}
-              helperText={errors.user_limit && errors.user_limit.message}
-              autoComplete="off"
-            />
-            {!errors.user_limit && (
+          {isUserSuperAdmin && (
+            <Box marginBottom={2}>
               <Typography
-                paddingLeft={1}
-                fontSize={12}
+                component={InputLabel}
+                htmlFor="user_limit"
                 gutterBottom
-                color="primary"
+                color="inherit"
               >
-                The maximum number of users a company can create
+                User Limit:
               </Typography>
-            )}
-          </Box>
+              <TextField
+                inputProps={{
+                  ...register("user_limit"),
+                  min: 0,
+                }}
+                id="user_limit"
+                type="number"
+                fullWidth
+                error={!!errors.user_limit}
+                helperText={errors.user_limit && errors.user_limit.message}
+                autoComplete="off"
+              />
+              {!errors.user_limit && (
+                <Typography
+                  paddingLeft={1}
+                  fontSize={12}
+                  gutterBottom
+                  color="primary"
+                >
+                  The maximum number of users a company can create
+                </Typography>
+              )}
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={(event) => handleClose(event, "cancel")}>

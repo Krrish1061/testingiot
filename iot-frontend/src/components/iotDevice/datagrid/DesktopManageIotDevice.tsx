@@ -2,14 +2,21 @@ import { useEffect } from "react";
 import useGetAllIotDevice from "../../../hooks/iotDevice/useGetAllIotDevice";
 import useIotDeviceDataGrid from "../../../hooks/muiDataGrid/useIotDeviceDataGrid";
 import useIotDeviceDataGridStore from "../../../store/datagrid/iotDeviceDataGridStore";
+import ErrorReload from "../../ErrorReload";
+import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
 import IotDeviceColumns from "./IotDeviceColumns";
-import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
-import ErrorReload from "../../ErrorReload";
+import IotDeviceToolBar from "./IotDeviceToolBar";
 
 function DesktopManageIotDevice() {
-  const { data, isError, isSuccess, isLoading, refetch } = useGetAllIotDevice();
+  const {
+    data: iotDeviceList,
+    isError,
+    isSuccess,
+    isLoading,
+    refetch,
+  } = useGetAllIotDevice();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -34,11 +41,10 @@ function DesktopManageIotDevice() {
   );
 
   useEffect(() => {
-    if (isSuccess && rows.length === 0) {
-      setRows(data);
+    if (isSuccess) {
+      setRows(iotDeviceList);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
+  }, [iotDeviceList, isSuccess, setRows]);
 
   const columns = IotDeviceColumns();
 
@@ -60,11 +66,13 @@ function DesktopManageIotDevice() {
             columnVisibilityModel: {
               // Hide columns status and traderName, the other columns will remain visible
               serial_number: false,
+              id: false,
             },
           },
           pagination: { paginationModel: { pageSize: 20 } },
         }}
         rowModesModel={rowModesModel}
+        customToolbar={IotDeviceToolBar}
         slotProps={{
           toolbar: { setRows, setRowModesModel },
         }}

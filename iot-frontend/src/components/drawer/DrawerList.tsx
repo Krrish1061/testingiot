@@ -1,28 +1,26 @@
-import List from "@mui/material/List";
-import DevicesIcon from "@mui/icons-material/Devices";
-import PeopleIcon from "@mui/icons-material/People";
-import SensorsIcon from "@mui/icons-material/Sensors";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import DrawerListItem from "./DrawerListItem";
+import DevicesIcon from "@mui/icons-material/Devices";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
+import PeopleIcon from "@mui/icons-material/People";
+import SensorsIcon from "@mui/icons-material/Sensors";
+import ShareIcon from "@mui/icons-material/Share";
 import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
 import useAuthStore from "../../store/authStore";
-import UserGroups from "../../constants/userGroups";
 import CompanyList from "../company/CompanyList";
 import AdminUsersList from "../user/AdminUsersList";
-import ShareIcon from "@mui/icons-material/Share";
+import DrawerListItem from "./DrawerListItem";
 
 const DrawerList = () => {
-  const user = useAuthStore((state) => state.user);
-  const isUserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
-  const isUserCompanySuperAdmin = user?.groups.includes(
-    UserGroups.companySuperAdminGroup
-  );
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
   return (
     <List>
       <DrawerListItem icon={<DashboardIcon />} linkto="/" text="Dashboard" />
       <Divider component="li" />
-      {isUserSuperAdmin && (
+      {(isUserSuperAdmin || isUserDealer) && (
         <>
           <DrawerListItem
             icon={<PeopleIcon />}
@@ -35,13 +33,12 @@ const DrawerList = () => {
         </>
       )}
 
-      {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
+      {(isUserSuperAdmin || isUserDealer) && (
         <>
           <DrawerListItem
             icon={<ApartmentIcon />}
             text="Company"
-            isDropdown={isUserSuperAdmin ? true : false}
-            linkto={isUserCompanySuperAdmin ? "/company-profile" : undefined}
+            isDropdown={true}
             dropDownNode={<CompanyList />}
           />
 
@@ -56,7 +53,7 @@ const DrawerList = () => {
       />
       <Divider component="li" />
 
-      {isUserSuperAdmin && (
+      {(isUserSuperAdmin || isUserDealer) && (
         <>
           <DrawerListItem
             icon={<ApartmentIcon />}
@@ -71,7 +68,10 @@ const DrawerList = () => {
             text="Manage Iot Device"
           />
           <Divider component="li" />
-
+        </>
+      )}
+      {isUserSuperAdmin && (
+        <>
           <DrawerListItem
             icon={<SensorsIcon />}
             linkto="/sensors"
@@ -79,9 +79,20 @@ const DrawerList = () => {
           />
           <Divider component="li" />
           <DrawerListItem
+            icon={<ManageAccountsIcon />}
+            linkto="/manage-dealers"
+            text="Manage Dealers"
+          />
+          <Divider component="li" />
+          <DrawerListItem
             icon={<ShareIcon />}
             linkto="/send-liveData"
             text="Send LiveData"
+          />
+          <DrawerListItem
+            icon={<MiscellaneousServicesIcon />}
+            linkto="/miscellaneous-settings"
+            text="Miscellaneous Setting"
           />
         </>
       )}

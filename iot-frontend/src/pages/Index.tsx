@@ -1,21 +1,20 @@
-import useAuthStore from "../store/authStore";
-import UserGroups from "../constants/userGroups";
-import IndexHeader from "../components/index/IndexHeader";
-import LiveDataCardContainer from "../components/liveData/LiveDataCardContainer";
+import DealerUserDashboard from "../components/dashboard/DealerUserDashboard";
 import SuperAdminDashboard from "../components/dashboard/SuperAdminDashboard";
 import LineGraphContainer from "../components/graph/LineGraphContainer";
+import IndexHeader from "../components/index/IndexHeader";
+import LiveDataCardContainer from "../components/liveData/LiveDataCardContainer";
+import useAuthStore from "../store/authStore";
 
 function Index() {
-  const user = useAuthStore((state) => state.user);
-  const isSuperAdminUser =
-    user && user.groups.includes(UserGroups.superAdminGroup);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
 
   return (
     <>
       <IndexHeader />
-      {isSuperAdminUser ? (
-        <SuperAdminDashboard />
-      ) : (
+      {isUserSuperAdmin && <SuperAdminDashboard />}
+      {isUserDealer && <DealerUserDashboard />}
+      {!isUserSuperAdmin && !isUserDealer && (
         <>
           <LiveDataCardContainer />
           <LineGraphContainer />

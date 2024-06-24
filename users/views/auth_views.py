@@ -15,11 +15,9 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.serializers import CustomTokenObtainPairSerializer, UserSerializer
-from users.utilis import check_username
 from utils.error_message import (
     ERROR_INCORRECT_USERNAME_PASSWORD,
     ERROR_INVALID_TOKEN,
-    ERROR_INVALID_URL,
     ERROR_REFRESH_TOKEN_NOT_FOUND,
 )
 
@@ -67,7 +65,7 @@ def login_user(request):
 
     else:
         return Response(
-            ERROR_INCORRECT_USERNAME_PASSWORD,
+            {"error": ERROR_INCORRECT_USERNAME_PASSWORD},
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
@@ -75,10 +73,7 @@ def login_user(request):
 @csrf_protect
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def logout_user(request, username):
-    if not check_username(request.user, username):
-        return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
-
+def logout_user(request):
     try:
         refresh_token = request.get_signed_cookie("refresh_token")
         token = RefreshToken(refresh_token)

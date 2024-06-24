@@ -25,7 +25,9 @@ def get_sensor_all(request):
     sensors = SensorCache.get_all_sensor()
     if GroupName.SUPERADMIN_GROUP not in user_groups:
         sensors_list = []
-        if user.is_associated_with_company:
+        if GroupName.DEALER_GROUP in user_groups:
+            sensors_list = SensorCache.get_all_dealer_sensor(user.dealer)
+        elif user.is_associated_with_company:
             sensors_list = SensorCache.get_all_company_sensor(user.company)
         elif GroupName.ADMIN_GROUP in user_groups:
             sensors_list = SensorCache.get_all_user_sensor(user)

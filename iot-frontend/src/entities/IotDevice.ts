@@ -4,6 +4,7 @@ interface IotDevice {
   id: number;
   user?: string | null;
   company?: string | null;
+  dealer?: string | null;
   board_id?: number | null;
   is_active: boolean;
   created_at: Date;

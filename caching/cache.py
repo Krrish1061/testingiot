@@ -89,6 +89,11 @@ class Cache(ABC):
         cache.delete(cache_key)
 
     @staticmethod
+    def clear() -> None:
+        """Delete all the stored values in cache"""
+        cache.clear()
+
+    @staticmethod
     def set_many(cache_data: dict, ttl=CACHE_TTL) -> None:
         cache.set_many(cache_data, ttl)
 

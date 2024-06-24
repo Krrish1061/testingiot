@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import User from "../../entities/User";
-import useAxios from "../../api/axiosInstance";
-import useAuthStore from "../../store/authStore";
 import { enqueueSnackbar } from "notistack";
-import UserTypes from "../../constants/userTypes";
+import useAxios from "../../api/axiosInstance";
 import UserGroups from "../../constants/userGroups";
+import UserTypes from "../../constants/userTypes";
+import User from "../../entities/User";
+import useAuthStore from "../../store/authStore";
 import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
 
 interface IFormInputs {
@@ -16,6 +16,7 @@ interface IFormInputs {
 
 interface IError {
   error: string;
+  errors: string[];
   email: string[];
 }
 
@@ -94,6 +95,7 @@ const useAddUser = () => {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
           error.response?.data.email[0] ||
           "Failed to Create User";
       }

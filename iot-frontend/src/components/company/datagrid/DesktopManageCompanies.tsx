@@ -2,14 +2,20 @@ import { useEffect } from "react";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useCompanyDataGrid from "../../../hooks/muiDataGrid/useCompanyDataGrid";
 import useCompanyDataGridStore from "../../../store/datagrid/companyDataGridStore";
-import CompanyColumns from "./CompanyColumns";
-import DeleteDialog from "../../datagrid/DeleteDialog";
-import ConfirmDialog from "../../datagrid/ConfirmDialog";
-import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import ErrorReload from "../../ErrorReload";
+import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
+import ConfirmDialog from "../../datagrid/ConfirmDialog";
+import DeleteDialog from "../../datagrid/DeleteDialog";
+import CompanyColumns from "./CompanyColumns";
 
 function DesktopManageCompanies() {
-  const { data, isError, isSuccess, isLoading, refetch } = useGetAllCompany();
+  const {
+    data: companyList,
+    isError,
+    isSuccess,
+    isLoading,
+    refetch,
+  } = useGetAllCompany();
 
   const {
     processRowUpdate,
@@ -35,11 +41,10 @@ function DesktopManageCompanies() {
   const columns = CompanyColumns();
 
   useEffect(() => {
-    if (isSuccess && rows.length === 0) {
-      setRows(data);
+    if (isSuccess) {
+      setRows(companyList);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
+  }, [isSuccess, companyList, setRows]);
 
   if (isError)
     return (
@@ -60,6 +65,7 @@ function DesktopManageCompanies() {
               // Hide columns status and traderName, the other columns will remain visible
               serial_number: false,
               created_at: false,
+              dealer: false,
             },
           },
           pagination: { paginationModel: { pageSize: 20 } },

@@ -21,7 +21,7 @@ const createZoomOptions = (
       enabled: false,
     },
     pinch: {
-      enabled: true,
+      enabled: false,
     },
     mode: "x",
   },

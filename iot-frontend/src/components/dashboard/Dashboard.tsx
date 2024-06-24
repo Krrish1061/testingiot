@@ -3,7 +3,6 @@ import useTheme from "@mui/material/styles/useTheme";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import UserGroups from "../../constants/userGroups";
 import useConnectWebSocket from "../../hooks/webSocket/useConnectWebSocket";
 import useAuthStore from "../../store/authStore";
 import useDrawerStore from "../../store/drawerStore";
@@ -25,10 +24,14 @@ function Dashboard() {
   // opens a dialog if user hasn't setup their name
   const [openNameForm, setOpenNameForm] = useState(false);
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
-  const isSuperAdminUser =
-    user && user.groups.includes(UserGroups.superAdminGroup);
-  const isAdminUser = user && user.groups.includes(UserGroups.adminGroup);
+  const isSuperAdminUser = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserCompanySuperAdmin = useAuthStore(
+    (state) => state.isUserCompanySuperAdmin
+  );
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const isAdminUser = useAuthStore((state) => state.isUserAdmin);
   const isAdminOrSuperAdmin = isSuperAdminUser || isAdminUser;
+  const showProfileFormPopup = !isUserCompanySuperAdmin && !isUserDealer;
 
   useEffect(() => {
     if (!isMobile) {
@@ -38,7 +41,12 @@ function Dashboard() {
   }, [isMobile, setDrawerOpen, setIsMobile]);
 
   useEffect(() => {
-    if (user && user.profile && !user.profile.first_name) {
+    if (
+      showProfileFormPopup &&
+      user &&
+      user.profile &&
+      !user.profile.first_name
+    ) {
       setOpenNameForm(true);
     }
     return () => {

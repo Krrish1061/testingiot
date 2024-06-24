@@ -1,17 +1,25 @@
-import { useMemo } from "react";
-import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import useCompanyDataGrid from "../../../hooks/muiDataGrid/useCompanyDataGrid";
-import Actions from "../../datagrid/Actions";
-import useCompanyDataGridStore from "../../../store/datagrid/companyDataGridStore";
-import dayjs from "dayjs";
-import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
+import Tooltip from "@mui/material/Tooltip";
+import {
+  GridColDef,
+  GridRenderCellParams,
+  GridValueGetterParams,
+} from "@mui/x-data-grid";
+import dayjs from "dayjs";
+import { useMemo } from "react";
 import Company from "../../../entities/Company";
+import useGetAllDealer from "../../../hooks/dealer/useGetAllDealer";
+import useCompanyDataGrid from "../../../hooks/muiDataGrid/useCompanyDataGrid";
+import useAuthStore from "../../../store/authStore";
+import useCompanyDataGridStore from "../../../store/datagrid/companyDataGridStore";
+import Actions from "../../datagrid/Actions";
+import RenderCellExpand from "../../datagrid/RenderCellExpand";
 import CompanyProfileModel from "./CompanyProfileModel";
 
 function CompanyColumns() {
   const rowModesModel = useCompanyDataGridStore((state) => state.rowModesModel);
-
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
   const {
     handleEditClick,
     handleSaveClick,
@@ -19,8 +27,10 @@ function CompanyColumns() {
     handleCancelClick,
   } = useCompanyDataGrid();
 
-  const columns: GridColDef[] = useMemo(
-    () => [
+  const { data: dealerList } = useGetAllDealer();
+
+  const columns: GridColDef[] = useMemo(() => {
+    const baseColumns: GridColDef[] = [
       {
         field: "serial_number",
         headerName: "S.N.",
@@ -69,15 +79,7 @@ function CompanyColumns() {
           </Tooltip>
         ),
       },
-      {
-        field: "user_limit",
-        headerName: "User Limit",
-        type: "number",
-        align: "center",
-        width: 90,
-        editable: true,
-        hideable: false,
-      },
+
       {
         field: "created_at",
         headerName: "Created Date",
@@ -106,6 +108,7 @@ function CompanyColumns() {
         getActions: ({ row }) =>
           Actions({
             row: row,
+            isUserDealer: isUserDealer,
             handleEditClick: handleEditClick,
             handleSaveClick: handleSaveClick,
             handleDeleteClick: handleDeleteClick,
@@ -113,15 +116,50 @@ function CompanyColumns() {
             rowModesModel: rowModesModel,
           }),
       },
-    ],
-    [
-      rowModesModel,
-      handleEditClick,
-      handleSaveClick,
-      handleDeleteClick,
-      handleCancelClick,
-    ]
-  );
+    ];
+    // Add the user_limit and dealer column only for superAdmin users
+    if (isUserSuperAdmin) {
+      baseColumns.splice(
+        4,
+        0,
+        {
+          field: "dealer",
+          headerName: "Dealer",
+          editable: false,
+          hideable: true,
+          valueGetter: (params: GridValueGetterParams<Company>) => {
+            if (params.row.dealer)
+              return (
+                dealerList?.find((dealer) => dealer.slug === params.row.dealer)
+                  ?.name || "-"
+              );
+            else return "-";
+          },
+          renderCell: RenderCellExpand,
+        },
+        {
+          field: "user_limit",
+          headerName: "User Limit",
+          type: "number",
+          align: "center",
+          width: 90,
+          editable: true,
+          hideable: false,
+        }
+      );
+    }
+
+    return baseColumns;
+  }, [
+    isUserSuperAdmin,
+    isUserDealer,
+    rowModesModel,
+    dealerList,
+    handleEditClick,
+    handleSaveClick,
+    handleDeleteClick,
+    handleCancelClick,
+  ]);
 
   return columns;
 }

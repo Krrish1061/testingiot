@@ -5,7 +5,6 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Control, Controller } from "react-hook-form";
-import UserGroups from "../../../constants/userGroups";
 import UserTypes from "../../../constants/userTypes";
 import useAuthStore from "../../../store/authStore";
 
@@ -21,14 +20,50 @@ interface Props {
   control: Control<IFormInputs>;
 }
 
+const getUserTypeOptions = (
+  isUserDealer: boolean,
+  isUserCompanySuperAdmin: boolean,
+  isUserSuperAdmin: boolean
+) => {
+  if (isUserDealer) {
+    return [
+      {
+        value: UserTypes.admin,
+        label: UserTypes.admin,
+      },
+    ];
+  }
+
+  const options = [
+    { value: UserTypes.moderator, label: UserTypes.moderator },
+    { value: UserTypes.viewer, label: UserTypes.viewer },
+  ];
+
+  // if user are in company super admin or SuperAdmin add admin options
+  if (isUserSuperAdmin || isUserCompanySuperAdmin) {
+    options.push({
+      value: UserTypes.admin,
+      label: UserTypes.admin,
+    });
+  }
+
+  return options;
+};
+
 function UserEditableField({ isEditMode, userType, username, control }: Props) {
-  const user = useAuthStore((state) => state.user);
-  const isUserSuperAdmin =
-    user?.groups.includes(UserGroups.superAdminGroup) || false;
-  const isUserCompanySuperAdmin =
-    user?.groups.includes(UserGroups.companySuperAdminGroup) || false;
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserCompanySuperAdmin = useAuthStore(
+    (state) => state.isUserCompanySuperAdmin
+  );
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
   const userTypeId = `user-type-${username}`;
   const userIsActiveId = `user-isactive-${username}`;
+
+  const userTypeOptions = getUserTypeOptions(
+    isUserDealer,
+    isUserCompanySuperAdmin,
+    isUserSuperAdmin
+  );
 
   return (
     <>
@@ -61,45 +96,47 @@ function UserEditableField({ isEditMode, userType, username, control }: Props) {
                   id: userTypeId,
                 }}
               >
-                <MenuItem value={UserTypes.viewer}>VIEWER</MenuItem>
-                <MenuItem value={UserTypes.moderator}>MODERATOR</MenuItem>
-                {(isUserCompanySuperAdmin || isUserSuperAdmin) && (
-                  <MenuItem value={UserTypes.admin}>ADMIN</MenuItem>
-                )}
+                {userTypeOptions.map((option, index) => (
+                  <MenuItem key={index} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             )}
           />
         )}
       </Stack>
-      <Stack
-        marginBottom={2}
-        direction="row"
-        justifyContent="flex-start"
-        alignItems="center"
-        spacing={2}
-        paddingLeft={5}
-      >
-        <InputLabel htmlFor={userIsActiveId} sx={{ color: "inherit" }}>
-          Is Active:
-        </InputLabel>
-        <Controller
-          name="is_active"
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              id={userIsActiveId}
-              size="small"
-              onChange={(e) => {
-                if (!e.target.readOnly) field.onChange(e.target.checked);
-              }}
-              checked={field.value}
-              inputProps={{
-                readOnly: isEditMode ? false : true,
-              }}
-            />
-          )}
-        />
-      </Stack>
+      {isUserSuperAdmin && (
+        <Stack
+          marginBottom={2}
+          direction="row"
+          justifyContent="flex-start"
+          alignItems="center"
+          spacing={2}
+          paddingLeft={5}
+        >
+          <InputLabel htmlFor={userIsActiveId} sx={{ color: "inherit" }}>
+            Is Active:
+          </InputLabel>
+          <Controller
+            name="is_active"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id={userIsActiveId}
+                size="small"
+                onChange={(e) => {
+                  if (!e.target.readOnly) field.onChange(e.target.checked);
+                }}
+                checked={field.value}
+                inputProps={{
+                  readOnly: isEditMode ? false : true,
+                }}
+              />
+            )}
+          />
+        </Stack>
+      )}
     </>
   );
 }

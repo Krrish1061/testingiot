@@ -2,15 +2,21 @@ import { useEffect } from "react";
 import useSensorDataGrid from "../../../hooks/muiDataGrid/useSensorDataGrid";
 import useGetAllSensors from "../../../hooks/sensor/useGetAllSensors";
 import useSensorDataGridStore from "../../../store/datagrid/sensorDataGridStore";
+import ErrorReload from "../../ErrorReload";
+import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
-import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import SensorColumns from "./SensorColumns";
 import SensorToolBar from "./SensorToolBar";
-import ErrorReload from "../../ErrorReload";
 
 function DesktopManageSensors() {
-  const { data, isError, isSuccess, isLoading, refetch } = useGetAllSensors();
+  const {
+    data: sensorList,
+    isError,
+    isSuccess,
+    isLoading,
+    refetch,
+  } = useGetAllSensors();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -33,11 +39,10 @@ function DesktopManageSensors() {
   );
 
   useEffect(() => {
-    if (isSuccess && rows.length === 0) {
-      setRows(data);
+    if (isSuccess) {
+      setRows(sensorList);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
+  }, [sensorList, isSuccess, setRows]);
 
   const columns = SensorColumns();
 

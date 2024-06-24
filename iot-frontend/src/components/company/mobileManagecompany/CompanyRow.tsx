@@ -1,24 +1,25 @@
-import { useState } from "react";
-import Company from "../../../entities/Company";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import ImageAvatar from "../../ImageAvatar";
-import Collapse from "@mui/material/Collapse";
-import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
-import InputLabel from "@mui/material/InputLabel";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import useEditCompany from "../../../hooks/company/useEditCompany";
-import useDeleteCompany from "../../../hooks/company/useDeleteCompany";
-import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
-import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
-import MobileActions from "../../mobileTable/MobileActions";
+import { zodResolver } from "@hookform/resolvers/zod";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
+import InputLabel from "@mui/material/InputLabel";
+import Stack from "@mui/material/Stack";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
+import Company from "../../../entities/Company";
+import useDeleteCompany from "../../../hooks/company/useDeleteCompany";
+import useEditCompany from "../../../hooks/company/useEditCompany";
+import useAuthStore from "../../../store/authStore";
+import ImageAvatar from "../../ImageAvatar";
+import MobileActions from "../../mobileTable/MobileActions";
+import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
+import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 
 interface Props {
   row: Company;
@@ -42,6 +43,8 @@ function CompanyRow({ row, index }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
   const { mutate: editCompany } = useEditCompany();
   const { mutate: deleteCompany } = useDeleteCompany();
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   const {
     register,
@@ -119,7 +122,7 @@ function CompanyRow({ row, index }: Props) {
           <ImageAvatar imgUrl={row.profile?.logo} altText={row.name} />
         </TableCell>
         <TableCell>{row.name}</TableCell>
-        <TableCell>{row.user_limit}</TableCell>
+        {isUserSuperAdmin && <TableCell>{row.user_limit}</TableCell>}
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -145,46 +148,49 @@ function CompanyRow({ row, index }: Props) {
               </Box>
               <MobileActions
                 isEditMode={isEditMode}
+                isUserDealer={isUserDealer}
                 handleEditClick={handleEditClick}
                 handleDeleteClick={handleDeleteClick}
                 handleCancelClick={handleCancelClick}
               />
             </Stack>
 
-            <Stack
-              direction="row"
-              justifyContent="flex-start"
-              alignItems="center"
-              spacing={2}
-              paddingLeft={5}
-              marginY={2}
-            >
-              <Typography
-                component={isEditMode ? InputLabel : "div"}
-                htmlFor={companyUserLimitId}
-                sx={{ color: "inherit" }}
+            {isUserSuperAdmin && (
+              <Stack
+                direction="row"
+                justifyContent="flex-start"
+                alignItems="center"
+                spacing={2}
+                paddingLeft={5}
+                marginY={2}
               >
-                User Limit:
-              </Typography>
+                <Typography
+                  component={isEditMode ? InputLabel : "div"}
+                  htmlFor={companyUserLimitId}
+                  sx={{ color: "inherit" }}
+                >
+                  User Limit:
+                </Typography>
 
-              {!isEditMode ? (
-                <Typography>{row.user_limit}</Typography>
-              ) : (
-                <TextField
-                  inputProps={{
-                    ...register("user_limit"),
-                    min: 0,
-                  }}
-                  id={companyUserLimitId}
-                  type="number"
-                  variant="outlined"
-                  size="small"
-                  error={!!errors.user_limit}
-                  helperText={errors.user_limit && errors.user_limit.message}
-                  sx={{ width: 100 }}
-                />
-              )}
-            </Stack>
+                {!isEditMode ? (
+                  <Typography>{row.user_limit}</Typography>
+                ) : (
+                  <TextField
+                    inputProps={{
+                      ...register("user_limit"),
+                      min: 0,
+                    }}
+                    id={companyUserLimitId}
+                    type="number"
+                    variant="outlined"
+                    size="small"
+                    error={!!errors.user_limit}
+                    helperText={errors.user_limit && errors.user_limit.message}
+                    sx={{ width: 100 }}
+                  />
+                )}
+              </Stack>
+            )}
           </Collapse>
         </TableCell>
       </TableRow>

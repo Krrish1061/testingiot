@@ -7,6 +7,7 @@ interface User {
   groups: string[];
   email?: string;
   company?: string | null;
+  dealer?: string | null;
   is_associated_with_company?: boolean;
   is_active?: boolean;
   date_joined?: string;

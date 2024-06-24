@@ -8,13 +8,20 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from company.cache import CompanyCache
+from dealer.cache import DealerCache
 from users.cache import UserCache
-from users.serializers import ChangePasswordSerializer, UserPasswordSerializer
+from users.serializers import (
+    ChangePasswordSerializer,
+    UserPasswordSerializer,
+    UserSerializer,
+)
 from users.tasks import (
     sending_account_is_active_email,
     sending_confirmation_email,
     sending_confirmation_mail_for_email_update,
     sending_update_email,
+    sending_verify_email,
 )
 from users.utilis import activation_token_for_email, check_username
 from utils.commom_functions import generate_api_key, get_groups_tuple
@@ -115,25 +122,23 @@ def change_username(request, username):
         )
 
     # checking if the username already exists
-    if User.objects.get(username=new_username):
+    users = UserCache.get_all_users()
+    if any(new_username == user.username for user in users):
         return Response(
             {
                 "error": f"'{new_username}' username already exist, Please choose another Username"
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    old_username = requested_user.username
     # updating username field
     requested_user.username = new_username
     requested_user.save(update_fields=["username"])
     # modifing user profile
     user_profile.is_username_modified = True
     user_profile.save(update_fields=["is_username_modified"])
-    # deleting user and user_profile from cache
-    UserCache.delete_user(requested_user.id)
-    return Response(
-        {"message": "Username is successfully changed"}, status=status.HTTP_200_OK
-    )
+    UserCache.clear()
+    serializer = UserSerializer(requested_user, context={"request": request})
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @csrf_protect
@@ -227,6 +232,7 @@ def set_user_password(request, username, token):
 
 @csrf_protect
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def change_email(request, username):
     user = request.user
     if not check_username(user, username):
@@ -247,13 +253,22 @@ def change_email(request, username):
             {"error": "Invalid Email address"}, status=status.HTTP_404_NOT_FOUND
         )
 
+    users = UserCache.get_all_users()
+    if any(new_email == user.email for user in users):
+        return Response(
+            {
+                "error": "This email already exist in our system. Please! use another email"
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     user_profile = UserCache.get_profile(username)
     user_profile.email_change_to = new_email
     user_profile.save(update_fields=["email_change_to"])
     UserCache.delete_user(user.id)
 
     # calling celery task to send email
-    sending_update_email.delay(user.username, user_profile.first_name)
+    sending_update_email.delay(user.username)
 
     return Response(
         {
@@ -271,14 +286,31 @@ def verify_update_email(request, username, token):
     except (TypeError, ValueError, OverflowError, UnicodeDecodeError):
         username = None
     user = UserCache.get_user(username)
+    user_groups = get_groups_tuple(user)
 
     if activation_token_for_email.check_token(user, token):
         old_email = user.email
         user.email = user.profile.email_change_to
         user.save(update_fields=["email"])
+
         # sending email for verying that email was changed sucessfully
+        first_name = user.profile.first_name if user else None
+        if GroupName.COMPANY_SUPERADMIN_GROUP in user_groups:
+            first_name = None
+            company = user.company
+            company.email = user.profile.email_change_to
+            company.save(update_fields=["email"])
+
+        elif GroupName.DEALER_GROUP in user_groups:
+            first_name = None
+            dealer = user.dealer
+            dealer.email = user.profile.email_change_to
+            dealer.save(update_fields=["email"])
+
         sending_confirmation_mail_for_email_update.delay(
-            user.id, old_email=old_email, new_email=user.profile.email_change_to
+            first_name=first_name,
+            old_email=old_email,
+            new_email=user.profile.email_change_to,
         )
         UserCache.delete_user(user.id)
         return Response(
@@ -288,3 +320,109 @@ def verify_update_email(request, username, token):
         {"error": "Email verification failed - Invalid Verification Token"},
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+
+def get_target_user(user, company, dealer):
+    if user:
+        return UserCache.get_user(user)
+    elif dealer:
+        dealer_obj = DealerCache.get_dealer(dealer)
+        return dealer_obj.user if dealer_obj else None
+    elif company:
+        company_obj = CompanyCache.get_company(company)
+        return company_obj.user if company_obj else None
+    return None
+
+
+@csrf_protect
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def resend_confirmation_email(request):
+    requested_user = UserCache.get_user(request.user.username)
+    user_groups = get_groups_tuple(requested_user)
+
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        user = request.data.get("user")
+        company = request.data.get("company")
+        dealer = request.data.get("dealer")
+
+        if not any([user, company, dealer]):
+            return Response(
+                {
+                    "error": "You must provide either a user, company, or dealer identifier."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_email_to_user = get_target_user(user, company, dealer)
+
+        if send_email_to_user is None:
+            return Response(
+                {"error": "Unknown user/company/dealer provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if (
+            send_email_to_user.is_active
+            or send_email_to_user.is_email_verified
+            or send_email_to_user.last_login is not None
+        ):
+            return Response(
+                {"error": "This account email has already been verified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        sending_verify_email.delay(send_email_to_user.username)
+
+        return Response(
+            {"message": "Email is send successfully"}, status=status.HTTP_200_OK
+        )
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+@csrf_protect
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def resend_set_password_email(request):
+    requested_user = UserCache.get_user(request.user.username)
+    user_groups = get_groups_tuple(requested_user)
+
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        user = request.data.get("user")
+        company = request.data.get("company")
+        dealer = request.data.get("dealer")
+
+        if not any([user, company, dealer]):
+            return Response(
+                {
+                    "error": "You must provide either a user, company, or dealer identifier."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_email_to_user = get_target_user(user, company, dealer)
+
+        if send_email_to_user is None:
+            return Response(
+                {"error": "Unknown user/company/dealer provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if send_email_to_user.is_active or send_email_to_user.last_login is not None:
+            return Response(
+                {"error": "This account password has already been set."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        sending_confirmation_email.delay(send_email_to_user.username)
+
+        return Response("Email is send successfully", status=status.HTTP_200_OK)
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )

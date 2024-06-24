@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "company",
+    "dealer",
     "sensor_data",
     "iot_devices",
     "sensors",

@@ -4,54 +4,31 @@ import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import useAxios from "../../api/axiosInstance";
 import CsrfError from "../../errors/csrfError";
-import useAuthStore from "../../store/authStore";
-import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import resetAllStore from "../../store/resetAllStore";
 import getCsrf from "../../utilis/getCsrf";
-import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
 
 //  userefresh hook is called 3 times due to react query setting and
 // thats why we are seeing multiple error when we logout.
 
 const useLogout = () => {
   const axiosInstance = useAxios();
-  const setUser = useAuthStore((state) => state.setUser);
-  const setToken = useAuthStore((state) => state.setToken);
-  const setIsUserSuperAdmin = useAuthStore(
-    (state) => state.setIsUserSuperAdmin
-  );
-  const setliveDataToNull = useWebSocketStore(
-    (state) => state.setliveDataToNull
-  );
-  const setSensorDataToNull = useWebSocketStore(
-    (state) => state.setSensorDataToNull
-  );
-  const setEmptySensorDataUpToDays = useWebSocketStore(
-    (state) => state.setEmptySensorDataUpToDays
-  );
-  const setRows = useUserDataGridStore((state) => state.setRows);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const logoutUser = async (username: string | undefined) => {
+  const logoutUser = async () => {
     const csrfToken = await getCsrf();
     if (csrfToken === null) {
       throw new CsrfError();
     }
     return axiosInstance
-      .post<string>(`account/${username}/logout/`)
+      .post<string>("account/logout/")
       .then((res) => res.data);
   };
 
-  return useMutation<string, AxiosError<string>, string | undefined>({
+  return useMutation<string, AxiosError<string>>({
     mutationFn: logoutUser,
     onSuccess: () => {
-      setUser(null);
-      setToken(null);
-      setIsUserSuperAdmin(false);
-      setliveDataToNull();
-      setSensorDataToNull();
-      setEmptySensorDataUpToDays();
-      setRows([]);
+      resetAllStore();
       queryClient.clear();
       enqueueSnackbar("Logout sucessfull", { variant: "success" });
       navigate("/login", {

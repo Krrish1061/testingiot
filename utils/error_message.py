@@ -26,6 +26,9 @@ ERROR_DEVICE_NO_VALID_ASSOCIATION = (
 )
 ERROR_DEVICE_INACTIVE = "The Iot device is Inactive."
 ERROR_DEVICE_NOT_FOUND = "Iot Devices does not exists."
+ERROR_UNASSOCIATED_DEVICE = (
+    "Iot Devices must be associated either with the company or user."
+)
 
 # Users app
 ERROR_INCORRECT_USERNAME_PASSWORD = "Username or password does not match"

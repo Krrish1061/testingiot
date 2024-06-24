@@ -9,7 +9,6 @@ import ImageAvatar from "../../ImageAvatar";
 import User from "../../../entities/User";
 import RenderCellExpand from "../../datagrid/RenderCellExpand";
 import UserTypes from "../../../constants/userTypes";
-import UserGroups from "../../../constants/userGroups";
 import dayjs from "dayjs";
 import Tooltip from "@mui/material/Tooltip";
 import Box from "@mui/material/Box";
@@ -21,15 +20,31 @@ import UserProfileModel from "./UserProfileModel";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useCompanyStore from "../../../store/companyStore";
 import useCompany from "../../../hooks/company/useCompany";
+import useGetAllDealer from "../../../hooks/dealer/useGetAllDealer";
 
 interface Props {
   users?: User[];
 }
 
-const getUserTypeOptions = (user: User | null, row: User | undefined) => {
+const getUserTypeOptions = (
+  user: User | null,
+  row: User | undefined,
+  isUserSuperAdmin: boolean,
+  isUserDealer: boolean,
+  isUserCompanySuperAdmin: boolean
+) => {
   // If the user matches the row, show only the current type
   if (user?.username === row?.username) {
     return [{ value: row?.type, label: row?.type }];
+  }
+
+  if (isUserDealer) {
+    return [
+      {
+        value: UserTypes.admin,
+        label: UserTypes.admin,
+      },
+    ];
   }
 
   const options = [
@@ -38,27 +53,12 @@ const getUserTypeOptions = (user: User | null, row: User | undefined) => {
   ];
 
   // if user are in company super admin or SuperAdmin add admin options
-  if (
-    user &&
-    user.groups.some((group) =>
-      [UserGroups.companySuperAdminGroup, UserGroups.superAdminGroup].includes(
-        group
-      )
-    )
-  ) {
+  if (isUserSuperAdmin || isUserCompanySuperAdmin) {
     options.push({
       value: UserTypes.admin,
       label: UserTypes.admin,
     });
   }
-  // else if (row && row.groups.includes(UserGroups.adminGroup)) {
-  //   return [
-  //     {
-  //       value: UserTypes.admin,
-  //       label: UserTypes.admin,
-  //     },
-  //   ];
-  // }
 
   return options;
 };
@@ -67,7 +67,12 @@ function UserColumns({ users }: Props) {
   const user = useAuthStore((state) => state.user);
   const userCompany = useCompanyStore((state) => state.company);
   const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const isUserCompanySuperAdmin = useAuthStore(
+    (state) => state.isUserCompanySuperAdmin
+  );
   const { data: companyList } = useGetAllCompany(isUserSuperAdmin);
+  const { data: dealerList } = useGetAllDealer();
   // fetching the user company detail
   useCompany(!isUserSuperAdmin && user?.is_associated_with_company);
 
@@ -80,8 +85,8 @@ function UserColumns({ users }: Props) {
 
   const rowModesModel = useUserDataGridStore((state) => state.rowModesModel);
 
-  const columns: GridColDef[] = useMemo(
-    () => [
+  const columns: GridColDef[] = useMemo(() => {
+    const baseColumns: GridColDef[] = [
       {
         field: "serial_number",
         headerName: "S.N.",
@@ -120,7 +125,7 @@ function UserColumns({ users }: Props) {
           <UserProfileModel
             params={params}
             isUserSuperAdmin={isUserSuperAdmin}
-            userCompanyName={userCompany.name}
+            userCompanyName={userCompany?.name}
             companyList={companyList}
           />
         ),
@@ -153,7 +158,13 @@ function UserColumns({ users }: Props) {
         type: "singleSelect",
         editable: true,
         valueOptions: ({ row }: GridValueOptionsParams<User>) =>
-          getUserTypeOptions(user, row),
+          getUserTypeOptions(
+            user,
+            row,
+            isUserSuperAdmin,
+            isUserDealer,
+            isUserCompanySuperAdmin
+          ),
       },
       {
         field: "company",
@@ -168,40 +179,10 @@ function UserColumns({ users }: Props) {
                 (company) => company.slug === params.row?.company
               )?.name || "-"
             );
-          else if (user?.is_associated_with_company) return userCompany.name;
+          else if (user?.is_associated_with_company) return userCompany?.name;
           else return "-";
         },
         renderCell: RenderCellExpand,
-      },
-      {
-        field: "is_active",
-        headerName: "is Active",
-        minWidth: 105,
-        editable: true,
-        type: "boolean",
-      },
-      {
-        field: "created_by",
-        headerName: "Created by",
-        editable: false,
-        sortable: false,
-        filterable: false,
-        valueGetter: (params: GridValueGetterParams<User>) =>
-          params.row.created_by,
-        renderCell: (params: GridRenderCellParams<User>) => {
-          const createdUser = users?.find(
-            (user) => user.username === params.value
-          );
-
-          if (createdUser) {
-            return (
-              <ImageAvatar
-                imgUrl={createdUser?.profile?.profile_picture}
-                altText={`${createdUser.profile?.first_name} ${createdUser?.profile?.last_name}`}
-              />
-            );
-          }
-        },
       },
       {
         field: "date_joined",
@@ -232,6 +213,7 @@ function UserColumns({ users }: Props) {
           Actions({
             row: row,
             isDisabled: user?.id === row.id ? true : false,
+            isUserDealer: isUserDealer,
             handleEditClick: handleEditClick,
             handleSaveClick: handleSaveClick,
             handleDeleteClick: handleDeleteClick,
@@ -239,21 +221,115 @@ function UserColumns({ users }: Props) {
             rowModesModel: rowModesModel,
           }),
       },
-    ],
+    ];
 
-    [
-      user,
-      users,
-      handleEditClick,
-      handleSaveClick,
-      handleDeleteClick,
-      handleCancelClick,
-      rowModesModel,
-      isUserSuperAdmin,
-      companyList,
-      userCompany,
-    ]
-  );
+    // Add the is_active and dealer column only for superAdmin users
+    if (isUserSuperAdmin) {
+      baseColumns.splice(
+        7,
+        0,
+        {
+          field: "dealer",
+          headerName: "Dealer",
+          editable: false,
+          hideable: true,
+          valueGetter: (params: GridValueGetterParams<User>) => {
+            if (params.row.dealer)
+              return (
+                dealerList?.find((dealer) => dealer.slug === params.row.dealer)
+                  ?.name || "-"
+              );
+            else return "-";
+          },
+          renderCell: RenderCellExpand,
+        },
+        {
+          field: "is_active",
+          headerName: "is Active",
+          minWidth: 105,
+          editable: true,
+          type: "boolean",
+        }
+      );
+    }
+
+    if (isUserCompanySuperAdmin || isUserSuperAdmin) {
+      baseColumns.splice(-1, 0, {
+        field: "created_by",
+        headerName: "Created by",
+        editable: false,
+        sortable: false,
+        filterable: false,
+        valueGetter: (params: GridValueGetterParams<User>) =>
+          params.row.created_by,
+        renderCell: (params: GridRenderCellParams<User>) => {
+          const createdUser = users?.find(
+            (user) => user.username === params.value
+          );
+
+          if (createdUser) {
+            return (
+              <ImageAvatar
+                imgUrl={createdUser.profile?.profile_picture}
+                altText={`${createdUser.profile?.first_name} ${createdUser?.profile?.last_name}`}
+              />
+            );
+          }
+          if (!createdUser) {
+            if (isUserSuperAdmin) {
+              if (params.row.is_associated_with_company) {
+                const company = companyList?.find(
+                  (company) => company.slug === params.row.company
+                );
+                if (company)
+                  return (
+                    <ImageAvatar
+                      imgUrl={company.profile?.logo}
+                      altText={company.name}
+                    />
+                  );
+              } else if (params.row.dealer) {
+                const dealer = dealerList?.find(
+                  (dealer) => dealer.slug === params.row.dealer
+                );
+                if (dealer)
+                  return (
+                    <ImageAvatar
+                      imgUrl={dealer.profile?.logo}
+                      altText={dealer.name}
+                    />
+                  );
+              }
+            } else if (isUserCompanySuperAdmin) {
+              if (userCompany)
+                return (
+                  <ImageAvatar
+                    imgUrl={userCompany.profile?.logo}
+                    altText={userCompany.name}
+                  />
+                );
+            }
+          }
+        },
+      });
+    }
+
+    return baseColumns;
+  }, [
+    user,
+    users,
+    companyList,
+    dealerList,
+    userCompany,
+    isUserSuperAdmin,
+    isUserDealer,
+    isUserCompanySuperAdmin,
+    rowModesModel,
+    handleEditClick,
+    handleSaveClick,
+    handleDeleteClick,
+    handleCancelClick,
+  ]);
 
   return columns;
 }

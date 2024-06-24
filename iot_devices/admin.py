@@ -9,6 +9,7 @@ class IotDeviceAdmin(admin.ModelAdmin):
         "id",
         "company",
         "user",
+        "dealer",
         "board_id",
         "is_active",
         "api_key",

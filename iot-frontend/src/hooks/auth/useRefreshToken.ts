@@ -1,13 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import jwtDecode, { JwtPayload } from "jwt-decode";
+import { enqueueSnackbar } from "notistack";
+import { useLocation, useNavigate } from "react-router-dom";
 import { axiosPrivate } from "../../api/axios";
+import CsrfError from "../../errors/csrfError";
 import useAuthStore from "../../store/authStore";
 import getCsrf from "../../utilis/getCsrf";
-import { enqueueSnackbar } from "notistack";
-import CsrfError from "../../errors/csrfError";
-import { useLocation, useNavigate } from "react-router-dom";
-import jwtDecode, { JwtPayload } from "jwt-decode";
-import UserTypes from "../../constants/userTypes";
 
 interface Token {
   access: string;
@@ -25,9 +24,6 @@ const useRefreshToken = () => {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
-  const setIsUserSuperAdmin = useAuthStore(
-    (state) => state.setIsUserSuperAdmin
-  );
 
   const token = useAuthStore((state) => state.token);
   const refreshToken = async () => {
@@ -48,16 +44,14 @@ const useRefreshToken = () => {
     mutationFn: refreshToken,
     onSuccess: (newtoken) => {
       if (!token) {
-        const accessToken: accessToken = jwtDecode(newtoken);
+        const { user_id, username, type, groups }: accessToken =
+          jwtDecode(newtoken);
         setUser({
-          id: accessToken.user_id,
-          username: accessToken.username,
-          type: accessToken.type,
-          groups: accessToken.groups,
+          id: user_id,
+          username: username,
+          type: type,
+          groups: groups,
         });
-        if (accessToken.type === UserTypes.superAdmin) {
-          setIsUserSuperAdmin(true);
-        }
       }
       setToken(newtoken);
     },

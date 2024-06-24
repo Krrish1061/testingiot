@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import axiosInstance from "../../api/axios";
-import { useParams, useNavigate } from "react-router-dom";
 import { enqueueSnackbar } from "notistack";
+import { useParams } from "react-router-dom";
+import axiosInstance from "../../api/axios";
 
 interface IResponse {
   message: string;
@@ -14,7 +14,6 @@ interface IError {
 
 function useVerifyUpdateEmail() {
   const { token, username } = useParams();
-  const navigate = useNavigate();
 
   const verifyUpdateEmail = async () => {
     return axiosInstance
@@ -25,9 +24,6 @@ function useVerifyUpdateEmail() {
   return useMutation<IResponse, AxiosError<IError>>({
     mutationFn: verifyUpdateEmail,
     onSuccess: () => {
-      navigate("/", {
-        replace: true,
-      });
       enqueueSnackbar("Email Verified", { variant: "success" });
     },
   });

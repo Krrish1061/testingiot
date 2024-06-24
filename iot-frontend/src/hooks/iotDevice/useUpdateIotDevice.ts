@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useAxios from "../../api/axiosInstance";
-import { enqueueSnackbar } from "notistack";
 import { AxiosError } from "axios";
+import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
 import IotDevice from "../../entities/IotDevice";
+import useIotDeviceDataGridStore from "../../store/datagrid/iotDeviceDataGridStore";
 
 interface EditIotDeviceContext {
   previousIotDeviceList: IotDevice[];
@@ -10,17 +11,19 @@ interface EditIotDeviceContext {
 
 interface IError {
   error: string;
+  errors: string[];
 }
 
 function useUpdateIotDevice() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
+  const rows = useIotDeviceDataGridStore((state) => state.rows);
+  const setRows = useIotDeviceDataGridStore((state) => state.setRows);
 
-  const updateIotDevice = async (IotDevice: IotDevice) => {
-    return axiosInstance
+  const updateIotDevice = async (IotDevice: IotDevice) =>
+    axiosInstance
       .patch<IotDevice>(`iot-device/${IotDevice.id}/`, IotDevice)
       .then((res) => res.data);
-  };
 
   return useMutation<
     IotDevice,
@@ -44,6 +47,12 @@ function useUpdateIotDevice() {
       return { previousIotDeviceList };
     },
     onSuccess: (newIotDevice) => {
+      if (rows.length !== 0) {
+        const newRows = rows.map((row) =>
+          row.id === newIotDevice.id ? newIotDevice : row
+        );
+        setRows(newRows);
+      }
       enqueueSnackbar("Iot Device sucessfully Updated", { variant: "success" });
       queryClient.setQueryData<IotDevice[]>(
         ["iotDeviceList"],
@@ -58,7 +67,10 @@ function useUpdateIotDevice() {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data.error || "Failed to Edit IotDevice";
+        errorMessage =
+          error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
+          "Failed to Edit IotDevice";
       }
       enqueueSnackbar(errorMessage, { variant: "error" });
       if (!context) return;

@@ -19,6 +19,7 @@ import { IDeviceFormInputs } from "../zodSchema/IotDeviceSchema";
 interface Props {
   isEditMode: boolean;
   iotDevice: IotDevice;
+  isUserSuperAdmin: boolean;
   control: Control<IDeviceFormInputs>;
   errors: FieldErrors<IDeviceFormInputs>;
   userList: User[] | undefined;
@@ -31,6 +32,7 @@ interface Props {
 function IotDeviceEditableField({
   isEditMode,
   iotDevice,
+  isUserSuperAdmin,
   control,
   errors,
   userList,
@@ -160,65 +162,71 @@ function IotDeviceEditableField({
         )}
       </Stack>
 
-      <Stack
-        direction="row"
-        spacing={2}
-        marginBottom={2}
-        paddingLeft={{ xs: 2, sm: 5 }}
-        alignItems="center"
-      >
-        <Typography
-          component={isEditMode ? InputLabel : "div"}
-          htmlFor={boardId}
-          gutterBottom
-          color="inherit"
-          sx={{ overflow: "visible" }}
-        >
-          Board Id:
-        </Typography>
-        {!isEditMode ? (
-          <Typography>{iotDevice.board_id} </Typography>
-        ) : (
-          <TextField
-            inputProps={{
-              ...register("board_id"),
-            }}
-            id={boardId}
-            type="number"
-            fullWidth
-            error={!!errors.board_id}
-            helperText={errors.board_id && errors.board_id.message}
-            autoComplete="off"
-            sx={{ maxWidth: 300 }}
-          />
-        )}
-      </Stack>
-      <Stack
-        direction="row"
-        spacing={4}
-        alignItems="center"
-        paddingLeft={{ xs: 2, sm: 5 }}
-      >
-        <Typography
-          component={isEditMode ? InputLabel : "div"}
-          htmlFor={isActive}
-          gutterBottom
-          color="inherit"
-        >
-          Is Active:
-        </Typography>
-        <Controller
-          name="is_active"
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              id={isActive}
-              onChange={(e) => isEditMode && field.onChange(e.target.checked)}
-              checked={field.value}
+      {isUserSuperAdmin && (
+        <>
+          <Stack
+            direction="row"
+            spacing={2}
+            marginBottom={2}
+            paddingLeft={{ xs: 2, sm: 5 }}
+            alignItems="center"
+          >
+            <Typography
+              component={isEditMode ? InputLabel : "div"}
+              htmlFor={boardId}
+              gutterBottom
+              color="inherit"
+              sx={{ overflow: "visible" }}
+            >
+              Board Id:
+            </Typography>
+            {!isEditMode ? (
+              <Typography>{iotDevice.board_id} </Typography>
+            ) : (
+              <TextField
+                inputProps={{
+                  ...register("board_id"),
+                }}
+                id={boardId}
+                type="number"
+                fullWidth
+                error={!!errors.board_id}
+                helperText={errors.board_id && errors.board_id.message}
+                autoComplete="off"
+                sx={{ maxWidth: 300 }}
+              />
+            )}
+          </Stack>
+          <Stack
+            direction="row"
+            spacing={4}
+            alignItems="center"
+            paddingLeft={{ xs: 2, sm: 5 }}
+          >
+            <Typography
+              component={isEditMode ? InputLabel : "div"}
+              htmlFor={isActive}
+              gutterBottom
+              color="inherit"
+            >
+              Is Active:
+            </Typography>
+            <Controller
+              name="is_active"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id={isActive}
+                  onChange={(e) =>
+                    isEditMode && field.onChange(e.target.checked)
+                  }
+                  checked={field.value}
+                />
+              )}
             />
-          )}
-        />
-      </Stack>
+          </Stack>
+        </>
+      )}
     </>
   );
 }

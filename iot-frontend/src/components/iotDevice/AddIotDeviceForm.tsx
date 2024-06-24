@@ -13,6 +13,7 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import UserGroups from "../../constants/userGroups";
 import IotDevice from "../../entities/IotDevice";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
+import useGetAllDealer from "../../hooks/dealer/useGetAllDealer";
 import useAddIotDevice from "../../hooks/iotDevice/useAddIotDevice";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
 import iotDeviceschema, {
@@ -26,6 +27,7 @@ interface Props {
 
 function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
   const { data: companyList } = useGetAllCompany();
+  const { data: dealerList } = useGetAllDealer();
   const { data: UserList } = useGetAllUser();
   const { data: iotDevice, mutate, isSuccess, isLoading } = useAddIotDevice();
   const {
@@ -34,11 +36,13 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
     reset,
     control,
     formState: { errors },
+    clearErrors,
   } = useForm<IDeviceFormInputs>({
     resolver: zodResolver(iotDeviceschema),
     defaultValues: {
       user: null,
       company: null,
+      dealer: null,
       board_id: null,
       is_active: true,
     },
@@ -93,7 +97,10 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
                   helperText={errors.user?.message}
                 />
               )}
-              onChange={(_, data) => field.onChange(data?.username)}
+              onChange={(_, data) => {
+                clearErrors();
+                field.onChange(data?.username);
+              }}
             />
           )}
         />
@@ -124,7 +131,43 @@ function AddIotDeviceForm({ handleNext, setIotDevice }: Props) {
                   helperText={errors.company?.message}
                 />
               )}
-              onChange={(_, data) => field.onChange(data?.slug)}
+              onChange={(_, data) => {
+                clearErrors();
+                field.onChange(data?.slug);
+              }}
+            />
+          )}
+        />
+      </Box>
+      <Box marginBottom={2}>
+        <InputLabel sx={{ color: "inherit" }} htmlFor="company">
+          Dealer:
+        </InputLabel>
+
+        <Controller
+          name="dealer"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              {...field}
+              id="dealer"
+              options={dealerList ?? []}
+              getOptionLabel={(option) => option.name}
+              value={
+                dealerList?.find((item) => field.value === item.slug) || null
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  type="text"
+                  error={!!errors.dealer}
+                  helperText={errors.dealer?.message}
+                />
+              )}
+              onChange={(_, data) => {
+                clearErrors();
+                field.onChange(data?.slug);
+              }}
             />
           )}
         />

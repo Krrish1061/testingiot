@@ -1,8 +1,9 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Permission, Group
-from django.contrib.contenttypes.models import ContentType
-from users.models import AdminUser, ModeratorUser, ViewerUser
 from django.apps import apps
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.core.management.base import BaseCommand
+
+from users.models.proxy_models import AdminUser, ModeratorUser, ViewerUser
 from utils.constants import GroupName
 
 
@@ -108,4 +109,6 @@ class Command(BaseCommand):
         viewer_group.permissions.set(viewer_permission)
 
         # Creating company super admin group and no permission are given
-        Group.objects.create(name=GroupName.COMPANY_SUPERADMIN_GROUP)
+        Group.objects.get_or_create(name=GroupName.COMPANY_SUPERADMIN_GROUP)
+        # Creating dealer group and no permission are given
+        Group.objects.get_or_create(name=GroupName.DEALER_GROUP)

@@ -3,7 +3,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -21,17 +23,13 @@ import {
   useState,
 } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
-
+import UserGroups from "../../constants/userGroups";
 import IotDevice from "../../entities/IotDevice";
+import useUpdateIotDeviceDetail from "../../hooks/iotDevice/useUpdateIotDeviceDetail";
+import useAuthStore from "../../store/authStore";
 import iotDeviceDetailSchema, {
   IDeviceDetailFormInputs,
 } from "./zodSchema/IotDeviceDetailSchema";
-import useUpdateIotDeviceDetail from "../../hooks/iotDevice/useUpdateIotDeviceDetail";
-import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
-import useAuthStore from "../../store/authStore";
-import UserGroups from "../../constants/userGroups";
-// import IotDeviceDetail from "../../entities/IotDeviceDetail";
 
 interface Props {
   open: boolean;
@@ -67,7 +65,29 @@ function IotDeviceDetailDialog({ open, iotDevice, setIotDevice }: Props) {
     );
 
   const onSubmit: SubmitHandler<IDeviceDetailFormInputs> = (data) => {
-    mutate({ device_id: iotDevice?.id, device_detail: data });
+    if (iotDevice) {
+      const deviceDetails = iotDevice.iot_device_details;
+      const { name, environment_type, address, description } = data;
+      const isDifferentName = name !== deviceDetails?.name;
+      const isDifferentEnvironment =
+        environment_type !== deviceDetails?.environment_type;
+      const isDifferentAddress =
+        (address || deviceDetails?.address) &&
+        address !== deviceDetails?.address;
+      const isDifferentDescription =
+        (description || deviceDetails?.description) &&
+        description !== deviceDetails?.description;
+
+      const isSendRequest =
+        isDifferentName ||
+        isDifferentEnvironment ||
+        isDifferentAddress ||
+        isDifferentDescription;
+
+      if (isSendRequest)
+        mutate({ device_id: iotDevice?.id, device_detail: data });
+      else setIsEditMode(false);
+    }
   };
 
   const handleClose = (

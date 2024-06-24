@@ -1,5 +1,4 @@
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+from django.db import transaction
 from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -8,6 +7,7 @@ from rest_framework.response import Response
 
 from company.cache import CompanyCache
 from company.models import Company
+from dealer.cache import DealerCache
 from users.cache import UserCache
 from utils.commom_functions import generate_api_key, get_groups_tuple
 from utils.constants import GroupName
@@ -16,7 +16,6 @@ from utils.error_message import (
     ERROR_COMPANY_NOT_FOUND,
     ERROR_INVALID_URL,
     ERROR_PERMISSION_DENIED,
-    error_protected_delete_message,
 )
 
 from .serializers import CompanyProfileSerializer, CompanySerializer
@@ -34,6 +33,12 @@ def company_list_all(request):
             companies, many=True, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+    elif GroupName.DEALER_GROUP in user_groups:
+        dealer_companies = CompanyCache.dealer_associated_company(user.dealer)
+        serializer = CompanySerializer(
+            dealer_companies, many=True, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
@@ -43,13 +48,44 @@ def company_list_all(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_company(request):
-    user = UserCache.get_user(username=request.user.username)
-    user_groups = get_groups_tuple(user)
-    if GroupName.SUPERADMIN_GROUP in user_groups:
-        serializer = CompanySerializer(data=request.data, context={"request": request})
+    requested_user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(requested_user)
+    if any(
+        group_name in user_groups
+        for group_name in (GroupName.DEALER_GROUP, GroupName.SUPERADMIN_GROUP)
+    ):
+        if GroupName.DEALER_GROUP in user_groups:
+            dealer = DealerCache.get_dealer_by_user(requested_user)
+            company_limit = dealer.user_company_limit if dealer else 0
+            company_count = Company.objects.filter(dealer=requested_user.dealer).count()
+            users = UserCache.get_all_users()
+            user_created_count = len(
+                [
+                    user
+                    for user in users
+                    if user.dealer == requested_user.dealer
+                    and user.id != requested_user.id
+                ]
+            )
+            company_created_count = user_created_count + company_count
+
+            if company_created_count >= company_limit:
+                return Response(
+                    {"error": f"{ERROR_PERMISSION_DENIED} Company limit reached"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        serializer = CompanySerializer(
+            data=request.data,
+            context={
+                "request": request,
+                "user_groups": user_groups,
+                "dealer": requested_user.dealer,
+            },
+        )
         serializer.is_valid(raise_exception=True)
-        company = serializer.save()
-        CompanyCache.set_company(company)
+        with transaction.atomic():
+            company = serializer.save()
+            CompanyCache.set_company(company)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response(
@@ -62,12 +98,6 @@ def add_company(request):
 def company(request, company_slug):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
-    # checking if company slug and id from the user belong to same company or not
-    is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
-
-    if not is_url_valid:
-        # raise exception error and catch 404 error in server and render 404 page
-        return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
 
     company = CompanyCache.get_company(company_slug)
     if company is None:
@@ -77,32 +107,64 @@ def company(request, company_slug):
         )
 
     if request.method == "GET":
+        # checking if company slug and id from the user belong to same company or not
+        is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
+
+        if not is_url_valid:
+            return Response(
+                {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = CompanySerializer(company, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    if GroupName.SUPERADMIN_GROUP in user_groups:
+    if any(
+        group_name in user_groups
+        for group_name in (GroupName.DEALER_GROUP, GroupName.SUPERADMIN_GROUP)
+    ):
         if request.method == "PATCH":
-            serializer = CompanySerializer(
-                company, data=request.data, partial=True, context={"request": request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            CompanyCache.delete_company(company.id)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            if GroupName.SUPERADMIN_GROUP in user_groups:
+                serializer = CompanySerializer(
+                    company,
+                    data=request.data,
+                    partial=True,
+                    context={"request": request},
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                CompanyCache.delete_company(company.id)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+                )
 
         elif request.method == "DELETE":
+            if GroupName.DEALER_GROUP in user_groups:
+                if user.dealer != company.dealer:
+                    return Response(
+                        {"error": ERROR_PERMISSION_DENIED},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
             try:
                 id = company.id
-                company.delete()
+                with transaction.atomic():
+                    if company.user:
+                        company.user.delete()
+                    company.delete()
                 CompanyCache.delete_company(id)
             except ProtectedError as e:
-                related_objects = e.protected_objects
-                # send list of projected objects
-                error_message = error_protected_delete_message(
-                    company, len(related_objects)
+                related_objects_details = {
+                    obj._meta.verbose_name for obj in e.protected_objects
+                }
+                detailed_error_message = (
+                    f"{ERROR_PERMISSION_DENIED} "
+                    f"The following related objects are preventing the deletion: {related_objects_details}"
                 )
                 return Response(
-                    {"error": error_message}, status=status.HTTP_404_NOT_FOUND
+                    {"error": detailed_error_message},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -159,7 +221,7 @@ def company_profile(request, company_slug):
 # @csrf_protect
 @api_view(["POST", "GET"])
 @permission_classes([IsAuthenticated])
-def generate_user_api_key(request):
+def generate_company_api_key(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     if GroupName.SUPERADMIN_GROUP in user_groups:
@@ -200,43 +262,3 @@ def generate_user_api_key(request):
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
         )
-
-
-@api_view(["POST"])
-def company_change_email(request, company_slug):
-    user = UserCache.get_user(username=request.user.username)
-    user_groups = get_groups_tuple(user)
-
-    is_url_valid = is_slugId_ofSameInstance(company_slug, user, user_groups)
-    if not is_url_valid:
-        # raise exception error and catch 404 error in server and render 404 page
-        return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
-
-    company = CompanyCache.get_company(company_slug)
-    new_email = request.data.get("new_email")
-
-    try:
-        validate_email(new_email)
-    except ValidationError:
-        return Response(
-            {"error": "Invalid Email address"}, status=status.HTTP_404_NOT_FOUND
-        )
-    if new_email == company.email:
-        return Response(
-            {"error": "Email address is already associated with your account"},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
-    company_profile = company.profile
-    company_profile.email_change_to = new_email
-    company_profile.save(update_fields=["email_change_to"])
-
-    # calling celery task to send email
-    # sending_update_email.delay(requested_user.id, user_profile.first_name)
-
-    return Response(
-        {
-            "message": f"Thanks! we've sent you an email containing further instructions for changing your Email Address."
-        },
-        status=status.HTTP_200_OK,
-    )

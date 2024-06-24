@@ -5,7 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from iot_devices.cache import IotDeviceCache
 from utils.error_message import ERROR_INVALID_API_KEY, ERROR_NO_API_KEY_PROVIDED
 
-from .exceptions import InactiveDeviceException
+from .exceptions import InactiveDeviceException, UnAssociatedDeviceException
 
 
 class DeviceAuthentication(BaseAuthentication):
@@ -29,6 +29,9 @@ class DeviceAuthentication(BaseAuthentication):
 
         if not iot_device.is_active:
             raise InactiveDeviceException()
+
+        if not iot_device.user and not iot_device.company:
+            raise UnAssociatedDeviceException()
 
         return (None, iot_device)
 

@@ -1,16 +1,17 @@
-import Company from "../../entities/Company";
-import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import Box from "@mui/material/Box";
-import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import { Link as RouterLink } from "react-router-dom";
+import {
+  ListChildComponentProps,
+  FixedSizeList as VirtualizedList,
+} from "react-window";
+import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import ErrorReload from "../ErrorReload";
+import LoadingSpinner from "../LoadingSpinner";
 
-// pass the linkto props or implement tab
 const CompanyList = () => {
-  const { data, error, refetch } = useGetAllCompany();
+  const { data: companyList, error, refetch, isLoading } = useGetAllCompany();
   if (error)
     return (
       <ErrorReload
@@ -19,32 +20,49 @@ const CompanyList = () => {
       />
     );
 
+  if (isLoading) return <LoadingSpinner size={20} />;
+
+  const arrayLength = companyList.length;
+
+  const renderRow = (props: ListChildComponentProps) => {
+    const { index, style } = props;
+
+    return (
+      <ListItem
+        disableGutters
+        disablePadding
+        style={style}
+        key={index}
+        divider={index !== arrayLength - 1}
+      >
+        <ListItemButton
+          disableGutters
+          component={RouterLink}
+          to={`/company/${companyList[index].slug}`}
+        >
+          <ListItemText
+            primary={companyList[index].name}
+            sx={{ whiteSpace: "normal" }}
+          />
+        </ListItemButton>
+      </ListItem>
+    );
+  };
+
   return (
-    <Box>
-      <List disablePadding>
-        {data
-          ? data.map((company: Company, index: number) => (
-              <ListItem
-                disableGutters
-                disablePadding
-                key={index}
-                divider={index !== data.length - 1}
-              >
-                <ListItemButton
-                  disableGutters
-                  component={RouterLink}
-                  to={`/company/${company.slug}`}
-                >
-                  <ListItemText
-                    primary={company.name}
-                    sx={{ whiteSpace: "normal" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))
-          : null}
-      </List>
-    </Box>
+    <>
+      {companyList ? (
+        <VirtualizedList
+          height={arrayLength < 8 ? arrayLength * 50 : 400}
+          itemCount={companyList.length}
+          itemSize={50}
+          overscanCount={5}
+          width={"100%"}
+        >
+          {renderRow}
+        </VirtualizedList>
+      ) : null}
+    </>
   );
 };
 

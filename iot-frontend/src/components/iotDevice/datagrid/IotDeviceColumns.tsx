@@ -1,26 +1,30 @@
-import useIotDeviceDataGrid from "../../../hooks/muiDataGrid/useIotDeviceDataGrid";
-import useIotDeviceDataGridStore from "../../../store/datagrid/iotDeviceDataGridStore";
-import { useMemo } from "react";
+import Box from "@mui/material/Box";
+import Tooltip from "@mui/material/Tooltip";
 import {
   GridColDef,
   GridRenderCellParams,
   GridValueGetterParams,
 } from "@mui/x-data-grid";
-import Actions from "../../datagrid/Actions";
-import Tooltip from "@mui/material/Tooltip";
-import Box from "@mui/material/Box";
 import dayjs from "dayjs";
-import RenderCellExpand from "../../datagrid/RenderCellExpand";
-import useGetAllUser from "../../../hooks/users/useGetAllUser";
-import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
+import { useMemo } from "react";
 import IotDevice from "../../../entities/IotDevice";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
+import useGetAllDealer from "../../../hooks/dealer/useGetAllDealer";
+import useIotDeviceDataGrid from "../../../hooks/muiDataGrid/useIotDeviceDataGrid";
+import useGetAllUser from "../../../hooks/users/useGetAllUser";
+import useAuthStore from "../../../store/authStore";
+import useIotDeviceDataGridStore from "../../../store/datagrid/iotDeviceDataGridStore";
+import Actions from "../../datagrid/Actions";
+import RenderCellExpand from "../../datagrid/RenderCellExpand";
 
 function IotDeviceColumns() {
   const { data: userList } = useGetAllUser();
   const { data: companyList } = useGetAllCompany();
+  const { data: dealerList } = useGetAllDealer();
   const rowModesModel = useIotDeviceDataGridStore(
     (state) => state.rowModesModel
   );
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
 
   const {
     handleEditClick,
@@ -29,8 +33,8 @@ function IotDeviceColumns() {
     handleCancelClick,
   } = useIotDeviceDataGrid();
 
-  const columns: GridColDef[] = useMemo(
-    () => [
+  const columns: GridColDef[] = useMemo(() => {
+    const baseColumns: GridColDef[] = [
       {
         field: "serial_number",
         headerName: "S.N.",
@@ -39,13 +43,6 @@ function IotDeviceColumns() {
         sortable: false,
         filterable: false,
         renderCell: (index) => index.api.getAllRowIds().indexOf(index.id) + 1,
-      },
-
-      {
-        field: "id",
-        headerName: "Device Id",
-        editable: false,
-        hideable: false,
       },
 
       {
@@ -63,12 +60,14 @@ function IotDeviceColumns() {
         headerName: "Company",
         minWidth: 110,
         flex: 1,
+        type: "text",
         editable: false,
         hideable: false,
         valueGetter: (params: GridValueGetterParams<IotDevice>) => {
-          return companyList?.find(
-            (company) => company.slug === params.row?.company
-          )?.name;
+          return (
+            companyList?.find((company) => company.slug === params.row?.company)
+              ?.name || "-"
+          );
         },
         renderCell: RenderCellExpand,
       },
@@ -86,25 +85,9 @@ function IotDeviceColumns() {
           const name = user?.profile?.first_name
             ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
             : user?.username;
-          return name;
+          return name || "-";
         },
         renderCell: RenderCellExpand,
-      },
-
-      {
-        field: "board_id",
-        headerName: "Board Id",
-        type: "number",
-        editable: true,
-        hideable: true,
-      },
-
-      {
-        field: "is_active",
-        headerName: "is Active",
-        minWidth: 105,
-        editable: true,
-        type: "boolean",
       },
 
       {
@@ -135,8 +118,49 @@ function IotDeviceColumns() {
           </Tooltip>
         ),
       },
+    ];
+    if (isUserSuperAdmin) {
+      baseColumns.splice(1, 0, {
+        field: "id",
+        headerName: "Device Id",
+        editable: false,
+        hideable: true,
+      });
 
-      {
+      baseColumns.splice(
+        5,
+        0,
+        {
+          field: "dealer",
+          headerName: "Dealer",
+          type: "text",
+          editable: false,
+          hideable: true,
+          valueGetter: (params: GridValueGetterParams<IotDevice>) => {
+            return (
+              dealerList?.find((dealer) => dealer.slug === params.row?.dealer)
+                ?.name || "-"
+            );
+          },
+          renderCell: RenderCellExpand,
+        },
+        {
+          field: "board_id",
+          headerName: "Board Id",
+          type: "number",
+          editable: true,
+          hideable: true,
+        },
+        {
+          field: "is_active",
+          headerName: "is Active",
+          minWidth: 105,
+          editable: true,
+          type: "boolean",
+        }
+      );
+
+      baseColumns.push({
         field: "actions",
         type: "actions",
         hideable: false,
@@ -152,18 +176,20 @@ function IotDeviceColumns() {
             handleCancelClick: handleCancelClick,
             rowModesModel: rowModesModel,
           }),
-      },
-    ],
-    [
-      rowModesModel,
-      handleEditClick,
-      handleSaveClick,
-      handleDeleteClick,
-      handleCancelClick,
-      userList,
-      companyList,
-    ]
-  );
+      });
+    }
+    return baseColumns;
+  }, [
+    rowModesModel,
+    isUserSuperAdmin,
+    handleEditClick,
+    handleSaveClick,
+    handleDeleteClick,
+    handleCancelClick,
+    userList,
+    companyList,
+    dealerList,
+  ]);
 
   return columns;
 }

@@ -9,17 +9,13 @@ from sensors.cache import SensorCache
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName
-from utils.error_message import (
-    ERROR_DEVICE_NOT_FOUND,
-    ERROR_PERMISSION_DENIED,
-    error_protected_delete_message,
-)
+from utils.error_message import ERROR_DEVICE_NOT_FOUND, ERROR_PERMISSION_DENIED
 
 from .models import IotDevice
 from .serializers import (
+    IotDeviceDetailSerializer,
     IotDeviceSensorSerializer,
     IotDeviceSerializer,
-    IotDeviceDetailSerializer,
 )
 
 
@@ -52,7 +48,13 @@ def iot_device_list_all(request):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     iot_devices = IotDeviceCache.get_all_iot_devices()
-    if not GroupName.SUPERADMIN_GROUP in user_groups:
+
+    if GroupName.DEALER_GROUP in user_groups:
+        iot_device_list = IotDeviceCache.dealer_associated_iot_device(user.dealer)
+        iot_devices = iot_devices.filter(id__in=iot_device_list)
+
+    elif not GroupName.SUPERADMIN_GROUP in user_groups:
+        iot_device_list = []
         if user.company:
             iot_device_list = IotDeviceCache.get_all_company_iot_devices(user.company)
         elif user.type == "ADMIN":
@@ -61,6 +63,7 @@ def iot_device_list_all(request):
             # user is of type Viewer or Moderator
             iot_device_list = IotDeviceCache.get_all_user_iot_devices(user.created_by)
         iot_devices = iot_devices.filter(id__in=iot_device_list)
+
     serializer = IotDeviceSerializer(
         iot_devices, many=True, context={"request": request}
     )
@@ -72,7 +75,15 @@ def iot_device_list_all(request):
 def iot_device(request, id):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
-    if GroupName.SUPERADMIN_GROUP in user_groups:
+    is_super_admin_user = GroupName.SUPERADMIN_GROUP in user_groups
+    is_dealer_user = GroupName.DEALER_GROUP in user_groups
+
+    if is_dealer_user and request.method != "PATCH":
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+    if is_super_admin_user or is_dealer_user:
         iot_device = IotDeviceCache.get_iot_device(id)
         if iot_device is None:
             return Response(
@@ -89,7 +100,13 @@ def iot_device(request, id):
                 iot_device,
                 data=request.data,
                 partial=True,
-                context={"request": request},
+                context={
+                    "request": request,
+                    "is_super_admin_user": is_super_admin_user,
+                    "is_dealer_user": is_dealer_user,
+                    "requested_user": user,
+                    "dealer": user.dealer,
+                },
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -112,13 +129,16 @@ def iot_device(request, id):
                     company_slug=company_slug,
                 )
             except ProtectedError as e:
-                related_objects = e.protected_objects
-                # send list of protected objects
-                error_message = error_protected_delete_message(
-                    iot_device, len(related_objects)
+                related_objects_details = [
+                    obj._meta.verbose_name for obj in e.protected_objects
+                ]
+                detailed_error_message = (
+                    f"{ERROR_PERMISSION_DENIED} "
+                    f"The following related objects are preventing the deletion: {related_objects_details}"
                 )
                 return Response(
-                    {"error": error_message}, status=status.HTTP_404_NOT_FOUND
+                    {"error": detailed_error_message},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -280,15 +300,19 @@ def iot_device_detail(request, device_id):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        company = iot_device.company
-        user = iot_device.user
-
         if GroupName.ADMIN_GROUP in user_groups:
-            iot_device_list = (
-                IotDeviceCache.get_all_company_iot_devices(company)
-                if company
-                else IotDeviceCache.get_all_user_iot_devices(user)
-            )
+            iot_device_list = []
+            if GroupName.DEALER_GROUP in user_groups:
+                iot_device_list = IotDeviceCache.dealer_associated_iot_device(
+                    user.dealer
+                )
+
+            else:
+                iot_device_list = (
+                    IotDeviceCache.get_all_company_iot_devices(user.company)
+                    if user.is_associated_with_company
+                    else IotDeviceCache.get_all_user_iot_devices(user)
+                )
             if device_id not in iot_device_list:
                 return Response(
                     {
@@ -305,10 +329,11 @@ def iot_device_detail(request, device_id):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         IotDeviceCache.delete_iot_device(
             iot_device_id=iot_device.id,
-            company_slug=company.slug if company else None,
-            username=user.username if user else None,
+            company_slug=iot_device.company.slug if iot_device.company else None,
+            username=iot_device.user.username if iot_device.user else None,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 

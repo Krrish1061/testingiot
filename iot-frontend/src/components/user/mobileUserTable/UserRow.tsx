@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import User from "../../../entities/User";
+import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useDeleteUser from "../../../hooks/users/useDeleteUser";
 import useEditUser from "../../../hooks/users/useEditUser";
 import useAuthStore from "../../../store/authStore";
@@ -18,7 +19,6 @@ import MobileConfirmDialog from "../../mobileTable/MobileConfirmDialog";
 import MobileDeleteDialog from "../../mobileTable/MobileDeleteDialog";
 import UserEditableField from "./UserEditableField";
 import UserRowHeader from "./UserRowHeader";
-import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 
 interface Props {
   row: User;
@@ -39,6 +39,7 @@ function UserRow({ row, index }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
   const user = useAuthStore((state) => state.user);
   const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
   const { mutate: editUser } = useEditUser();
   const { mutate: deleteuser } = useDeleteUser();
   const { data: companyList } = useGetAllCompany(isUserSuperAdmin);
@@ -83,6 +84,14 @@ function UserRow({ row, index }: Props) {
     else setIsEditMode(false);
   };
 
+  const handleRowOpenClose = () => {
+    setOpen(!open);
+    if (isEditMode) {
+      setIsEditMode(false);
+      reset();
+    }
+  };
+
   const isDisabled = row.id === user?.id;
 
   const handleDeleteClick = () => setDeleteDialogOpen(true);
@@ -104,7 +113,7 @@ function UserRow({ row, index }: Props) {
     <>
       <TableRow
         sx={{ "& > *": { borderBottom: "unset" } }}
-        onClick={() => setOpen(!open)}
+        onClick={handleRowOpenClose}
       >
         <TableCell size="small" sx={{ paddingLeft: 1, paddingRight: 0 }}>
           {open ? (
@@ -148,6 +157,7 @@ function UserRow({ row, index }: Props) {
               <MobileActions
                 isDisabled={isDisabled}
                 isEditMode={isEditMode}
+                isUserDealer={isUserDealer}
                 handleEditClick={handleEditClick}
                 handleDeleteClick={handleDeleteClick}
                 handleCancelClick={handleCancelClick}

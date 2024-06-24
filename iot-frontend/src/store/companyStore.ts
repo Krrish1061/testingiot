@@ -1,14 +1,13 @@
 import { create } from "zustand";
-import Company from "../entities/Company";
+import ICompanyStore from "../entities/zustandStore/CompanyStore";
+import { storeResetFns } from "./resetAllStore";
 
-interface CompanyStore {
-  company: Company;
-  setCompany: (company: Company) => void;
-}
-
-const useCompanyStore = create<CompanyStore>((set) => ({
-  company: {} as Company,
-  setCompany: (company) => set({ company: company }),
-}));
+const useCompanyStore = create<ICompanyStore>((set) => {
+  storeResetFns.add(() => set({ company: null }));
+  return {
+    company: null,
+    setCompany: (company) => set({ company: company }),
+  };
+});
 
 export default useCompanyStore;

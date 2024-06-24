@@ -10,6 +10,7 @@ class CompanyAdmin(admin.ModelAdmin):
         "name",
         "slug",
         "email",
+        "dealer",
         "user_limit",
         "api_key",
     )

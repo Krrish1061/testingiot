@@ -1,11 +1,12 @@
 import re
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
-from company.cache import CompanyCache
-from iot_devices.cache import IotDeviceCache
-from users.cache import UserCache
 
+from company.models import Company
+from dealer.models import Dealer
+from iot_devices.cache import IotDeviceCache
 from utils.error_message import (
     ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY,
     ERROR_ADMIN_USER_NOT_FOUND,
@@ -16,7 +17,9 @@ from utils.error_message import (
     error_assigned_sensor,
 )
 
-from .models import IotDevice, IotDeviceSensor, IotDeviceDetail
+from .models import IotDevice, IotDeviceDetail, IotDeviceSensor
+
+User = get_user_model()
 
 
 class IotDeviceDetailSerializer(serializers.ModelSerializer):
@@ -51,6 +54,24 @@ class IotDeviceDetailSerializer(serializers.ModelSerializer):
 class IotDeviceSerializer(serializers.ModelSerializer):
     iot_device_details = IotDeviceDetailSerializer(read_only=True)
     sensor_name_list = serializers.SerializerMethodField(read_only=True)
+    user = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="username",
+        allow_null=True,
+        required=False,
+    )
+    company = serializers.SlugRelatedField(
+        queryset=Company.objects.all(),
+        slug_field="slug",
+        allow_null=True,
+        required=False,
+    )
+    dealer = serializers.SlugRelatedField(
+        queryset=Dealer.objects.all(),
+        slug_field="slug",
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = IotDevice
@@ -58,6 +79,7 @@ class IotDeviceSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "company",
+            "dealer",
             "is_active",
             "board_id",
             "created_at",
@@ -80,71 +102,133 @@ class IotDeviceSerializer(serializers.ModelSerializer):
         device_sensors = IotDeviceCache.get_all_device_sensors(obj.id)
         return [device_sensor.sensor.name for device_sensor in device_sensors]
 
-    def to_internal_value(self, data):
-        # Replace the company slug and username with the corresponding Company instance
-        username = data.get("user")
-        company_slug = data.get("company")
-        if company_slug:
-            company_instance = CompanyCache.get_company(company_slug)
-            if company_instance is None:
-                raise serializers.ValidationError({"error": "Company not found."})
-            data["company"] = company_instance.id
-
-        if username:
-            user_instance = UserCache.get_user(username)
-            if user_instance is None:
-                raise serializers.ValidationError({"error": "User not found."})
-            data["user"] = user_instance.id
-        return super().to_internal_value(data)
-
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = instance.user
         company = instance.company
+        dealer = instance.dealer
 
         if user:
-            representation["user"] = user.username
-            # removing company field from response
             representation.pop("company")
         if company:
-            representation["company"] = company.slug
-            # removing user field from response
             representation.pop("user")
+        if not dealer:
+            representation.pop("dealer")
 
         return representation
 
     def validate(self, attrs):
-        # request = self.context["request"]
         user = attrs.get("user")
         company = attrs.get("company")
+        dealer = attrs.get("dealer")
+        request = self.context["request"]
 
         if user and user.is_associated_with_company:
             raise serializers.ValidationError(
-                {"error": ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY}
+                {"errors": ERROR_ADMIN_USER_ASSOCIATED_WITH_COMPANY}
             )
 
-        if (user and company) or (not user and not company):
+        if user and company:
             raise serializers.ValidationError(
-                {"error": ERROR_DEVICE_NO_VALID_ASSOCIATION}
+                {"errors": ERROR_DEVICE_NO_VALID_ASSOCIATION}
             )
+
+        if request.method == "POST":
+            if not user and not company and not dealer:
+                raise serializers.ValidationError(
+                    {"errors": ERROR_DEVICE_NO_VALID_ASSOCIATION}
+                )
+
+        elif request.method == "PATCH":
+            # is_dealer_user = self.context.get("is_dealer_user", False)
+            is_super_admin_user = self.context.get("is_super_admin_user", False)
+            instance = self.instance
+
+            if is_super_admin_user:
+                if (
+                    (
+                        "user" in attrs
+                        and user is None
+                        and instance.company is None
+                        and company is None
+                        and instance.dealer is None
+                        and dealer is None
+                    )
+                    or (
+                        "company" in attrs
+                        and company is None
+                        and instance.user is None
+                        and user is None
+                        and instance.dealer is None
+                        and dealer is None
+                    )
+                    or (
+                        "dealer" in attrs
+                        and dealer is None
+                        and instance.user is None
+                        and user is None
+                        and instance.company is None
+                        and company is None
+                    )
+                ):
+                    raise serializers.ValidationError(
+                        {"errors": f"{ERROR_DEVICE_NO_VALID_ASSOCIATION}"}
+                    )
+
+            else:
+                # user is a dealer
+                requested_user = self.context["requested_user"]
+                if instance.dealer != requested_user.dealer:
+                    raise serializers.ValidationError(
+                        {
+                            "errors": "Permission Denied! you cannot update this iotDevice"
+                        }
+                    )
+
+                if (
+                    "user" in attrs
+                    and user is None
+                    and instance.company is None
+                    and company is None
+                ) or (
+                    "company" in attrs
+                    and company is None
+                    and instance.user is None
+                    and user is None
+                ):
+                    raise serializers.ValidationError(
+                        {"errors": f"{ERROR_DEVICE_NO_VALID_ASSOCIATION}"}
+                    )
+
+                if (user and requested_user.dealer != user.dealer) or (
+                    company and requested_user.dealer != company.dealer
+                ):
+                    raise serializers.ValidationError(
+                        {
+                            "errors": "Permission Denied! you cannot update this iotDevice"
+                        }
+                    )
 
         return attrs
 
     def update(self, instance, validated_data):
-        user = validated_data.get("user")
-        company = validated_data.get("company")
-        if instance.user and company:
-            instance.user = None
-            instance.company = company
-        if instance.company and user:
-            instance.company = None
+        user = validated_data.get("user", None)
+        company = validated_data.get("company", None)
+        is_super_admin_user = self.context["is_super_admin_user"]
+        if instance.user != user or instance.company != company:
             instance.user = user
-        if "iot_device_location" in validated_data:
-            instance.iot_device_location = validated_data["iot_device_location"]
-        if "is_active" in validated_data:
-            instance.is_active = validated_data["is_active"]
-        if "board_id" in validated_data:
-            instance.board_id = validated_data["board_id"]
+            instance.company = company
+        if is_super_admin_user:
+            is_active = validated_data.get("is_active", None)
+            board_id = validated_data.get("board_id", None)
+            dealer = validated_data.get("dealer", None)
+            if is_active is not None and instance.is_active != is_active:
+                instance.is_active = is_active
+            if board_id is not None and instance.board_id != board_id:
+                instance.board_id = board_id
+            if instance.dealer != dealer:
+                instance.dealer = dealer
+
         instance.save()
         return instance
 

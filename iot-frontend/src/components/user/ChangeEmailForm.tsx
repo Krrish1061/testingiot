@@ -1,19 +1,19 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import CancelIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import InputLabel from "@mui/material/InputLabel";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import EditIcon from "@mui/icons-material/Edit";
-import CancelIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
-import useAuthStore from "../../store/authStore";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import useChangeEmail from "../../hooks/users/useChangeEmail";
-import CircularProgress from "@mui/material/CircularProgress";
+import useAuthStore from "../../store/authStore";
 
 const schema = z.object({
   new_email: z.string().min(1, "This field is required").email(),
@@ -30,21 +30,15 @@ function ChangeEmailForm() {
     handleSubmit,
     reset,
     formState: { errors },
-    setError,
   } = useForm<IFormInputs>({
     resolver: zodResolver(schema),
     defaultValues: { new_email: user?.email },
   });
 
   const onSubmit: SubmitHandler<IFormInputs> = async (data) => {
-    if (data.new_email === user?.email) {
-      setError("new_email", {
-        type: "custom",
-        message: "Email address is already associated with your account",
-      });
-    } else {
+    if (data.new_email !== user?.email) {
       await mutateAsync(data);
-    }
+    } else setIsEditMode(false);
   };
 
   useEffect(() => {
@@ -61,7 +55,7 @@ function ChangeEmailForm() {
         margin: 1,
         padding: 1,
         "& .MuiTextField-root": {
-          width: "25ch",
+          width: "30ch",
         },
         display: "flex",
         flexDirection: "column",

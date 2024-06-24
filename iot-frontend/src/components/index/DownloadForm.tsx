@@ -34,6 +34,7 @@ import useAuthStore from "../../store/authStore";
 import DownloadFormSchema, {
   IDownloadFormInputs,
 } from "./ZodSchema/DownloadFormSchema";
+
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -44,10 +45,11 @@ interface Props {
 }
 
 function DownloadForm({ open, setOpen, anchorRef }: Props) {
-  const user = useAuthStore((state) => state.user);
-  const isuserSuperAdmin = user?.groups.includes(UserGroups.superAdminGroup);
-  const { data: companyList } = useGetAllCompany(isuserSuperAdmin);
-  const { data: userList } = useGetAllUser(isuserSuperAdmin);
+  const isuserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const showUserAndCompanyDownload = isuserSuperAdmin || isUserDealer;
+  const { data: companyList } = useGetAllCompany(showUserAndCompanyDownload);
+  const { data: userList } = useGetAllUser(showUserAndCompanyDownload);
   const { downloadSensorData, isLoading, setIsLoading } = useDownload();
 
   const {
@@ -360,7 +362,7 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                     </>
                   )}
                 </Stack>
-                {isuserSuperAdmin && (
+                {showUserAndCompanyDownload && (
                   <>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
@@ -593,12 +595,9 @@ function DownloadForm({ open, setOpen, anchorRef }: Props) {
                         disableCloseOnSelect
                         multiple
                         options={sensorNameList}
-                        value={
-                          sensorNameList.filter((sensor) =>
-                            field.value?.includes(sensor)
-                          )
-                          // Array.isArray(field.value) ? field.value : ["all"]
-                        }
+                        value={sensorNameList.filter((sensor) =>
+                          field.value?.includes(sensor)
+                        )}
                         renderInput={(params) => (
                           <TextField
                             {...params}

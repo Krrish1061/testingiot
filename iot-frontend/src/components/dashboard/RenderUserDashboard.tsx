@@ -5,6 +5,7 @@ import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
+import useAuthStore from "../../store/authStore";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 import LineGraphContainer from "../graph/LineGraphContainer";
@@ -42,8 +43,11 @@ function a11yProps(index: number) {
 }
 
 function RenderUserDashboard() {
+  const [value, setValue] = useState(0);
   const { username } = useParams();
   const { data: iotDeviceList } = useGetAllIotDevice();
+  const { data: userList } = useGetAllUser();
+
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
@@ -58,16 +62,17 @@ function RenderUserDashboard() {
     (state) => state.setliveDataToNull
   );
 
-  const { data } = useGetAllUser();
-  const currentAdminUser = useMemo(
-    () => data?.find((value) => value.username === username),
-    [data, username]
-  );
-  const [value, setValue] = useState(0);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
 
-  const handleChange = (_event: SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
+  const currentAdminUser = useMemo(
+    () => userList?.find((value) => value.username === username),
+    [userList, username]
+  );
+
+  const userIotDeviceList = useMemo(
+    () => iotDeviceList?.filter((device) => device.user === username),
+    [iotDeviceList, username]
+  );
 
   useEffect(() => {
     setValue(0);
@@ -89,13 +94,21 @@ function RenderUserDashboard() {
     setSubscribedGroup,
   ]);
 
-  const userIotDeviceList = useMemo(
-    () => iotDeviceList?.filter((device) => device.user === username),
-    [iotDeviceList, username]
-  );
+  const handleChange = (_event: SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
 
   if (userIotDeviceList?.length === 0)
     return <CustomNoRowsOverlay text="No Iot Device Asscociated" />;
+
+  if (isUserDealer) {
+    return (
+      <>
+        <LiveDataCardContainer />
+        <LineGraphContainer username={username} />
+      </>
+    );
+  }
 
   return (
     <>

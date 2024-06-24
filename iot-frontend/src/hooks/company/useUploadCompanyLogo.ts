@@ -1,10 +1,10 @@
-import { AxiosError } from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
-import CompanyProfile from "../../entities/CompanyProfile";
-import useCompanyStore from "../../store/companyStore";
 import useAxios from "../../api/axiosInstance";
 import Company from "../../entities/Company";
+import CompanyProfile from "../../entities/CompanyProfile";
+import useCompanyStore from "../../store/companyStore";
 
 interface IFormInputs {
   logo: File;
@@ -23,7 +23,7 @@ function useUpdateCompanyLogo() {
 
   const UpdateCompanyProfile = async (data: IFormInputs) =>
     axiosInstance
-      .patch<CompanyProfile>(`company/${company.slug}/profile/`, data, {
+      .patch<CompanyProfile>(`company/${company?.slug}/profile/`, data, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -34,18 +34,20 @@ function useUpdateCompanyLogo() {
     mutationFn: UpdateCompanyProfile,
 
     onSuccess(companyProfile) {
-      setCompany({
-        ...company,
-        profile: companyProfile,
-      });
-
-      queryClient.setQueryData<Company>(
-        ["company", company.slug],
-        (cachedCompany = {} as Company) => ({
-          ...cachedCompany,
+      if (company) {
+        setCompany({
+          ...company,
           profile: companyProfile,
-        })
-      );
+        });
+
+        queryClient.setQueryData<Company>(
+          ["company", company.slug],
+          (cachedCompany = {} as Company) => ({
+            ...cachedCompany,
+            profile: companyProfile,
+          })
+        );
+      }
       enqueueSnackbar("Profile Updated", {
         variant: "success",
       });

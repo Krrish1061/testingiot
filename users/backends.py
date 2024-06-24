@@ -1,8 +1,10 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 from django.db.models import Q
 
 from .exceptions import InActiveUserException
-from .models import User
+
+User = get_user_model()
 
 
 class EmailorUsernameModelBackend(BaseBackend):

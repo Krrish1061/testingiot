@@ -5,15 +5,16 @@ import Typography from "@mui/material/Typography";
 import { useRef, useState } from "react";
 import ChangeImage from "../components/ChangeImage";
 import ChangeImageBadge from "../components/ChangeImageBadge";
+import ErrorReload from "../components/ErrorReload";
 import ImageAvatar from "../components/ImageAvatar";
-import ChangeCompanyEmail from "../components/company/ChangeCompanyEmail";
+import LoadingSpinner from "../components/LoadingSpinner";
 import CompanyProfile from "../components/company/CompanyProfile";
+import ChangeEmailForm from "../components/user/ChangeEmailForm";
+import ChangePasswordForm from "../components/user/ChangePasswordForm";
 import useCompany from "../hooks/company/useCompany";
 import useUpdateCompanyLogo from "../hooks/company/useUploadCompanyLogo";
 import useCompanyStore from "../store/companyStore";
 import useDrawerStore from "../store/drawerStore";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorReload from "../components/ErrorReload";
 
 function ViewCompanyProfile() {
   const [open, setOpen] = useState(false);
@@ -43,6 +44,7 @@ function ViewCompanyProfile() {
       />
     );
   if (isLoading) return <LoadingSpinner size={40} />;
+  if (company === null) return;
 
   return (
     <Box>
@@ -119,10 +121,16 @@ function ViewCompanyProfile() {
           <CompanyProfile />
 
           <Divider flexItem textAlign="left">
+            Change Password
+          </Divider>
+
+          <ChangePasswordForm />
+
+          <Divider flexItem textAlign="left">
             Change Email Address
           </Divider>
-          {/* below component backend is not fully implemented */}
-          <ChangeCompanyEmail email={company.email} />
+
+          <ChangeEmailForm />
         </Stack>
       </Stack>
     </Box>

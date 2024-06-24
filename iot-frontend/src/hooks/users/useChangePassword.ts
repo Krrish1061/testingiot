@@ -1,8 +1,8 @@
-import useAuthStore from "../../store/authStore";
-import useAxios from "../../api/axiosInstance";
-import { AxiosError } from "axios";
 import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
+import useAuthStore from "../../store/authStore";
 
 interface IFormInputs {
   old_password: string;
@@ -24,6 +24,11 @@ function useChangePassword() {
 
   return useMutation<Response, AxiosError<string[]>, IFormInputs>({
     mutationFn: ChangePassword,
+    onSuccess: () => {
+      enqueueSnackbar("Password Successfully Changed", {
+        variant: "success",
+      });
+    },
     onError: (error) => {
       let errorMessage = "";
       if (error.code === "ERR_NETWORK") {

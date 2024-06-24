@@ -1,7 +1,8 @@
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
 import CardHeader from "@mui/material/CardHeader";
+import Skeleton from "@mui/material/Skeleton";
+import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
 
 interface Props {
@@ -15,7 +16,6 @@ function DashboardCard({ headerIcon, title, content }: Props) {
     <Card
       elevation={3}
       sx={{
-        // width: 1,
         height: 1,
         maxWidth: 160,
         display: "flex",
@@ -48,14 +48,19 @@ function DashboardCard({ headerIcon, title, content }: Props) {
           justifyContent: "flex-end",
           flexGrow: 1,
           paddingY: 0,
+          paddingX: content === undefined ? 0 : undefined,
           "&:last-child": {
             paddingBottom: 0,
           },
         }}
       >
-        <Typography component="h2" variant="h3" textAlign="center">
-          {content}
-        </Typography>
+        {content !== undefined ? (
+          <Typography component="h2" variant="h3" textAlign="center">
+            {content}
+          </Typography>
+        ) : (
+          <Skeleton animation="wave" sx={{ width: 1, height: 50 }} />
+        )}
       </CardContent>
     </Card>
   );

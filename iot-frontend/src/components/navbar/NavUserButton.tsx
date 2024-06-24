@@ -1,27 +1,35 @@
-import ImageAvatar from "../ImageAvatar";
-import useAuthStore from "../../store/authStore";
-import MenuItem from "@mui/material/MenuItem";
-import ProfileCard from "./ProfileCard";
-import Divider from "@mui/material/Divider";
-import { useTheme } from "@mui/material/styles";
-import { useState, useRef, useContext } from "react";
-import Typography from "@mui/material/Typography";
-import NavButton from "./NavButton";
-import Popper from "@mui/material/Popper";
-import Box from "@mui/material/Box";
-import Grow from "@mui/material/Grow";
-import ClickAwayListener from "@mui/material/ClickAwayListener";
-import Paper from "@mui/material/Paper";
-import MenuList from "@mui/material/MenuList";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Logout from "@mui/icons-material/Logout";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import { useNavigate } from "react-router-dom";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import { ColorModeContext } from "../../theme";
-import useLogout from "../../hooks/auth/useLogout";
+import Logout from "@mui/icons-material/Logout";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Divider from "@mui/material/Divider";
+import Grow from "@mui/material/Grow";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import MenuItem from "@mui/material/MenuItem";
+import MenuList from "@mui/material/MenuList";
+import Paper from "@mui/material/Paper";
+import Popper from "@mui/material/Popper";
+import { useTheme } from "@mui/material/styles";
+import {
+  KeyboardEvent,
+  SyntheticEvent,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useNavigate } from "react-router-dom";
+import useLogout from "../../hooks/auth/useLogout";
+import useAuthStore from "../../store/authStore";
+import useCompanyStore from "../../store/companyStore";
+import useDealerStore from "../../store/dealerStore";
+import { ColorModeContext } from "../../theme";
+import { extractFirstWord, truncateName } from "../../utilis/truncateName";
+import NavButton from "./NavButton";
+import ProfileCard from "./ProfileCard";
 
 function NavUserButton() {
   const theme = useTheme();
@@ -31,8 +39,39 @@ function NavUserButton() {
   const user = useAuthStore((state) => state.user);
   const [open, setOpen] = useState(false);
   const { mutate, isLoading } = useLogout();
+  const dealer = useDealerStore((state) => state.dealer);
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+  const isUserCompanySuperAdmin = useAuthStore(
+    (state) => state.isUserCompanySuperAdmin
+  );
+  const company = useCompanyStore((state) => state.company);
 
-  function handleListKeyDown(event: React.KeyboardEvent) {
+  const { imgUrl, altText, navButtonText } = useMemo(() => {
+    let imgUrl: string | null | undefined = undefined;
+    let altText: string | null | undefined = "";
+    let navButtonText = "";
+    if (isUserDealer && dealer) {
+      imgUrl = dealer.profile?.logo;
+      altText = dealer.name;
+      navButtonText = truncateName(extractFirstWord(dealer.name), 20);
+    } else if (isUserCompanySuperAdmin && company) {
+      imgUrl = company.profile?.logo;
+      altText = company.name;
+      navButtonText = truncateName(extractFirstWord(company.name), 20);
+    } else if (user) {
+      imgUrl = user.profile?.profile_picture;
+      altText = user.profile?.first_name
+        ? `${user.profile?.first_name} ${user.profile?.last_name}`
+        : user.username;
+      navButtonText = truncateName(
+        user.profile?.first_name || user.username,
+        20
+      );
+    }
+    return { imgUrl, altText, navButtonText };
+  }, [company, dealer, isUserCompanySuperAdmin, isUserDealer, user]);
+
+  function handleListKeyDown(event: KeyboardEvent) {
     if (event.key === "Tab") {
       event.preventDefault();
       setOpen(false);
@@ -45,7 +84,7 @@ function NavUserButton() {
     setOpen((prevOpen) => !prevOpen);
   };
 
-  const handleClose = (event: Event | React.SyntheticEvent) => {
+  const handleClose = (event: Event | SyntheticEvent) => {
     if (
       anchorRef.current &&
       anchorRef.current.contains(event.target as HTMLElement)
@@ -56,57 +95,32 @@ function NavUserButton() {
     setOpen(false);
   };
 
-  const handleViewProfile = (event: Event | React.SyntheticEvent) => {
+  const handleViewProfile = (event: Event | SyntheticEvent) => {
     handleClose(event);
-    navigate("/profile");
+    if (isUserDealer) navigate("/dealer-profile");
+    else if (isUserCompanySuperAdmin) navigate("/company-profile");
+    else navigate("/profile");
   };
 
-  const handleColorModeToggle = (event: Event | React.SyntheticEvent) => {
+  const handleColorModeToggle = (event: Event | SyntheticEvent) => {
     colorMode.toggleColorMode();
     handleClose(event);
   };
 
   const handleLogout = () => {
-    mutate(user?.username);
+    mutate();
   };
 
   return (
     <>
       <NavButton
-        variant="outlined"
-        disableElevation
-        isAvatar={true}
-        ref={anchorRef}
-        onClick={handleToggle}
-        aria-controls={open ? "menu" : undefined}
-        aria-expanded={open ? "true" : undefined}
-        aria-haspopup="true"
-      >
-        <ImageAvatar
-          imgUrl={user?.profile?.profile_picture}
-          altText={
-            user?.profile?.first_name
-              ? `${user?.profile?.first_name} ${user?.profile?.last_name}`
-              : user?.username
-          }
-          height={{
-            xs: 50,
-            md: 30,
-          }}
-          width={{
-            xs: 50,
-            md: 30,
-          }}
-        />
-        <Typography
-          display={{
-            xs: "none",
-            md: "inherit",
-          }}
-        >
-          {user?.profile?.first_name || user?.username}
-        </Typography>
-      </NavButton>
+        open={open}
+        anchorRef={anchorRef}
+        imgUrl={imgUrl}
+        altText={altText}
+        navButtonText={navButtonText}
+        handleToggle={handleToggle}
+      />
       <Popper
         open={open}
         anchorEl={anchorRef.current}
@@ -130,7 +144,17 @@ function NavUserButton() {
                     autoFocus={open}
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
-                    subheader={<ProfileCard />}
+                    subheader={
+                      <ProfileCard
+                        imgUrl={imgUrl}
+                        altText={altText}
+                        isUserCompanySuperAdmin={isUserCompanySuperAdmin}
+                        isUserDealer={isUserDealer}
+                        company={company}
+                        user={user}
+                        dealer={dealer}
+                      />
+                    }
                     sx={{
                       "&:focus": {
                         outline: "none",

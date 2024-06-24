@@ -2,8 +2,9 @@ from django.db import models
 from django.forms import ValidationError
 
 from company.models import Company
-from users.models import AdminUser
+from users.models.proxy_models import AdminUser
 from utils.error_message import ERROR_INVALID_ASSIGNMENT
+
 from .validators import validate_urls
 
 

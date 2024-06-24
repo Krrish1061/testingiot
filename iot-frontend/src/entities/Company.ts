@@ -5,6 +5,7 @@ interface Company {
   name: string;
   email: string;
   slug: string;
+  dealer: string | null;
   user_limit: number | null;
   created_at: string;
   profile?: CompanyProfile;

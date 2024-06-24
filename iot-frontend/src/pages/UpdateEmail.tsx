@@ -1,23 +1,32 @@
-import { useEffect } from "react";
-import Card from "@mui/material/Card";
-import CardMedia from "@mui/material/CardMedia";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import Logo from "/logo.png";
-import CircularProgress from "@mui/material/CircularProgress";
-import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useEffect } from "react";
+import useLogout from "../hooks/auth/useLogout";
 import useVerifyUpdateEmail from "../hooks/auth/useVerifyUpdateEmaill";
+import Logo from "/logo.png";
 
 function UpdateEmail() {
   const { mutate, isSuccess, isError, error, isLoading } =
     useVerifyUpdateEmail();
 
+  const { mutate: logoutUser } = useLogout();
+
   useEffect(() => {
     // send post request to the backend to verify the email
     mutate();
   }, [mutate]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      logoutUser();
+    }
+  }, [isSuccess, logoutUser]);
 
   const handleClick = () => {
     mutate();

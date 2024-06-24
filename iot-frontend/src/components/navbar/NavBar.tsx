@@ -1,78 +1,34 @@
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import styled from "@mui/material/styles/styled";
 import { useRef, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import UserGroups from "../../constants/userGroups";
 import useAuthStore from "../../store/authStore";
 import useDrawerStore from "../../store/drawerStore";
 import ImageAvatar from "../ImageAvatar";
 import AddUserForm from "../user/AddUserForm";
 import AddPopper from "./AddPopper";
-import NavButton from "./NavButton";
 import NavUserButton from "./NavUserButton";
 import SearchBar from "./SearchBar";
+import StyledAppBar from "./StyledAppBar";
+import StyledNavButton from "./StyledNavButton";
 import Logo from "/logo.png";
 
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-  isDrawerDisplayed: boolean;
-}
-
-const drawerWidth = 240;
-
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== "open" && prop !== "isDrawerDisplayed",
-})<AppBarProps>(({ theme, open, isDrawerDisplayed }) => ({
-  zIndex: theme.zIndex.drawer,
-  backgroundColor: theme.palette.background.default,
-  transition: theme.transitions.create(["width", "margin"], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open &&
-    isDrawerDisplayed && {
-      marginLeft: drawerWidth,
-      [theme.breakpoints.up("sm")]: {
-        width: `calc(100% - ${drawerWidth}px)`,
-      },
-
-      transition: theme.transitions.create(["width", "margin"], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-    }),
-  ...(!open &&
-    isDrawerDisplayed && {
-      transition: theme.transitions.create(["width", "margin"], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-      overflowX: "hidden",
-      // if you change any value change in sidebar also
-      [theme.breakpoints.up("sm")]: {
-        width: `calc(100% - ${theme.spacing(8)} + 1px)`,
-      },
-    }),
-}));
-
 function NavBar() {
-  const user = useAuthStore((state) => state.user);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const isDrawerOpen = useDrawerStore((state) => state.isDrawerOpen);
   const toggleDrawerOpen = useDrawerStore((state) => state.toggleDrawerOpen);
   const [openUserForm, setOpenUserForm] = useState(false);
   const [openAddPopper, setOpenAddPopper] = useState(false);
-  const isUserSuperAdmin =
-    user?.groups.includes(UserGroups.superAdminGroup) || false;
-  const isUserAdmin = user?.groups.includes(UserGroups.adminGroup) || false;
-  const isUserCompanySuperAdmin =
-    user?.groups.includes(UserGroups.companySuperAdminGroup) || false;
+  const isUserSuperAdmin = useAuthStore((state) => state.isUserSuperAdmin);
+  const isUserAdmin = useAuthStore((state) => state.isUserAdmin);
+  const isUserCompanySuperAdmin = useAuthStore(
+    (state) => state.isUserCompanySuperAdmin
+  );
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
   const isDrawerDisplayed = isUserSuperAdmin || isUserAdmin;
 
   const handleDrawerOpen = () => {
@@ -91,7 +47,7 @@ function NavBar() {
 
   return (
     <>
-      <AppBar
+      <StyledAppBar
         position="fixed"
         component="nav"
         open={isDrawerOpen}
@@ -152,9 +108,9 @@ function NavBar() {
             alignItems="center"
             justifyContent="center"
           >
-            {isUserSuperAdmin && (
+            {(isUserSuperAdmin || isUserDealer) && (
               <>
-                <NavButton
+                <StyledNavButton
                   variant="outlined"
                   disableElevation
                   startIcon={<AddIcon fontSize="large" />}
@@ -162,36 +118,38 @@ function NavBar() {
                   onClick={handleClickAddButton}
                 >
                   Add
-                </NavButton>
+                </StyledNavButton>
                 <AddPopper
                   open={openAddPopper}
                   setOpen={setOpenAddPopper}
                   anchorRef={anchorRef}
+                  isUserSuperAdmin={isUserSuperAdmin}
                   handleClickUserButton={handleClickUserButton}
                 />
               </>
             )}
 
-            {isUserAdmin && (
-              <NavButton
+            {isUserAdmin && !isUserDealer && (
+              <StyledNavButton
                 variant="outlined"
                 disableElevation
                 startIcon={<AddIcon fontSize="large" />}
                 onClick={handleClickUserButton}
               >
                 User
-              </NavButton>
+              </StyledNavButton>
             )}
 
             <NavUserButton />
           </Stack>
         </Toolbar>
-      </AppBar>
+      </StyledAppBar>
       {(isUserSuperAdmin || isUserAdmin) && (
         <AddUserForm
           open={openUserForm}
           setOpen={setOpenUserForm}
           isUserSuperAdmin={isUserSuperAdmin}
+          isUserDealer={isUserDealer}
           isUserCompanySuperAdmin={isUserCompanySuperAdmin}
         />
       )}

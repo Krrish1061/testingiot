@@ -1,18 +1,18 @@
-import Paper from "@mui/material/Paper";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { useEffect, useState } from "react";
-import Button from "@mui/material/Button";
-import EditIcon from "@mui/icons-material/Edit";
-import CancelIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useCompanyStore from "../../store/companyStore";
+import CancelIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
 import useUpdateCompanyProfile from "../../hooks/company/useUpdateCompanyProfile";
+import useCompanyStore from "../../store/companyStore";
 
 const schema = z.object({
   phone_number: z
@@ -35,9 +35,9 @@ function CompanyProfile() {
   const noValue = "N/A";
 
   const defaultValues = {
-    phone_number: (company.profile?.phone_number || "") as string,
-    description: company.profile?.description || "",
-    address: company.profile?.address || "",
+    phone_number: (company?.profile?.phone_number || "") as string,
+    description: company?.profile?.description || "",
+    address: company?.profile?.address || "",
   };
 
   const {
@@ -115,7 +115,7 @@ function CompanyProfile() {
               Company Name:
             </Typography>
             <Typography color="inherit" gutterBottom>
-              {company.name}
+              {company?.name}
             </Typography>
           </Box>
         </Grid>
@@ -125,7 +125,7 @@ function CompanyProfile() {
               Company Email:
             </Typography>
             <Typography gutterBottom color="inherit">
-              {company.email}
+              {company?.email}
             </Typography>
           </Box>
         </Grid>
@@ -136,7 +136,7 @@ function CompanyProfile() {
             </Typography>
             {!isEditMode ? (
               <Typography gutterBottom color="inherit">
-                {company.profile?.phone_number || noValue}
+                {company?.profile?.phone_number || noValue}
               </Typography>
             ) : (
               <TextField
@@ -163,7 +163,7 @@ function CompanyProfile() {
             </Typography>
             {!isEditMode ? (
               <Typography color="inherit" gutterBottom>
-                {company.profile?.address || noValue}
+                {company?.profile?.address || noValue}
               </Typography>
             ) : (
               <TextField
@@ -190,7 +190,7 @@ function CompanyProfile() {
               User Creation Limit:
             </Typography>
             <Typography color="inherit" gutterBottom>
-              {company.user_limit || noValue}
+              {company?.user_limit || noValue}
             </Typography>
           </Box>
         </Grid>
@@ -201,7 +201,7 @@ function CompanyProfile() {
             </Typography>
             {!isEditMode ? (
               <Typography gutterBottom color="inherit">
-                {company.profile?.description || noValue}
+                {company?.profile?.description || noValue}
               </Typography>
             ) : (
               <TextField

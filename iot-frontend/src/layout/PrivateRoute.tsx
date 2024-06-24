@@ -1,7 +1,7 @@
-// import { Navigate } from "react-router-dom";
+import Typography from "@mui/material/Typography";
 import { ReactNode } from "react";
-import useAuthStore from "../store/authStore";
 import { Outlet } from "react-router-dom";
+import useAuthStore from "../store/authStore";
 
 interface Props {
   children?: ReactNode;
@@ -12,7 +12,11 @@ function PrivateRoute({ hasPermission, children }: Props) {
   const user = useAuthStore((state) => state.user);
 
   if (user && !user.groups.some((v) => hasPermission.indexOf(v) !== -1)) {
-    return <div>forbidden</div>;
+    return (
+      <Typography color="error.main">
+        You Don't Have permission to view this page
+      </Typography>
+    );
   }
 
   if (children) {

@@ -21,14 +21,16 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
             True if GroupName.SUPERADMIN_GROUP in user_groups else False
         )
 
-        if not self.is_superadmin:
+        self.is_user_dealer = True if GroupName.DEALER_GROUP in user_groups else False
+
+        if not self.is_superadmin and not self.is_user_dealer:
             group_name = await self.get_group_name(user)
             await self.subscribe_to_group(group_name)
         else:
             self.subscribed_group = ""
 
         await self.accept()
-        if not self.is_superadmin:
+        if not self.is_superadmin and not self.is_user_dealer:
             company = user.company
             username = None
             if company is None:
@@ -37,8 +39,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 )
             company_slug = company.slug if company else None
             send_initial_data.delay(username=username, company_slug=company_slug)
-            # initial_data = await self.get_initial_data(user=user, company=user.company)
-            # await self.send(text_data=json.dumps(initial_data))
 
     async def disconnect(self, code):
         if self.subscribed_group:
@@ -71,7 +71,9 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message_type = data.get("type")
 
-        if message_type == "group_subscribe" and self.is_superadmin:
+        if message_type == "group_subscribe" and (
+            self.is_superadmin or self.is_user_dealer
+        ):
             company_slug = data.get("company_slug")
             username = data.get("username")
             # handle case when both username and company_slug is send
@@ -90,8 +92,6 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                     user.username if user.type == "ADMIN" else user.created_by.username
                 )
             send_initial_data.delay(username=username, company_slug=company_slug)
-            # initial_data = await self.get_initial_data(user=user, company=company)
-            # await self.send(text_data=json.dumps(initial_data))
 
         elif message_type == "sensor_data":
             sensor_name = data.get("sensor_name")

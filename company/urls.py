@@ -12,9 +12,4 @@ urlpatterns = [
         views.company_profile,
         name="company-profile",
     ),
-    path(
-        "<slug:company_slug>/change-email/",
-        views.company_change_email,
-        name="company-change-email",
-    ),
 ]

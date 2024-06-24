@@ -5,6 +5,7 @@ import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
+import useAuthStore from "../../store/authStore";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 import LineGraphContainer from "../graph/LineGraphContainer";
@@ -42,8 +43,11 @@ function a11yProps(index: number) {
 }
 
 function RenderCompanyDashboard() {
+  const [value, setValue] = useState(0);
   const { companySlug } = useParams();
   const { data: iotDeviceList } = useGetAllIotDevice();
+  const { data: companyList } = useGetAllCompany();
+
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
@@ -56,17 +60,19 @@ function RenderCompanyDashboard() {
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
   );
-  const { data } = useGetAllCompany();
+
+  const isUserDealer = useAuthStore((state) => state.isUserDealer);
+
   const currentCompany = useMemo(
-    () => data?.find((value) => value.slug === companySlug),
-    [data, companySlug]
+    () => companyList?.find((value) => value.slug === companySlug),
+    [companyList, companySlug]
   );
 
-  const [value, setValue] = useState(0);
+  const companyIotDeviceList = useMemo(
+    () => iotDeviceList?.filter((device) => device.company === companySlug),
+    [iotDeviceList, companySlug]
+  );
 
-  const handleChange = (_event: SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
   useEffect(() => {
     setValue(0);
     if (websocket && subscribedGroup !== companySlug) {
@@ -87,13 +93,21 @@ function RenderCompanyDashboard() {
     setSubscribedGroup,
   ]);
 
-  const companyIotDeviceList = useMemo(
-    () => iotDeviceList?.filter((device) => device.company === companySlug),
-    [iotDeviceList, companySlug]
-  );
+  const handleChange = (_event: SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
 
   if (companyIotDeviceList?.length === 0)
     return <CustomNoRowsOverlay text="No Iot Device Asscociated" />;
+
+  if (isUserDealer) {
+    return (
+      <>
+        <LiveDataCardContainer />
+        <LineGraphContainer companySlug={companySlug} />
+      </>
+    );
+  }
 
   return (
     <>

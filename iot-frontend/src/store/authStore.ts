@@ -1,26 +1,29 @@
 import { create } from "zustand";
-import User from "../entities/User";
+import IAuthStore from "../entities/zustandStore/AuthStore";
+import { storeResetFns } from "./resetAllStore";
 
-// type AuthUser = Partial<User> &
-//   Pick<User, "groups" | "id" | "username" | "type">;
-
-interface AuthStore {
-  user: User | null;
-  setUser: (user: User | null) => void;
-  isUserSuperAdmin: boolean;
-  setIsUserSuperAdmin: (isUserSuperAdmin: boolean) => void;
-  token: string | null;
-  setToken: (token: string | null) => void;
-}
-
-const useAuthStore = create<AuthStore>((set) => ({
+const initialAuthState = {
   user: null,
   token: null,
   isUserSuperAdmin: false,
-  setUser: (user) => set({ user: user }),
-  setIsUserSuperAdmin: (isUserSuperAdmin) =>
-    set({ isUserSuperAdmin: isUserSuperAdmin }),
-  setToken: (token) => set({ token: token }),
-}));
+  isUserCompanySuperAdmin: false,
+  isUserDealer: false,
+  isUserAdmin: false,
+};
+
+const useAuthStore = create<IAuthStore>((set) => {
+  storeResetFns.add(() => set(initialAuthState));
+  return {
+    ...initialAuthState,
+    setUser: (user) => set({ user: user }),
+    setIsUserSuperAdmin: (isUserSuperAdmin) =>
+      set({ isUserSuperAdmin: isUserSuperAdmin }),
+    setIsUserCompanySuperAdmin: (isUserCompanySuperAdmin) =>
+      set({ isUserCompanySuperAdmin: isUserCompanySuperAdmin }),
+    setIsUserDealer: (isUserDealer) => set({ isUserDealer: isUserDealer }),
+    setIsUserAdmin: (isUserAdmin) => set({ isUserAdmin: isUserAdmin }),
+    setToken: (token) => set({ token: token }),
+  };
+});
 
 export default useAuthStore;

@@ -11,6 +11,8 @@ from users.tasks import (
     sending_password_reset_email,
 )
 from users.utilis import activation_token_for_email
+from utils.commom_functions import get_groups_tuple
+from utils.constants import GroupName
 
 
 @csrf_protect
@@ -55,6 +57,17 @@ def password_reset_confirm(request, username, token):
         user.save()
         # send password reset confirmation email.
         first_name = user.profile.first_name if user.profile.first_name else None
+
+        user_groups = get_groups_tuple(user)
+        if any(
+            group_name in user_groups
+            for group_name in (
+                GroupName.COMPANY_SUPERADMIN_GROUP,
+                GroupName.DEALER_GROUP,
+            )
+        ):
+            first_name = None
+
         sending_password_reset_confirmation_email.delay(user.email, first_name)
 
         return Response(

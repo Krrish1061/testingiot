@@ -1,4 +1,5 @@
 from celery import shared_task
+from decouple import config
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -6,8 +7,10 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.html import strip_tags
 from django.utils.http import urlsafe_base64_encode
-from decouple import config
+
 from users.cache import UserCache
+from utils.commom_functions import get_groups_tuple
+from utils.constants import GroupName
 
 from .utilis import activation_token_for_email, activation_token_for_password_reset
 
@@ -91,6 +94,7 @@ def sending_password_reset_email(email: str):
         if user is None:
             raise ObjectDoesNotExist
 
+        user_groups = get_groups_tuple(user)
         # generating the one time token for the user
         confirmation_token = activation_token_for_password_reset.make_token(user)
 
@@ -98,6 +102,15 @@ def sending_password_reset_email(email: str):
         username = urlsafe_base64_encode(force_bytes(user.username))
 
         first_name = user.profile.first_name if user.profile.first_name else None
+
+        if any(
+            group_name in user_groups
+            for group_name in (
+                GroupName.COMPANY_SUPERADMIN_GROUP,
+                GroupName.DEALER_GROUP,
+            )
+        ):
+            first_name = None
 
         # generating the html message
         html_message = render_to_string(
@@ -178,17 +191,25 @@ def sending_account_is_active_email(email: str):
 
 
 @shared_task
-def sending_update_email(username: str, first_name: str):
+def sending_update_email(username: str):
     """Celery Task to Send mail to the user for updating their email"""
 
     # get the user
-    user = UserCache.get_user_by_email(username)
+    user = UserCache.get_user(username)
+    user_groups = get_groups_tuple(user)
+    first_name = user.profile.first_name if user else None
 
     # generating the one time token for the user
     confirmation_token = activation_token_for_email.make_token(user)
 
     # encoding the username
     username = urlsafe_base64_encode(force_bytes(user.username))
+
+    if any(
+        group_name in user_groups
+        for group_name in (GroupName.COMPANY_SUPERADMIN_GROUP, GroupName.DEALER_GROUP)
+    ):
+        first_name = None
 
     # generating the html message
     html_message = render_to_string(
@@ -214,7 +235,7 @@ def sending_update_email(username: str, first_name: str):
 
 @shared_task
 def sending_confirmation_mail_for_email_update(
-    email: str, first_name: str, old_email: str, new_email: str
+    first_name: str | None, old_email: str, new_email: str
 ):
     """Celery Task to send confirmation mail to the user for updating their email"""
 
