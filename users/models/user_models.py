@@ -4,7 +4,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from company.models import Company
-from dealer.models import Dealer
+
+# from dealer.models import Dealer
 from utils.error_message import (
     ERROR_IS_ASSOCIATION_WITH_COMPANY_FALSE,
     ERROR_IS_ASSOCIATION_WITH_COMPANY_TRUE,
@@ -70,13 +71,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
     )
 
-    dealer = models.ForeignKey(
-        Dealer,
-        on_delete=models.PROTECT,
-        related_name="users",
-        null=True,
-        blank=True,
-    )
+    # dealer = models.ForeignKey(
+    #     Dealer,
+    #     on_delete=models.PROTECT,
+    #     related_name="users",
+    #     null=True,
+    #     blank=True,
+    # )
 
     email = models.EmailField(verbose_name="email address", max_length=255, unique=True)
     is_email_verified = models.BooleanField(default=False, blank=True)
