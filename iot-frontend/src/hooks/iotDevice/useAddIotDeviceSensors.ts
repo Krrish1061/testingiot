@@ -15,7 +15,8 @@ interface IFormInputs {
 }
 
 interface IError {
-  error: string;
+  error?: string;
+  errors?: string[];
 }
 
 interface IResponse {
@@ -51,6 +52,7 @@ function useAddIotDeviceSensors(iotDeviceId: number) {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response.data.errors[0]) ||
           "Failed to Associate Sensor to IotDevice";
       }
       enqueueSnackbar(errorMessage, {

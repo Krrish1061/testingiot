@@ -62,7 +62,7 @@ def sensor(request, name):
     user = UserCache.get_user(username=request.user.username)
     user_groups = get_groups_tuple(user)
     if GroupName.SUPERADMIN_GROUP in user_groups:
-        sensor = SensorCache.get_sensor(name)
+        sensor = SensorCache.get_sensor(name.strip().lower())
         if sensor is None:
             return Response(
                 {"error": ERROR_SENSOR_NOT_FOUND},

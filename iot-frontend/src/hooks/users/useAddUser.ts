@@ -6,7 +6,6 @@ import UserGroups from "../../constants/userGroups";
 import UserTypes from "../../constants/userTypes";
 import User from "../../entities/User";
 import useAuthStore from "../../store/authStore";
-import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
 
 interface IFormInputs {
   email: string;
@@ -39,8 +38,6 @@ const useAddUser = () => {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
-  const rows = useUserDataGridStore((state) => state.rows);
-  const setRows = useUserDataGridStore((state) => state.setRows);
 
   const postUser = (data: IFormInputs) =>
     axiosInstance
@@ -85,8 +82,6 @@ const useAddUser = () => {
       queryClient.setQueryData<User[]>(["userList"], (users) =>
         users?.map((user) => (user.id === context.newUserId ? newUser : user))
       );
-
-      if (rows.length !== 0) setRows([...rows, newUser]);
     },
     onError: (error, _formsInputs, context) => {
       let errorMessage = "";
@@ -105,9 +100,6 @@ const useAddUser = () => {
 
       if (!context) return;
       queryClient.setQueryData<User[]>(["userList"], context.previousUserList);
-      if (rows.length !== 0) {
-        setRows(rows.filter((row) => row.id !== context.newUserId));
-      }
     },
   });
 };

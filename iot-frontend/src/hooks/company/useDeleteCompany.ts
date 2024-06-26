@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError, AxiosResponse } from "axios";
+import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import Company from "../../entities/Company";
-import { enqueueSnackbar } from "notistack";
-import useCompanyDataGridStore from "../../store/datagrid/companyDataGridStore";
-import { AxiosError, AxiosResponse } from "axios";
 
 interface DeleteCompanyContext {
   previousCompanyList: Company[];
@@ -15,8 +14,6 @@ interface IError {
 
 function useDeleteCompany() {
   const axiosInstance = useAxios();
-  const rows = useCompanyDataGridStore((state) => state.rows);
-  const setRows = useCompanyDataGridStore((state) => state.setRows);
   const queryClient = useQueryClient();
 
   const deleteCompany = async (company: Company) => {
@@ -43,9 +40,7 @@ function useDeleteCompany() {
     onSuccess: () => {
       enqueueSnackbar("Company sucessfully Deleted", { variant: "success" });
     },
-    onError: (error, company, context) => {
-      // reverting to the old rows here company is the company to be deleted
-      setRows([...rows, company]);
+    onError: (error, _company, context) => {
       let errorMessage = "";
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;

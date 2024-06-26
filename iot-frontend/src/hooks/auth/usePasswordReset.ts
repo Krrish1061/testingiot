@@ -12,6 +12,11 @@ interface Response {
   message: string;
 }
 
+interface IError {
+  error?: string;
+  errors?: string[];
+}
+
 function usePasswordReset() {
   const { username, token } = useParams();
   const navigate = useNavigate();
@@ -20,7 +25,7 @@ function usePasswordReset() {
       .post(`account/password-reset-confirm/${username}/${token}`, data)
       .then((res) => res.data);
 
-  return useMutation<Response, AxiosError<Response>, FormData>({
+  return useMutation<Response, AxiosError<IError>, FormData>({
     mutationFn: setPassword,
     onSuccess: () => {
       navigate("/login", { replace: true });
@@ -30,9 +35,14 @@ function usePasswordReset() {
       });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data.message, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        (error.response?.data.error && error.response?.data.error) ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
+          "Password Reset Failed",
+        {
+          variant: "error",
+        }
+      );
     },
   });
 }

@@ -10,6 +10,7 @@ interface EditSendLiveDataContext {
 
 interface IError {
   error: string;
+  errors: string[];
 }
 
 function useEditSendLiveData() {
@@ -66,7 +67,10 @@ function useEditSendLiveData() {
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;
       } else {
-        errorMessage = error.response?.data.error || "Failed to Edit Endpoint";
+        errorMessage =
+          error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
+          "Failed to Edit Endpoint";
       }
       enqueueSnackbar(errorMessage, { variant: "error" });
       if (!context) return;

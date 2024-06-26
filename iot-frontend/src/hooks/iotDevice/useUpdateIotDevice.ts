@@ -3,7 +3,6 @@ import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import IotDevice from "../../entities/IotDevice";
-import useIotDeviceDataGridStore from "../../store/datagrid/iotDeviceDataGridStore";
 
 interface EditIotDeviceContext {
   previousIotDeviceList: IotDevice[];
@@ -17,8 +16,6 @@ interface IError {
 function useUpdateIotDevice() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useIotDeviceDataGridStore((state) => state.rows);
-  const setRows = useIotDeviceDataGridStore((state) => state.setRows);
 
   const updateIotDevice = async (IotDevice: IotDevice) =>
     axiosInstance
@@ -47,12 +44,6 @@ function useUpdateIotDevice() {
       return { previousIotDeviceList };
     },
     onSuccess: (newIotDevice) => {
-      if (rows.length !== 0) {
-        const newRows = rows.map((row) =>
-          row.id === newIotDevice.id ? newIotDevice : row
-        );
-        setRows(newRows);
-      }
       enqueueSnackbar("Iot Device sucessfully Updated", { variant: "success" });
       queryClient.setQueryData<IotDevice[]>(
         ["iotDeviceList"],

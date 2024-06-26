@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useAxios from "../../api/axiosInstance";
-import { enqueueSnackbar } from "notistack";
 import { AxiosError } from "axios";
+import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
 import Sensor from "../../entities/Sensor";
 
 interface EditSensorContext {
@@ -45,7 +45,6 @@ function useEditSensor() {
       );
     },
     onError: (error, _sensor, context) => {
-      // reverting to the old rows here sensor is the sensor to be deleted
       let errorMessage = "";
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;

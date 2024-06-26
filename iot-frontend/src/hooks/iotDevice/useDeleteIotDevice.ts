@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxios from "../../api/axiosInstance";
 import { enqueueSnackbar } from "notistack";
 import { AxiosError, AxiosResponse } from "axios";
-import useIotDeviceDataGridStore from "../../store/datagrid/iotDeviceDataGridStore";
 import IotDevice from "../../entities/IotDevice";
 
 interface DeleteIotDeviceContext {
@@ -16,8 +15,6 @@ interface IError {
 function useDeleteIotDevice() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useIotDeviceDataGridStore((state) => state.rows);
-  const setRows = useIotDeviceDataGridStore((state) => state.setRows);
 
   const deleteIotDevice = async (iotDevice: IotDevice) => {
     return axiosInstance.delete(`iot-device/${iotDevice.id}/`);
@@ -47,9 +44,7 @@ function useDeleteIotDevice() {
     onSuccess: () => {
       enqueueSnackbar("IotDevice sucessfully Deleted", { variant: "success" });
     },
-    onError: (error, iotDevice, context) => {
-      // reverting to the old rows here sensor is the sensor to be deleted
-      setRows([...rows, iotDevice]);
+    onError: (error, _iotDevice, context) => {
       let errorMessage = "";
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;

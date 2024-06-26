@@ -10,8 +10,9 @@ interface EditCompanyContext {
 }
 
 interface IError {
-  error: string;
-  name: string[];
+  error?: string;
+  errors?: string;
+  name?: string[];
 }
 
 function useEditCompany() {
@@ -60,6 +61,7 @@ function useEditCompany() {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response?.data.errors[0]) ||
           (error.response?.data.name && error.response?.data.name[0]) ||
           "Failed to Edit Company";
       }

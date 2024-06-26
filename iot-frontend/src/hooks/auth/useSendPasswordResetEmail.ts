@@ -10,13 +10,17 @@ interface Response {
   message: string;
 }
 
+interface IError {
+  error: string;
+}
+
 function useSendPasswordResetEmail() {
   const sendPasswordResetEmail = async (data: FormData) =>
     axiosPrivate.post("account/password-reset/", data).then((res) => {
       return res.data;
     });
 
-  return useMutation<Response, AxiosError<string>, FormData>({
+  return useMutation<Response, AxiosError<IError>, FormData>({
     mutationFn: sendPasswordResetEmail,
   });
 }

@@ -16,7 +16,8 @@ interface IFormInputs {
 }
 
 interface IError {
-  error: string;
+  error?: string;
+  errors?: string[];
 }
 
 function useEditDeviceSensors(iotDeviceId: number) {
@@ -48,6 +49,7 @@ function useEditDeviceSensors(iotDeviceId: number) {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response.data.errors[0]) ||
           "Failed to Edit Associate Sensor of IotDevice";
       }
       enqueueSnackbar(errorMessage, {

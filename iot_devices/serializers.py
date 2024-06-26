@@ -248,6 +248,7 @@ class SensorSerializer(serializers.Serializer):
 
 
 class IotDeviceSensorSerializer(serializers.ModelSerializer):
+    # format fieldname_sensor={"field1": {"sensor_name": "value", "max_limit": "value", "min_limit": "value"}}
     fieldname_sensor = serializers.DictField(
         child=SensorSerializer(), write_only=True, required=False
     )
@@ -284,12 +285,12 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
 
     def check_empty_dict(self, dict, name):
         if not bool(dict):
-            raise serializers.ValidationError({"error": empty_dict(name)})
+            raise serializers.ValidationError({"errors": empty_dict(name)})
 
     def check_dict_keys_pattern(self, keys):
         pattern = re.compile(r"^field\d+$")
         if not all(pattern.match(key) for key in keys):
-            raise serializers.ValidationError({"error": ERROR_INVALID_FIELD_NAME})
+            raise serializers.ValidationError({"errors": ERROR_INVALID_FIELD_NAME})
 
     def validate_fieldname_sensor(self, value):
         self.check_dict_keys_pattern(value.keys())
@@ -312,7 +313,7 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
                 if sensor_name in seen_name or seen_name.add(sensor_name):
                     raise serializers.ValidationError(
                         {
-                            "error": f"Sensor '{sensor_name}' is assigned to two different fields"
+                            "errors": f"Sensor '{sensor_name}' is assigned to two different fields"
                         }
                     )
 
@@ -327,7 +328,7 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
         # checking if sensor name provided in fieldname_sensor_dict exists in the system or not.
         if not set(sensor_name_list).issubset(sensor_name_set):
             raise serializers.ValidationError(
-                {"error": "A sensor is provided which is not in our system"}
+                {"errors": "A sensor is provided which is not in our system"}
             )
 
     def validate(self, attrs):
@@ -350,7 +351,7 @@ class IotDeviceSensorSerializer(serializers.ModelSerializer):
                             fieldname == field_name
                         ):
                             raise serializers.ValidationError(
-                                {"error": error_assigned_sensor(sensorname, fieldname)}
+                                {"errors": error_assigned_sensor(sensorname, fieldname)}
                             )
 
         elif request.method == "PATCH":

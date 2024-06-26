@@ -22,7 +22,7 @@ def password_reset(request):
     email = request.data.get("email")
     if not email:
         return Response(
-            {"message": "No email address provided"}, status=status.HTTP_400_BAD_REQUEST
+            {"error": "No email address provided"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     sending_password_reset_email.delay(email)
@@ -46,9 +46,7 @@ def password_reset_confirm(request, username, token):
     user = UserCache.get_user(username)
 
     if not activation_token_for_email.check_token(user, token):
-        return Response(
-            {"message": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
     serializer = UserPasswordSerializer(data=request.data)
     if serializer.is_valid():

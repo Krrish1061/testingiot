@@ -3,7 +3,6 @@ import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import IDealer from "../../entities/Dealer";
-import useDealerDataGridStore from "../../store/datagrid/dealerDataGridStore";
 import slugify from "../../utilis/slugifyName";
 
 interface IFormInputs {
@@ -27,8 +26,6 @@ interface AddDealerContext {
 function useAddDealer() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useDealerDataGridStore((state) => state.rows);
-  const setRows = useDealerDataGridStore((state) => state.setRows);
 
   const addDealer = async (data: IFormInputs) =>
     axiosInstance.post<IDealer>("dealer/", data).then((res) => res.data);
@@ -68,8 +65,6 @@ function useAddDealer() {
           dealer.id === context.newDealerId ? newDealer : dealer
         )
       );
-
-      if (rows.length !== 0) setRows([...rows, newDealer]);
     },
     onError: (error, _formsInputs, context) => {
       let errorMessage = "";
@@ -92,9 +87,6 @@ function useAddDealer() {
         ["dealerList"],
         context.previousDealerList
       );
-      if (rows.length !== 0) {
-        setRows(rows.filter((row) => row.id !== context.newDealerId));
-      }
     },
   });
 }

@@ -1,6 +1,5 @@
 import { AxiosError } from "axios";
 import useAxios from "../../api/axiosInstance";
-// import IotDevice from "../../entities/IotDevice";
 import { useQuery } from "@tanstack/react-query";
 import { enqueueSnackbar } from "notistack";
 

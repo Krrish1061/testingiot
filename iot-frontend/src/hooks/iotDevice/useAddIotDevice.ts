@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import useAxios from "../../api/axiosInstance";
 import { enqueueSnackbar } from "notistack";
-import IotDevice from "../../entities/IotDevice";
+import useAxios from "../../api/axiosInstance";
 import { IDeviceFormInputs } from "../../components/iotDevice/zodSchema/IotDeviceSchema";
-import useIotDeviceDataGridStore from "../../store/datagrid/iotDeviceDataGridStore";
+import IotDevice from "../../entities/IotDevice";
 
 interface IError {
-  error: string;
+  error?: string;
+  errors?: string[];
   board_id?: string[];
 }
 
@@ -19,8 +19,6 @@ interface AddIotDeviceContext {
 function useAddIotDevice() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useIotDeviceDataGridStore((state) => state.rows);
-  const setRows = useIotDeviceDataGridStore((state) => state.setRows);
 
   const addIotDevice = (data: IDeviceFormInputs) =>
     axiosInstance
@@ -62,7 +60,6 @@ function useAddIotDevice() {
     },
     onSuccess: (newIotDevice, _formsInputs, context) => {
       enqueueSnackbar("Iot Device sucessfully Added", { variant: "success" });
-      if (rows.length !== 0) setRows([...rows, newIotDevice]);
       if (!context) return;
       queryClient.setQueryData<IotDevice[]>(
         ["iotDeviceList"],
@@ -79,6 +76,7 @@ function useAddIotDevice() {
       } else {
         errorMessage =
           error.response?.data.error ||
+          (error.response?.data.errors && error.response.data.errors[0]) ||
           (error.response?.data.board_id && error.response.data.board_id[0]) ||
           "Failed to Create IotDevice";
       }

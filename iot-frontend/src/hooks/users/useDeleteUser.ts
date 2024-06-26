@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError, AxiosResponse } from "axios";
-import useAxios from "../../api/axiosInstance";
-import useAuthStore from "../../store/authStore";
 import { enqueueSnackbar } from "notistack";
+import useAxios from "../../api/axiosInstance";
 import User from "../../entities/User";
-import useUserDataGridStore from "../../store/datagrid/userDataGridStore";
+import useAuthStore from "../../store/authStore";
 
 interface DeleteUserContext {
   previousUserList: User[];
@@ -17,8 +16,6 @@ interface IError {
 function useDeleteUser() {
   const axiosInstance = useAxios();
   const user = useAuthStore((state) => state.user);
-  const rows = useUserDataGridStore((state) => state.rows);
-  const setRows = useUserDataGridStore((state) => state.setRows);
   const queryClient = useQueryClient();
 
   const deleteUser = async (modifiedUser: User) =>
@@ -44,9 +41,7 @@ function useDeleteUser() {
     onSuccess: () => {
       enqueueSnackbar("User sucessfull Deleted", { variant: "success" });
     },
-    onError: (error, user, context) => {
-      // reverting to the old rows here user is the user to be deleted
-      setRows([...rows, user]);
+    onError: (error, _user, context) => {
       let errorMessage = "";
       if (error.code === "ERR_NETWORK") {
         errorMessage = error.message;

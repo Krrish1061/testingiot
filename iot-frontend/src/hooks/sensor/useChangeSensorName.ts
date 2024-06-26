@@ -3,7 +3,6 @@ import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import Sensor from "../../entities/Sensor";
-import useSensorDataGridStore from "../../store/datagrid/sensorDataGridStore";
 
 interface IFormInputs {
   sensor_name: string;
@@ -21,8 +20,6 @@ interface ChangeSensorNameContext {
 function useChangeSensorName() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useSensorDataGridStore((state) => state.rows);
-  const setRows = useSensorDataGridStore((state) => state.setRows);
 
   const changeSensorName = async (data: IFormInputs) => {
     return axiosInstance
@@ -53,8 +50,7 @@ function useChangeSensorName() {
 
       return { previousSensorList };
     },
-    onSuccess: (sensor) => {
-      if (rows.length !== 0) setRows([...rows, sensor]);
+    onSuccess: () => {
       enqueueSnackbar("Sensor Name Changed Sucessfully", {
         variant: "success",
       });

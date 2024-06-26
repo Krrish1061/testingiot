@@ -1,17 +1,22 @@
+import { useEffect } from "react";
 import useSendLiveDataDataGrid from "../../../hooks/muiDataGrid/useSendLiveDataDataGrid";
 import useGetAllSendLiveData from "../../../hooks/sendLiveData/useGetAllSendLiveData";
 import useSendLiveDataDataGridStore from "../../../store/datagrid/sendLiveDataDataGrid";
+import ErrorReload from "../../ErrorReload";
 import BaseMuiGrid from "../../datagrid/BaseMuiGrid";
 import ConfirmDialog from "../../datagrid/ConfirmDialog";
 import DeleteDialog from "../../datagrid/DeleteDialog";
-import { useEffect } from "react";
 import SendLiveDataColumns from "./SendLiveDataColumns";
 import SendLiveDataToolBar from "./SendLiveDataToolBar";
-import ErrorReload from "../../ErrorReload";
 
 function DesktopSendLiveData() {
-  const { data, isError, isSuccess, isLoading, refetch } =
-    useGetAllSendLiveData();
+  const {
+    data: sendLiveDataList,
+    isError,
+    isSuccess,
+    isLoading,
+    refetch,
+  } = useGetAllSendLiveData();
   const {
     processRowUpdate,
     handleRowModesModelChange,
@@ -36,11 +41,10 @@ function DesktopSendLiveData() {
   );
 
   useEffect(() => {
-    if (isSuccess && rows.length === 0) {
-      setRows(data);
+    if (isSuccess) {
+      setRows(sendLiveDataList);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess]);
+  }, [isSuccess, sendLiveDataList, setRows]);
 
   const columns = SendLiveDataColumns();
 

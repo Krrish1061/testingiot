@@ -3,7 +3,6 @@ import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import Company from "../../entities/Company";
-import useCompanyDataGridStore from "../../store/datagrid/companyDataGridStore";
 import slugify from "../../utilis/slugifyName";
 
 interface IFormInputs {
@@ -27,8 +26,6 @@ interface AddCompanyContext {
 function useAddCompany() {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useCompanyDataGridStore((state) => state.rows);
-  const setRows = useCompanyDataGridStore((state) => state.setRows);
 
   const addCompany = async (data: IFormInputs) =>
     axiosInstance.post<Company>("company/", data).then((res) => res.data);
@@ -69,8 +66,6 @@ function useAddCompany() {
           company.id === context.newCompanyId ? newCompany : company
         )
       );
-
-      if (rows.length !== 0) setRows([...rows, newCompany]);
     },
     onError: (error, _formsInputs, context) => {
       let errorMessage = "";
@@ -93,9 +88,6 @@ function useAddCompany() {
         ["companyList"],
         context.previousCompanyList
       );
-      if (rows.length !== 0) {
-        setRows(rows.filter((row) => row.id !== context.newCompanyId));
-      }
     },
   });
 }

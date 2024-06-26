@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { enqueueSnackbar } from "notistack";
 import useAxios from "../../api/axiosInstance";
 import Sensor from "../../entities/Sensor";
-import { enqueueSnackbar } from "notistack";
-import useSensorDataGridStore from "../../store/datagrid/sensorDataGridStore";
 
 interface IFormInputs {
   name: string;
@@ -16,6 +15,7 @@ interface IFormInputs {
 
 interface IError {
   error?: string;
+  errors?: string[];
   name?: string[];
 }
 
@@ -27,8 +27,6 @@ interface AddSensorContext {
 const useAddSensor = () => {
   const axiosInstance = useAxios();
   const queryClient = useQueryClient();
-  const rows = useSensorDataGridStore((state) => state.rows);
-  const setRows = useSensorDataGridStore((state) => state.setRows);
 
   const addSensor = (data: IFormInputs) =>
     axiosInstance.post<Sensor>("sensor/add/", data).then((res) => res.data);
@@ -57,7 +55,6 @@ const useAddSensor = () => {
       },
       onSuccess: (newSensor, _formsInputs, context) => {
         enqueueSnackbar("Sensor sucessfully Created", { variant: "success" });
-        if (rows.length !== 0) setRows([...rows, newSensor]);
         if (!context) return;
         queryClient.setQueryData<Sensor[]>(["sensorList"], (sensors) =>
           sensors?.map((sensor) =>
@@ -72,6 +69,7 @@ const useAddSensor = () => {
         } else {
           errorMessage =
             error.response?.data.error ||
+            (error.response?.data.errors && error.response?.data.errors[0]) ||
             (error.response?.data.name && error.response.data.name[0]) ||
             "Failed to Create Sensor";
         }
