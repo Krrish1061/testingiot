@@ -9,6 +9,7 @@ import useGetAllUser from "../../../hooks/users/useGetAllUser";
 import LoadingSpinner from "../../LoadingSpinner";
 import UserRow from "./UserRow";
 import ErrorReload from "../../ErrorReload";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileManageUsers() {
   const { data: users, isError, isLoading, refetch } = useGetAllUser();
@@ -21,6 +22,8 @@ function MobileManageUsers() {
       />
     );
   if (isLoading) return <LoadingSpinner />;
+
+  if (users.length === 0) return <CustomNoRowsOverlay text="No Users" />;
 
   return (
     <TableContainer component={Paper}>

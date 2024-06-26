@@ -10,6 +10,7 @@ import useAuthStore from "../../../store/authStore";
 import ErrorReload from "../../ErrorReload";
 import LoadingSpinner from "../../LoadingSpinner";
 import CompanyRow from "./CompanyRow";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileManageCompanies() {
   const { data: companies, isError, isLoading, refetch } = useGetAllCompany();
@@ -23,6 +24,8 @@ function MobileManageCompanies() {
       />
     );
   if (isLoading) return <LoadingSpinner />;
+
+  if (companies.length === 0) return <CustomNoRowsOverlay text="No Company" />;
 
   return (
     <TableContainer component={Paper}>

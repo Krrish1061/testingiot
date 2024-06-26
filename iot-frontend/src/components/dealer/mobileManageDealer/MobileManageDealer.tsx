@@ -9,6 +9,7 @@ import useGetAllDealer from "../../../hooks/dealer/useGetAllDealer";
 import ErrorReload from "../../ErrorReload";
 import LoadingSpinner from "../../LoadingSpinner";
 import DealerRow from "./DealerRow";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileManageDealer() {
   const { data: dealerList, isError, isLoading, refetch } = useGetAllDealer();
@@ -21,6 +22,8 @@ function MobileManageDealer() {
       />
     );
   if (isLoading) return <LoadingSpinner />;
+
+  if (dealerList.length === 0) return <CustomNoRowsOverlay text="No Dealer" />;
 
   return (
     <TableContainer component={Paper}>

@@ -14,6 +14,7 @@ import ErrorReload from "../../ErrorReload";
 import LoadingSpinner from "../../LoadingSpinner";
 import AddSendLiveData from "../AddSendLiveData";
 import SendLiveDataRow from "./SendLiveDataRow";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileSendLiveData() {
   const {
@@ -61,6 +62,7 @@ function MobileSendLiveData() {
           </TableBody>
         </Table>
       </TableContainer>
+      {sendLiveDataList.length === 0 && <CustomNoRowsOverlay />}
       <AddSendLiveData open={open} setOpen={setOpen} />
     </>
   );

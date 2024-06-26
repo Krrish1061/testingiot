@@ -9,6 +9,7 @@ import useGetAllIotDevice from "../../../hooks/iotDevice/useGetAllIotDevice";
 import ErrorReload from "../../ErrorReload";
 import LoadingSpinner from "../../LoadingSpinner";
 import IotDeviceRow from "./IotDeviceRow";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileManageIotDevice() {
   const {
@@ -25,6 +26,9 @@ function MobileManageIotDevice() {
       />
     );
   if (isLoading) return <LoadingSpinner />;
+
+  if (iotDevices.length === 0)
+    return <CustomNoRowsOverlay text="No Iot Device" />;
 
   return (
     <TableContainer component={Paper}>

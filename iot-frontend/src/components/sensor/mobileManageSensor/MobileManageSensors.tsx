@@ -9,6 +9,7 @@ import LoadingSpinner from "../../LoadingSpinner";
 import useGetAllSensors from "../../../hooks/sensor/useGetAllSensors";
 import SensorRow from "./SensorRow";
 import ErrorReload from "../../ErrorReload";
+import CustomNoRowsOverlay from "../../datagrid/CustomNoRowsOverlay";
 
 function MobileManageSensors() {
   const { data: sensors, isError, isLoading, refetch } = useGetAllSensors();
@@ -21,6 +22,8 @@ function MobileManageSensors() {
       />
     );
   if (isLoading) return <LoadingSpinner />;
+
+  if (sensors.length === 0) return <CustomNoRowsOverlay text="No Sensor" />;
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
