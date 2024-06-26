@@ -12,7 +12,7 @@ interface Props {
   username?: string;
 }
 
-function useGetIotDeviceSensor({ companySlug, username }: Props) {
+function useGetAllIotDeviceSensor({ companySlug, username }: Props) {
   const axiosInstance = useAxios();
 
   const getIotDeviceSensor = () =>
@@ -33,4 +33,4 @@ function useGetIotDeviceSensor({ companySlug, username }: Props) {
   });
 }
 
-export default useGetIotDeviceSensor;
+export default useGetAllIotDeviceSensor;

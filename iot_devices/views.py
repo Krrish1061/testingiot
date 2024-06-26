@@ -250,12 +250,40 @@ def get_all_device_sensor(request):
             else IotDeviceCache.get_all_user_iot_devices(username=username)
         )
 
+        if iot_devices is None:
+            return Response(
+                {"error": "No Iot Device found with specified company or user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         iot_device_sensors = {}
         for device_id in iot_devices:
             device_sensors = IotDeviceCache.get_all_device_sensors(device_id)
             serializer = IotDeviceSensorSerializer(device_sensors, many=True)
             iot_device_sensors[device_id] = serializer.data
         return Response(iot_device_sensors, status=status.HTTP_200_OK)
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_device_sensor(request, device_id):
+    user = UserCache.get_user(username=request.user.username)
+    user_groups = get_groups_tuple(user)
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        iot_device = IotDeviceCache.get_iot_device(device_id)
+
+        if iot_device is None:
+            return Response(
+                {"error": "Iot Device not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        device_sensors = IotDeviceCache.get_all_device_sensors(device_id)
+        serializer = IotDeviceSensorSerializer(device_sensors, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN

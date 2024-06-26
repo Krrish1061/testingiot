@@ -162,6 +162,8 @@ class IotDeviceCaching(Cache):
         if user_devices is None:
             if user is None:
                 user = UserCache.get_user(username)
+                if user is None:
+                    return None
             user_devices = user.iot_device.values_list("id", flat=True)
             self.set(cache_key=cache_key, data=user_devices)
         return user_devices
@@ -174,6 +176,8 @@ class IotDeviceCaching(Cache):
         if company_devices is None:
             if company is None:
                 company = CompanyCache.get_company(company_slug)
+                if company is None:
+                    return None
             company_devices = company.iot_device.values_list("id", flat=True)
             self.set(cache_key=cache_key, data=company_devices)
         return company_devices

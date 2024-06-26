@@ -1,34 +1,34 @@
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import IotDeviceSensor from "../../entities/IotDeviceSensor";
-import { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
-import CancelIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
 import AddIcon from "@mui/icons-material/Add";
+import CancelIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import { IFormInputs } from "./SensorField";
+import { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
+import { ZodError, ZodIssue } from "zod";
+import IotDeviceSensor from "../../entities/IotDeviceSensor";
 import Sensor from "../../entities/Sensor";
-import IconButton from "@mui/material/IconButton";
-import { ZodIssue, ZodError } from "zod";
-import DeviceSensorSchema from "./zodSchema/DeviceSensorSchema";
+import useAddIotDeviceSensors from "../../hooks/iotDevice/useAddIotDeviceSensors";
+import useDeleteDeviceSensor from "../../hooks/iotDevice/useDeleteDeviceSensor";
+import useEditDeviceSensors from "../../hooks/iotDevice/useEditDeviceSensor";
+import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
+import CheckBox from "./CheckBox";
+import ErrorTableRow from "./ErrorTableRow";
 import MaxMinField from "./MaxMinField";
 import SensorAutoComplete from "./SensorAutoComplete";
-import CheckBox from "./CheckBox";
-import useAddIotDeviceSensors from "../../hooks/iotDevice/useAddIotDeviceSensors";
-import CircularProgress from "@mui/material/CircularProgress";
-import useEditDeviceSensors from "../../hooks/iotDevice/useEditDeviceSensor";
-import ErrorTableRow from "./ErrorTableRow";
-import useDeleteDeviceSensor from "../../hooks/iotDevice/useDeleteDeviceSensor";
-import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
+import { IFormInputs } from "./SensorField";
+import DeviceSensorSchema from "./zodSchema/DeviceSensorSchema";
 
 interface Props {
   iotDeviceId: number;
@@ -75,19 +75,19 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
   const {
     mutate: addDeviceSensors,
     isLoading: addLoading,
-    // isSuccess: addSuccess,
+    isSuccess: addSuccess,
   } = useAddIotDeviceSensors(iotDeviceId);
 
   const {
     mutate: editDeviceSensors,
     isLoading: editLoading,
-    // isSuccess: editSuccess,
+    isSuccess: editSuccess,
   } = useEditDeviceSensors(iotDeviceId);
 
   const {
     mutate: deleteDeviceSensors,
     isLoading: deleteLoading,
-    // isSuccess: deleteSuccess,
+    isSuccess: deleteSuccess,
   } = useDeleteDeviceSensor(iotDeviceId);
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -98,40 +98,44 @@ function UpdateIotDeviceSensor({ iotDeviceId, iotDeviceSensors }: Props) {
   const [errors, setErrors] = useState<ZodIssue[] | null>(null);
   const [deleteFieldName, setDeleteFieldName] = useState<string[] | null>(null);
 
-  useEffect(() => {
-    setFields(initalData);
-    setIsAddMode(false);
-    setNewFields(null);
-    setIsEditMode(false);
-    setIsDeleteMode(false);
-    setDeleteFieldName(null);
-  }, [initalData]);
-
   // useEffect(() => {
-  //   setFields({ ...fields, ...newFields });
+  //   setFields(initalData);
   //   setIsAddMode(false);
   //   setNewFields(null);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [addSuccess]);
-
-  // useEffect(() => {
   //   setIsEditMode(false);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [editSuccess]);
-
-  // useEffect(() => {
-  //   const updatedObject = { ...fields };
-  //   deleteFieldName?.forEach((key) => {
-  //     if (key in updatedObject) {
-  //       delete updatedObject[key];
-  //     }
-  //   });
-
-  //   setFields(updatedObject);
   //   setIsDeleteMode(false);
   //   setDeleteFieldName(null);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [deleteSuccess]);
+  // }, [initalData]);
+
+  useEffect(() => {
+    if (addSuccess) {
+      setFields({ ...fields, ...newFields });
+      setIsAddMode(false);
+      setNewFields(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addSuccess]);
+
+  useEffect(() => {
+    if (editSuccess) {
+      setIsEditMode(false);
+    }
+  }, [editSuccess]);
+
+  useEffect(() => {
+    if (deleteSuccess && deleteFieldName) {
+      const updatedObject = { ...fields };
+      deleteFieldName.forEach((key) => {
+        if (key in updatedObject) {
+          delete updatedObject[key];
+        }
+      });
+      setFields(updatedObject);
+      setIsDeleteMode(false);
+      setDeleteFieldName(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteSuccess]);
 
   const handleAddEditSaveButton = () => {
     try {

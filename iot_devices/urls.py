@@ -11,6 +11,11 @@ urlpatterns = [
         views.get_all_device_sensor,
         name="device-sensor-list-all",
     ),
+    path(
+        "device-sensors/<int:device_id>/",
+        views.get_device_sensor,
+        name="get-device-sensor",
+    ),
     path("<int:id>/", views.iot_device, name="iot-device-detail"),
     path(
         "<int:device_id>/sensors/",

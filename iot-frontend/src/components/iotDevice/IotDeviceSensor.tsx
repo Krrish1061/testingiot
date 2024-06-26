@@ -1,14 +1,14 @@
-import useGetIotDeviceSensor from "../../hooks/iotDevice/useGetIotDeviceSensor";
-import IIotDeviceSensor from "../../entities/IotDeviceSensor";
-import UpdateIotDeviceSensor from "./UpdateIotDeviceSensor";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
+import IIotDeviceSensor from "../../entities/IotDeviceSensor";
 import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
-import LoadingSpinner from "../LoadingSpinner";
+import useGetAllIotDeviceSensor from "../../hooks/iotDevice/useGetAllIotDeviceSensor";
 import ErrorReload from "../ErrorReload";
+import LoadingSpinner from "../LoadingSpinner";
+import UpdateIotDeviceSensor from "./UpdateIotDeviceSensor";
 
 interface IProps {
   companySlug?: string;
@@ -22,7 +22,7 @@ function IotDeviceSensor(Props: IProps) {
     isError,
     isLoading,
     refetch,
-  } = useGetIotDeviceSensor(Props);
+  } = useGetAllIotDeviceSensor(Props);
 
   if (isError)
     return (

@@ -67,7 +67,7 @@ function AddDealerForm({ open, setOpen }: Props) {
         },
       }}
     >
-      <DialogTitle mx="auto">ADD COMPANY</DialogTitle>
+      <DialogTitle mx="auto">ADD DEALER</DialogTitle>
       <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <Box marginBottom={2}>
