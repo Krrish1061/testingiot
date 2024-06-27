@@ -9,6 +9,7 @@ import {
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import ErrorReload from "../ErrorReload";
 import LoadingSpinner from "../LoadingSpinner";
+import Box from "@mui/material/Box";
 
 const CompanyList = () => {
   const { data: companyList, error, refetch, isLoading } = useGetAllCompany();
@@ -50,7 +51,7 @@ const CompanyList = () => {
   };
 
   return (
-    <>
+    <Box marginTop={1}>
       {companyList ? (
         <VirtualizedList
           height={arrayLength < 8 ? arrayLength * 50 : 400}
@@ -62,7 +63,7 @@ const CompanyList = () => {
           {renderRow}
         </VirtualizedList>
       ) : null}
-    </>
+    </Box>
   );
 };
 
