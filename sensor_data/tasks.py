@@ -9,6 +9,7 @@ from asgiref.sync import async_to_sync
 from celery import shared_task
 from channels.layers import get_channel_layer
 from django.db.models import CharField, DateTimeField, F, Func, Value
+from django.utils.timezone import make_aware
 
 from iot_devices.cache import IotDeviceCache
 from send_livedata.cache import SendLiveDataCache
@@ -76,6 +77,9 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
     except ValueError:
         start_date = (datetime.now() - timedelta(days=1)).date()
         end_date = datetime.now()
+
+    start_date = make_aware(start_date, kathmandu_tz)
+    end_date = make_aware(end_date, kathmandu_tz)
 
     sensor_data_qs = (
         SensorData.objects.filter(
