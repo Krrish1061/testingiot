@@ -23,6 +23,7 @@ from utils.error_message import (
     ERROR_PERMISSION_DENIED,
     ERROR_USER_LIMIT_REACHED,
 )
+from users.tasks import sending_verify_email
 
 User = get_user_model()
 
@@ -156,6 +157,8 @@ def add_user(request, username):
 
         # create_company_super_admin(new_user, user_groups)
         UserCache.set_user(new_user)
+        # calling celery task to send verification email to the new user
+        sending_verify_email.delay(new_user.username)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response(

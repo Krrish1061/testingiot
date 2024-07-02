@@ -6,6 +6,7 @@ from django.utils.text import slugify
 
 from company.cache import CompanyCache
 from users.cache import UserCache
+from users.tasks import sending_verify_email
 from utils.constants import GroupName, UserType
 
 from .models import Company, CompanyProfile
@@ -48,3 +49,5 @@ def handling_company_superadmin_user(sender, instance, created, **kwargs):
         UserCache.set_user(company_superadmin_user)
         instance.user = company_superadmin_user
         instance.save(update_fields=["user"])
+        # calling celery task to send verification email
+        sending_verify_email.delay(company_superadmin_user.username)

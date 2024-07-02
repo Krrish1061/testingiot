@@ -3,7 +3,6 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from users.models.user_models import UserProfile
-from users.tasks import sending_verify_email
 
 from .utilis import generate_unique_username
 
@@ -23,6 +22,3 @@ def handle_user_registered(sender, created, instance, *args, **kwargs):
     if created:
         # creating the profile for the new user
         UserProfile.objects.create(user=instance)
-
-        # calling celery task to send to send veirification email to the new user
-        sending_verify_email.delay(instance.username)
