@@ -112,7 +112,7 @@ function SuperAdminDashboard() {
     () =>
       userList?.filter(
         (user) =>
-          user.is_associated_with_company &&
+          !user.is_associated_with_company &&
           user.groups.includes(UserGroups.viewerGroup)
       ).length,
     [userList]

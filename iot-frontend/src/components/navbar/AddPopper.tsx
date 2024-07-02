@@ -16,12 +16,15 @@ import {
   RefObject,
   SetStateAction,
   SyntheticEvent,
+  lazy,
   useState,
 } from "react";
 import AddCompanyForm from "../company/AddCompanyForm";
-import AddDealerForm from "../dealer/AddDealerForm";
-import IotDeviceDialog from "../iotDevice/IotDeviceDialog";
-import AddSensorForm from "../sensor/AddSensorForm";
+import SuspenseFallback from "../SuspenseFallback";
+
+const LazyIotDeviceDialog = lazy(() => import("../iotDevice/IotDeviceDialog"));
+const LazyAddSensorForm = lazy(() => import("../sensor/AddSensorForm"));
+const LazyAddDealerForm = lazy(() => import("../dealer/AddDealerForm"));
 
 interface Props {
   open: boolean;
@@ -160,9 +163,16 @@ function AddPopper({
         setOpen={setCompanyForm}
         isUserSuperAdmin={isUserSuperAdmin}
       />
-      <AddSensorForm open={sensorForm} setOpen={setSensorForm} />
-      <IotDeviceDialog open={iotDeviceForm} setOpen={setIotDeviceForm} />
-      <AddDealerForm open={dealerForm} setOpen={setDealerForm} />
+      {isUserSuperAdmin && (
+        <SuspenseFallback isfallbackUndefined={true}>
+          <LazyIotDeviceDialog
+            open={iotDeviceForm}
+            setOpen={setIotDeviceForm}
+          />
+          <LazyAddSensorForm open={sensorForm} setOpen={setSensorForm} />
+          <LazyAddDealerForm open={dealerForm} setOpen={setDealerForm} />
+        </SuspenseFallback>
+      )}
     </>
   );
 }

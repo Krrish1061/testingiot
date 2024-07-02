@@ -38,7 +38,7 @@ function ProtectedAppLayout() {
   if (isRefreshTokenError) return <Outlet />;
 
   if (isLoading || isDealerLoading || isCompanyLoading)
-    return <LoadingSpinner size={80} thickness={4} />;
+    return <LoadingSpinner size={40} />;
 
   return <Outlet />;
 }

@@ -1,14 +1,24 @@
 import { Theme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import DesktopManageDealer from "../components/dealer/datagrid/DesktopManageDealer";
-import MobileManageDealer from "../components/dealer/mobileManageDealer/MobileManageDealer";
+import { lazy } from "react";
+import SuspenseFallback from "../components/SuspenseFallback";
+
+const LazyDesktopManageDealer = lazy(
+  () => import("../components/dealer/datagrid/DesktopManageDealer")
+);
+const LazyMobileManageDealer = lazy(
+  () => import("../components/dealer/mobileManageDealer/MobileManageDealer")
+);
 
 function ManageDealers() {
   const smallScreen = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("md")
   );
-  if (smallScreen) return <MobileManageDealer />;
-  else return <DesktopManageDealer />;
+  return (
+    <SuspenseFallback>
+      {smallScreen ? <LazyMobileManageDealer /> : <LazyDesktopManageDealer />}
+    </SuspenseFallback>
+  );
 }
 
 export default ManageDealers;

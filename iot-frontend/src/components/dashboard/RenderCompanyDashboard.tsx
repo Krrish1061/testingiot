@@ -1,16 +1,22 @@
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import { ReactNode, SyntheticEvent, useEffect, useMemo, useState } from "react";
+import {
+  ReactNode,
+  SyntheticEvent,
+  lazy,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import useGetAllIotDevice from "../../hooks/iotDevice/useGetAllIotDevice";
 import useAuthStore from "../../store/authStore";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import SuspenseFallback from "../SuspenseFallback";
 import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
 import LineGraphContainer from "../graph/LineGraphContainer";
-import IotDeviceApiSetting from "../iotDevice/IotDeviceApiSetting";
-import IotDeviceSensor from "../iotDevice/IotDeviceSensor";
 import LiveDataCardContainer from "../liveData/LiveDataCardContainer";
 
 interface TabPanelProps {
@@ -18,6 +24,11 @@ interface TabPanelProps {
   index: number;
   value: number;
 }
+
+const LazyIotDeviceSensor = lazy(() => import("../iotDevice/IotDeviceSensor"));
+const LazyIotDeviceApiSetting = lazy(
+  () => import("../iotDevice/IotDeviceApiSetting")
+);
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -131,10 +142,14 @@ function RenderCompanyDashboard() {
         <LineGraphContainer companySlug={companySlug} />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <IotDeviceSensor companySlug={companySlug} />
+        <SuspenseFallback
+          children={<LazyIotDeviceSensor companySlug={companySlug} />}
+        />
       </TabPanel>
       <TabPanel value={value} index={2}>
-        <IotDeviceApiSetting companySlug={companySlug} />
+        <SuspenseFallback
+          children={<LazyIotDeviceApiSetting companySlug={companySlug} />}
+        />
       </TabPanel>
     </>
   );

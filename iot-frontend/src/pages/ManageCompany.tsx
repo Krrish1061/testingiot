@@ -1,14 +1,28 @@
-import MobileManageCompanies from "../components/company/mobileManagecompany/MobileManageCompany";
 import { Theme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import DesktopManageCompanies from "../components/company/datagrid/DesktopManageCompanies";
+import { lazy } from "react";
+import SuspenseFallback from "../components/SuspenseFallback";
+
+const LazyDesktopManageCompanies = lazy(
+  () => import("../components/company/datagrid/DesktopManageCompanies")
+);
+const LazyMobileManageCompanies = lazy(
+  () => import("../components/company/mobileManagecompany/MobileManageCompany")
+);
 
 function ManageCompany() {
   const smallScreen = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("md")
   );
-  if (smallScreen) return <MobileManageCompanies />;
-  else return <DesktopManageCompanies />;
+  return (
+    <SuspenseFallback>
+      {smallScreen ? (
+        <LazyMobileManageCompanies />
+      ) : (
+        <LazyDesktopManageCompanies />
+      )}
+    </SuspenseFallback>
+  );
 }
 
 export default ManageCompany;

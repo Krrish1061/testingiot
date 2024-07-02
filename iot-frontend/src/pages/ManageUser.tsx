@@ -1,17 +1,26 @@
 import { Theme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import DesktopManageUser from "../components/user/datagrid/DesktopManageUser";
-import MobileManageUsers from "../components/user/mobileUserTable/MobileManageUsers";
+import { lazy } from "react";
+import SuspenseFallback from "../components/SuspenseFallback";
 
-// add api key request button on user column.
+const LazyDesktopManageUser = lazy(
+  () => import("../components/user/datagrid/DesktopManageUser")
+);
+const LazyMobileManageUsers = lazy(
+  () => import("../components/user/mobileUserTable/MobileManageUsers")
+);
+
 function ManageUser() {
   // for tablet and mobile devices
   const smallScreen = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("md")
   );
 
-  if (smallScreen) return <MobileManageUsers />;
-  else return <DesktopManageUser />;
+  return (
+    <SuspenseFallback>
+      {smallScreen ? <LazyMobileManageUsers /> : <LazyDesktopManageUser />}
+    </SuspenseFallback>
+  );
 }
 
 export default ManageUser;
