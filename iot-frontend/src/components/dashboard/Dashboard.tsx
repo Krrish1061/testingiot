@@ -56,6 +56,8 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (!user) return;
+
   return (
     <Box sx={{ display: "flex", width: 1 }}>
       <NavBar />

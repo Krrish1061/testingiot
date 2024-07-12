@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import useRefreshToken from "../hooks/auth/useRefreshToken";
 import useCompany from "../hooks/company/useCompany";
@@ -8,16 +8,14 @@ import useGetUser from "../hooks/users/useGetUser";
 import useAuthStore from "../store/authStore";
 
 function ProtectedAppLayout() {
-  const location = useLocation();
   const {
     mutate,
+    isLoading: isRefreshTokenLoading,
     isSuccess: isRefreshTokenSuccess,
     isIdle,
-    isError: isRefreshTokenError,
   } = useRefreshToken();
-  const { isLoading, isSuccess: isFetchingUserSuccess } = useGetUser(
-    isRefreshTokenSuccess
-  );
+  const { isInitialLoading: isUserLoading, isSuccess: isFetchingUserSuccess } =
+    useGetUser(isRefreshTokenSuccess);
   const isUserCompanySuperAdmin = useAuthStore(
     (state) => state.isUserCompanySuperAdmin
   );
@@ -28,16 +26,17 @@ function ProtectedAppLayout() {
   );
 
   useEffect(() => {
-    if (!isRefreshTokenSuccess && isIdle && location.state?.from !== "logout") {
+    if (!isRefreshTokenSuccess && isIdle) {
       mutate();
     }
-  }, [isRefreshTokenSuccess, isIdle, mutate, location]);
+  }, [isRefreshTokenSuccess, isIdle, mutate]);
 
-  if (location.state?.from === "logout") return <Outlet />;
-
-  if (isRefreshTokenError) return <Outlet />;
-
-  if (isLoading || isDealerLoading || isCompanyLoading)
+  if (
+    isRefreshTokenLoading ||
+    isUserLoading ||
+    isDealerLoading ||
+    isCompanyLoading
+  )
     return <LoadingSpinner size={40} />;
 
   return <Outlet />;

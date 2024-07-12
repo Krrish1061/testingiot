@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { enqueueSnackbar } from "notistack";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -37,6 +37,11 @@ const useLogin = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  if (location.state?.from === "logout") {
+    queryClient.clear();
+  }
 
   const loginUser = async (data: FormData) => {
     const csrfToken = await getCsrf();
@@ -68,7 +73,10 @@ const useLogin = () => {
       } else if (user.groups.includes(UserGroups.adminGroup)) {
         setIsUserAdmin(true);
       }
-      const redirectUrl = location.state?.from || "/";
+      const redirectFromLogout = location.state?.from === "logout";
+      const redirectUrl = redirectFromLogout
+        ? "/"
+        : location.state?.from || "/";
       navigate(redirectUrl, {
         replace: true,
       });

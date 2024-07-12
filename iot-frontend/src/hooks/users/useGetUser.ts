@@ -23,7 +23,7 @@ function useGetUser(isEnabled: boolean = true) {
   return useQuery<User>({
     queryKey: user ? ["users", user.username] : ["user"],
     queryFn: fetchUser,
-    enabled: isEnabled,
+    enabled: isEnabled && !!user,
     onSuccess: (data) => {
       const groups = data.groups;
       if (groups.includes(UserGroups.superAdminGroup)) {

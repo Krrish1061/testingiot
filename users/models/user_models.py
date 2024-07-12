@@ -97,6 +97,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(
         default=timezone.now, editable=False, null=True, blank=True
     )
+    invalidate_jwt_token_upto = models.DateTimeField(null=True, blank=True)
     api_key = models.CharField(
         verbose_name="Authentication Api key",
         max_length=32,

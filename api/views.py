@@ -9,7 +9,7 @@ from iot_devices.cache import IotDeviceCache
 from sensor_data.models import SensorData
 from sensor_data.pagination import SensorDataPaginator
 from sensors.cache import SensorCache
-from users.auth import ApiKeyAuthentication
+from users.auth.api_auth import ApiKeyAuthentication
 
 
 # Create your views here.

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.utils import timezone
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_protect
 from rest_framework import status
@@ -11,11 +12,7 @@ from rest_framework.response import Response
 from company.cache import CompanyCache
 from dealer.cache import DealerCache
 from users.cache import UserCache
-from users.serializers import (
-    ChangePasswordSerializer,
-    UserPasswordSerializer,
-    UserSerializer,
-)
+from users.serializers import ChangePasswordSerializer, UserPasswordSerializer
 from users.tasks import (
     sending_account_is_active_email,
     sending_confirmation_email,
@@ -96,7 +93,6 @@ def generate_user_api_key(request, username):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def change_username(request, username):
-    # change the name of the username of the username
     requested_user = request.user
     if not check_username(requested_user, username):
         return Response({"error": ERROR_INVALID_URL}, status=status.HTTP_404_NOT_FOUND)
@@ -122,8 +118,8 @@ def change_username(request, username):
         )
 
     # checking if the username already exists
-    users = UserCache.get_all_users()
-    if any(new_username == user.username for user in users):
+    user = UserCache.get_user(new_username)
+    if user:
         return Response(
             {
                 "error": f"'{new_username}' username already exist, Please choose another Username"
@@ -132,13 +128,16 @@ def change_username(request, username):
         )
     # updating username field
     requested_user.username = new_username
-    requested_user.save(update_fields=["username"])
+    requested_user.invalidate_jwt_token_upto = timezone.now()
+    requested_user.save(update_fields=["username", "invalidate_jwt_token_upto"])
     # modifing user profile
     user_profile.is_username_modified = True
     user_profile.save(update_fields=["is_username_modified"])
     UserCache.clear()
-    serializer = UserSerializer(requested_user, context={"request": request})
-    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(
+        {"message": "username sucessfully changed"}, status=status.HTTP_200_OK
+    )
 
 
 @csrf_protect
@@ -153,6 +152,7 @@ def change_password(request, username):
 
     if serializer.is_valid():
         user.set_password(serializer.validated_data.get("new_password"))
+        user.invalidate_jwt_token_upto = timezone.now()
         user.save()
         UserCache.delete_user(user.id)
         return Response(

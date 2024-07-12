@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import csrf_protect
 from rest_framework import status
@@ -38,6 +39,9 @@ def password_reset(request):
 @csrf_protect
 @api_view(["POST"])
 def password_reset_confirm(request, username, token):
+    """
+    Reset the password and sends the confirmation Email to the user
+    """
     try:
         username = urlsafe_base64_decode(username).decode("utf-8")
     except (TypeError, ValueError, OverflowError, UnicodeDecodeError):
@@ -51,7 +55,7 @@ def password_reset_confirm(request, username, token):
     serializer = UserPasswordSerializer(data=request.data)
     if serializer.is_valid():
         user.set_password(serializer.validated_data.get("password"))
-        user.is_active = True
+        user.invalidate_jwt_token_upto = timezone.now()
         user.save()
         # send password reset confirmation email.
         first_name = user.profile.first_name if user.profile.first_name else None

@@ -14,7 +14,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useLogout from "../../hooks/auth/useLogout";
 
 const schema = z.object({
   username: z
@@ -28,9 +27,8 @@ type IFormInputs = z.infer<typeof schema>;
 
 function ChangeUsernameForm() {
   const user = useAuthStore((state) => state.user);
-  const { mutateAsync, isSuccess, isLoading } = useChangeUsername();
+  const { mutateAsync, isLoading, isSuccess } = useChangeUsername();
   const [isEditMode, setIsEditMode] = useState(false);
-  const { mutate, isLoading: isUserloggingOut } = useLogout();
 
   const {
     register,
@@ -44,9 +42,9 @@ function ChangeUsernameForm() {
 
   useEffect(() => {
     if (isSuccess) {
-      mutate();
+      setIsEditMode(false);
     }
-  }, [isSuccess, mutate]);
+  }, [isSuccess, setIsEditMode]);
 
   const onSubmit: SubmitHandler<IFormInputs> = async (data) => {
     if (data.username !== user?.username) {
@@ -81,10 +79,10 @@ function ChangeUsernameForm() {
           Change Username
         </Button>
       ) : (
-        <Box sx={{ alignSelf: "flex-end" }}>
+        <Box sx={{ alignSelf: "flex-end", position: "relative" }}>
           <Button
             size="small"
-            disabled={isUserloggingOut}
+            disabled={isLoading}
             startIcon={<SaveIcon />}
             onClick={handleSubmit(onSubmit)}
           >
@@ -107,7 +105,7 @@ function ChangeUsernameForm() {
           <Button
             size="small"
             startIcon={<CancelIcon />}
-            disabled={isLoading || isUserloggingOut}
+            disabled={isLoading}
             onClick={() => {
               reset({ username: user?.username });
               setIsEditMode(!isEditMode);

@@ -1,3 +1,4 @@
+import zoneinfo
 from datetime import datetime
 
 from django.conf import settings
@@ -14,6 +15,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from users.cache import UserCache
 from users.serializers import CustomTokenObtainPairSerializer, UserSerializer
 from utils.error_message import (
     ERROR_INCORRECT_USERNAME_PASSWORD,
@@ -93,6 +95,10 @@ def logout_user(request):
 @api_view(["POST"])
 @csrf_protect
 def cookie_token_refresh(request):
+    """
+    Handles access token refresh using a refresh token stored in a signed cookie.
+
+    """
     try:
         refresh_token = request.get_signed_cookie("refresh_token")
     except KeyError:
@@ -105,6 +111,47 @@ def cookie_token_refresh(request):
             {"error": ERROR_INVALID_TOKEN},
             status=status.HTTP_401_UNAUTHORIZED,
         )
+
+    try:
+        token = RefreshToken(refresh_token)
+    except TokenError:
+        return Response(
+            {"error": ERROR_INVALID_TOKEN},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    created_at_epoch_time = token.get("iat")
+    username = token.get("username")
+
+    if not created_at_epoch_time or not username:
+        return Response(
+            {"error": "Invalid token payload."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    user = UserCache.get_user(username)
+
+    if user is None:
+        return Response(
+            {"error": ERROR_INVALID_TOKEN},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    kathmandu_tz = zoneinfo.ZoneInfo("Asia/Kathmandu")
+    created_at = datetime.fromtimestamp(created_at_epoch_time, tz=kathmandu_tz)
+    invalidate_jwt_token_upto = user.invalidate_jwt_token_upto
+
+    if invalidate_jwt_token_upto and invalidate_jwt_token_upto >= created_at:
+        token.blacklist()
+        response = Response(
+            {"error": ERROR_INVALID_TOKEN}, status=status.HTTP_401_UNAUTHORIZED
+        )
+        response.delete_cookie(
+            settings.SIMPLE_JWT["AUTH_COOKIE"],
+            domain=settings.SIMPLE_JWT["AUTH_COOKIE_DOMAIN"],
+            path=settings.SIMPLE_JWT["AUTH_COOKIE_PATH"],
+        )
+        return response
 
     serializer = TokenRefreshSerializer(data={"refresh": refresh_token})
     try:

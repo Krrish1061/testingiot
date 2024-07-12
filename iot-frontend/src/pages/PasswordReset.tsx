@@ -1,24 +1,23 @@
-import Card from "@mui/material/Card";
-import CardMedia from "@mui/material/CardMedia";
-import Stack from "@mui/material/Stack";
-import Logo from "/logo.png";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-
-import InputLabel from "@mui/material/InputLabel";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import InputAdornment from "@mui/material/InputAdornment";
-import IconButton from "@mui/material/IconButton";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
 import CircularProgress from "@mui/material/CircularProgress";
-import usePasswordReset from "../hooks/auth/usePasswordReset";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
+import usePasswordReset from "../hooks/auth/usePasswordReset";
+import Logo from "/logo.png";
 
 const schema = z
   .object({
@@ -29,7 +28,7 @@ const schema = z
       .max(32, "The password must be a maximun 32 characters")
       .refine(
         (value) =>
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W\w])(?!.*\s)[\W\w]{8,32}$/.test(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,32}$/.test(
             value
           ),
         {

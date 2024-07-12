@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production") disableReactDevTools();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 3,
       cacheTime: 30 * 60 * 1000, // 30 min
       staleTime: 30 * 60 * 1000, // 30 min
       refetchOnWindowFocus: false,
