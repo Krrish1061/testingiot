@@ -30,11 +30,7 @@ const DrawerList = () => {
           />
 
           <Divider component="li" />
-        </>
-      )}
 
-      {(isUserSuperAdmin || isUserDealer) && (
-        <>
           <DrawerListItem
             icon={<ApartmentIcon />}
             text="Company"

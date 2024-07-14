@@ -9,7 +9,6 @@ import {
 import useGetAllCompany from "../../hooks/company/useGetAllCompany";
 import ErrorReload from "../ErrorReload";
 import LoadingSpinner from "../LoadingSpinner";
-import Box from "@mui/material/Box";
 
 const CompanyList = () => {
   const { data: companyList, error, refetch, isLoading } = useGetAllCompany();
@@ -50,21 +49,37 @@ const CompanyList = () => {
     );
   };
 
-  return (
-    <Box marginTop={1}>
-      {companyList ? (
-        <VirtualizedList
-          height={arrayLength < 8 ? arrayLength * 50 : 400}
-          itemCount={companyList.length}
-          itemSize={50}
-          overscanCount={5}
-          width={"100%"}
-        >
-          {renderRow}
-        </VirtualizedList>
-      ) : null}
-    </Box>
-  );
+  if (companyList) {
+    return (
+      <VirtualizedList
+        height={arrayLength < 8 ? arrayLength * 50 : 400}
+        itemCount={companyList.length}
+        itemSize={50}
+        overscanCount={5}
+        width={"100%"}
+      >
+        {renderRow}
+      </VirtualizedList>
+    );
+  } else {
+    return;
+  }
+  // return (
+  //   <Box>
+  //     {companyList ? (
+  //       <VirtualizedList
+  //         height={arrayLength < 8 ? arrayLength * 50 : 400}
+  //         itemCount={companyList.length}
+  //         itemSize={50}
+  //         overscanCount={5}
+  //         width={"100%"}
+  //         style={{ marginTop: 1 }}
+  //       >
+  //         {renderRow}
+  //       </VirtualizedList>
+  //     ) : null}
+  //   </Box>
+  // );
 };
 
 export default CompanyList;
