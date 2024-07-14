@@ -12,7 +12,6 @@ import User from "../../entities/User";
 import useGetAllUser from "../../hooks/users/useGetAllUser";
 import ErrorReload from "../ErrorReload";
 import LoadingSpinner from "../LoadingSpinner";
-import Box from "@mui/material/Box";
 
 function getAdminUsers(users: User[] | undefined) {
   if (!users) return null;
@@ -68,21 +67,19 @@ function AdminUsersList() {
     }
   };
 
-  return (
-    <Box marginTop={1}>
-      {adminUsersList ? (
-        <VirtualizedList
-          height={arrayLength < 8 ? arrayLength * 50 : 400}
-          itemCount={arrayLength}
-          itemSize={50}
-          overscanCount={5}
-          width={"100%"}
-        >
-          {renderRow}
-        </VirtualizedList>
-      ) : null}
-    </Box>
-  );
+  if (adminUsersList)
+    return (
+      <VirtualizedList
+        height={arrayLength < 8 ? arrayLength * 50 : 400}
+        itemCount={arrayLength}
+        itemSize={50}
+        overscanCount={5}
+        width={"100%"}
+      >
+        {renderRow}
+      </VirtualizedList>
+    );
+  else return;
 }
 
 export default AdminUsersList;

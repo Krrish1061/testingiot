@@ -42,14 +42,22 @@ const CompanyList = () => {
         >
           <ListItemText
             primary={companyList[index].name}
-            sx={{ whiteSpace: "normal" }}
+            primaryTypographyProps={{
+              sx: {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: "2", // Number of lines before truncating
+              },
+            }}
           />
         </ListItemButton>
       </ListItem>
     );
   };
 
-  if (companyList) {
+  if (companyList)
     return (
       <VirtualizedList
         height={arrayLength < 8 ? arrayLength * 50 : 400}
@@ -61,25 +69,7 @@ const CompanyList = () => {
         {renderRow}
       </VirtualizedList>
     );
-  } else {
-    return;
-  }
-  // return (
-  //   <Box>
-  //     {companyList ? (
-  //       <VirtualizedList
-  //         height={arrayLength < 8 ? arrayLength * 50 : 400}
-  //         itemCount={companyList.length}
-  //         itemSize={50}
-  //         overscanCount={5}
-  //         width={"100%"}
-  //         style={{ marginTop: 1 }}
-  //       >
-  //         {renderRow}
-  //       </VirtualizedList>
-  //     ) : null}
-  //   </Box>
-  // );
+  else return;
 };
 
 export default CompanyList;
