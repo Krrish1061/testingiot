@@ -45,6 +45,7 @@ const CompanyList = () => {
             primaryTypographyProps={{
               sx: {
                 overflow: "hidden",
+                whiteSpace: "normal",
                 textOverflow: "ellipsis",
                 display: "-webkit-box",
                 WebkitBoxOrient: "vertical",
