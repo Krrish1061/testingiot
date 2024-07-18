@@ -149,11 +149,14 @@ def company(request, company_slug):
 
             try:
                 id = company.id
+                user_id = company.user.id if company.user else None
                 with transaction.atomic():
                     if company.user:
                         company.user.delete()
                     company.delete()
                 CompanyCache.delete_company(id)
+                if user_id:
+                    UserCache.delete_user(user_id)
             except ProtectedError as e:
                 related_objects_details = {
                     obj._meta.verbose_name for obj in e.protected_objects

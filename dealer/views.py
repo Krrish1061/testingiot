@@ -103,11 +103,14 @@ def dealer(request, dealer_slug):
                 # while deleting the dealers models delete the user instance which is handled via signals
                 try:
                     id = dealer.id
+                    user_id = dealer.user.id if dealer.user else None
                     with transaction.atomic():
                         if dealer.user:
                             dealer.user.delete()
                         dealer.delete()
                     DealerCache.delete_dealer(id)
+                    if user_id:
+                        UserCache.delete_user(user_id)
                 except ProtectedError as e:
                     related_objects_details = {
                         obj._meta.verbose_name for obj in e.protected_objects
