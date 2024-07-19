@@ -68,7 +68,7 @@ def sending_confirmation_email(username: str):
     html_message = render_to_string(
         "email/set_account_password_email.html",
         {
-            "verification_url": f"{base_url}/set-password/{username}/{confirmation_token}",
+            "password_set_url": f"{base_url}/set-password/{username}/{confirmation_token}",
         },
     )
 
