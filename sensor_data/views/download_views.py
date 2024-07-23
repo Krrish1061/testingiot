@@ -205,7 +205,7 @@ def get_dataframe(queryset):
 
 
 def sensor_data_to_excel(
-    sensor_dict, df, writer, workbook, header_format, value_column_format
+    sensor_dict, df, writer, workbook, header_format, value_column_format, mains_format
 ):
     for sensor, unit in sensor_dict.items():
         sensor_df = df.loc[lambda df: df["Sensor Name"] == sensor]
@@ -219,6 +219,23 @@ def sensor_data_to_excel(
             else f"{worksheet_name} Sensor Data"
         )
         worksheet.merge_range(0, 0, 0, 2, header_text, header_format)
+        if sensor == "mains":
+            (max_row, _) = sensor_df.shape
+            worksheet.conditional_format(
+                2,
+                0,
+                max_row + 2,
+                0,
+                {
+                    "type": "cell",
+                    "criteria": "==",
+                    "value": '"OFF"',
+                    "format": mains_format,
+                },
+            )
+
+        worksheet.set_column(0, 0, 15, value_column_format)
+        worksheet.set_column(1, 2, 30)
 
         sensor_df.to_excel(
             writer,
@@ -227,10 +244,6 @@ def sensor_data_to_excel(
             startrow=1,
             columns=["value", "Timestamp", "Device Name"],
         )
-
-        worksheet.set_column(0, 0, 15, value_column_format)
-        worksheet.set_column(1, 2, 30)
-        # worksheet.set_column(2, 2, 15)
 
 
 def users_and_company_data_to_excel(
@@ -242,6 +255,7 @@ def users_and_company_data_to_excel(
     worksheet_name,
     header_format,
     value_column_format,
+    mains_format,
 ):
     start_column = 0
     end_column = 2
@@ -264,6 +278,27 @@ def users_and_company_data_to_excel(
                     header_text,
                     header_format,
                 )
+
+                if sensor == "mains":
+                    (max_row, _) = sensor_df.shape
+                    worksheet.conditional_format(
+                        2,
+                        start_column,
+                        max_row + 2,
+                        start_column,
+                        {
+                            "type": "cell",
+                            "criteria": "==",
+                            "value": '"OFF"',
+                            "format": mains_format,
+                        },
+                    )
+
+                worksheet.set_column(
+                    start_column, start_column, 15, value_column_format
+                )
+                worksheet.set_column(start_column + 1, start_column + 2, 30)
+
                 sensor_df.to_excel(
                     writer,
                     sheet_name=worksheet_name,
@@ -273,11 +308,6 @@ def users_and_company_data_to_excel(
                     columns=["value", "Timestamp", "Device Name"],
                 )
 
-                worksheet.set_column(
-                    start_column, start_column, 15, value_column_format
-                )
-                worksheet.set_column(start_column + 1, start_column + 2, 30)
-                # worksheet.set_column(start_column + 2, start_column + 2, 15)
                 start_column = end_column + 2
                 end_column = end_column + 2 + 2
 
@@ -434,6 +464,7 @@ def download_sensor_data(request):
             ) as writer:
                 workbook = writer.book
                 value_column_format = workbook.add_format({"num_format": "0.00"})
+                mains_format = workbook.add_format({"bg_color": "red"})
                 header_format = workbook.add_format(
                     {"align": "center", "bold": True, "font_size": 12}
                 )
@@ -462,6 +493,7 @@ def download_sensor_data(request):
                                 worksheet_name,
                                 header_format,
                                 value_column_format,
+                                mains_format,
                             )
                 if companies:
                     for slug in companies:
@@ -486,6 +518,7 @@ def download_sensor_data(request):
                                 worksheet_name,
                                 header_format,
                                 value_column_format,
+                                mains_format,
                             )
                 if users is None and companies is None:
                     sensor_data_to_excel(
@@ -495,6 +528,7 @@ def download_sensor_data(request):
                         workbook,
                         header_format,
                         value_column_format,
+                        mains_format,
                     )
 
             if pd.read_excel(bio, nrows=2).empty:
@@ -645,6 +679,7 @@ def download_sensor_data(request):
             ) as writer:
                 workbook = writer.book
                 value_column_format = workbook.add_format({"num_format": "0.00"})
+                mains_format = workbook.add_format({"bg_color": "red"})
                 header_format = workbook.add_format(
                     {"align": "center", "bold": True, "font_size": 12}
                 )
@@ -656,6 +691,7 @@ def download_sensor_data(request):
                     workbook,
                     header_format,
                     value_column_format,
+                    mains_format,
                 )
         else:
             # file type is equal to csv
