@@ -2,7 +2,6 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Unstable_Grid2"; // Grid version 2
@@ -14,12 +13,11 @@ import useGetAllSensors from "../../hooks/sensor/useGetAllSensors";
 import useGetWebSocketToken from "../../hooks/webSocket/useGetWebSocketToken";
 import useDrawerStore from "../../store/drawerStore";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
-import IotDeviceDetailDialog from "../iotDevice/IotDeviceDetailDialog";
-import BlinkingDot from "../styledComponents/BlinkingDot";
-import LiveDataCard from "./LiveDataCard";
-import LiveDataCardButton from "./LiveDataCardButton";
 import LoadingSpinner from "../LoadingSpinner";
 import CustomNoRowsOverlay from "../datagrid/CustomNoRowsOverlay";
+import IotDeviceDetailDialog from "../iotDevice/IotDeviceDetailDialog";
+import LiveDataCard from "./LiveDataCard";
+import LiveDataCardButton from "./LiveDataCardButton";
 
 function LiveDataCardContainer() {
   const { data: iotDeviceList } = useGetAllIotDevice();
@@ -65,7 +63,7 @@ function LiveDataCardContainer() {
         }}
       >
         <Typography color="error.main">
-          Could not establish Live Connection to the Server!!
+          Could not establish Live Connection to the Server!!!
         </Typography>
         <Button onClick={reConnectWebsocket}>Re-established Connection</Button>
       </Box>
@@ -89,18 +87,7 @@ function LiveDataCardContainer() {
                   iotDeviceList={iotDeviceList}
                   setIotDevice={setSelectedIotDevice}
                 />
-                {connectionState === "connected" ? (
-                  <Typography
-                    color="success.main"
-                    noWrap
-                    sx={{
-                      overflow: "visible",
-                    }}
-                  >
-                    <BlinkingDot />
-                    Live
-                  </Typography>
-                ) : (
+                {connectionState !== "connected" && (
                   <Stack
                     direction="row"
                     alignItems="center"
@@ -115,21 +102,20 @@ function LiveDataCardContainer() {
                         }}
                       />
                     ) : (
-                      <IconButton
+                      <Button
                         size="small"
                         onClick={reConnectWebsocket}
                         color="inherit"
+                        disableElevation
+                        disableFocusRipple
+                        disableRipple
+                        startIcon={<ReplayIcon fontSize="inherit" />}
                       >
-                        <ReplayIcon fontSize="inherit" />
-                      </IconButton>
+                        {connectionState === "disconnected"
+                          ? "refresh"
+                          : connectionState}
+                      </Button>
                     )}
-                    <Typography
-                    // sx={{ display: { xs: "none", sm: "inherit" } }}
-                    >
-                      {connectionState === "disconnected"
-                        ? "refresh"
-                        : connectionState}
-                    </Typography>
                   </Stack>
                 )}
               </Stack>

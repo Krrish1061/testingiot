@@ -63,12 +63,12 @@ function RenderUserDashboard() {
     (state) => state.sendWebSocketMessage
   );
   const websocket = useWebSocketStore((state) => state.websocket);
-
+  const connectionState = useWebSocketStore((state) => state.connectionState);
   const subscribedGroup = useWebSocketStore((state) => state.subscribedGroup);
   const setSubscribedGroup = useWebSocketStore(
     (state) => state.setSubscribedGroup
   );
-
+  const liveData = useWebSocketStore((state) => state.liveData);
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
   );
@@ -86,9 +86,7 @@ function RenderUserDashboard() {
   );
 
   useEffect(() => {
-    setValue(0);
     if (websocket && subscribedGroup !== username) {
-      setliveDataToNull();
       sendWebSocketMessage({
         type: "group_subscribe",
         username: username,
@@ -96,14 +94,22 @@ function RenderUserDashboard() {
       });
       setSubscribedGroup(username || null);
     }
+    if (!websocket && connectionState === "disconnected") {
+      setSubscribedGroup(null);
+    }
   }, [
     websocket,
     username,
     subscribedGroup,
-    setliveDataToNull,
+    connectionState,
     sendWebSocketMessage,
     setSubscribedGroup,
   ]);
+
+  useEffect(() => {
+    setValue(0);
+    setliveDataToNull();
+  }, [username, setliveDataToNull]);
 
   const handleChange = (_event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -116,7 +122,7 @@ function RenderUserDashboard() {
     return (
       <>
         <LiveDataCardContainer />
-        <LineGraphContainer username={username} />
+        {liveData && <LineGraphContainer username={username} />}
       </>
     );
   }
@@ -147,7 +153,7 @@ function RenderUserDashboard() {
       </Tabs>
       <TabPanel value={value} index={0}>
         <LiveDataCardContainer />
-        <LineGraphContainer username={username} />
+        {liveData && <LineGraphContainer username={username} />}
       </TabPanel>
       <TabPanel value={value} index={1}>
         <SuspenseFallback

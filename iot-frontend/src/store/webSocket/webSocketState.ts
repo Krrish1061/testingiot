@@ -33,12 +33,14 @@ const webSocketState: StateCreator<IWebSocketStateStore> = (set) => {
 
       webSocketService.websocket!.onclose = () => {
         set({
+          websocket: null,
           connectionState: "disconnected",
         });
       };
 
       webSocketService.websocket!.onerror = () => {
         set({
+          websocket: null,
           connectionState: "disconnected",
         });
       };

@@ -7,6 +7,7 @@ function useConnectWebSocket() {
     (state) => state.connectToWebsocket
   );
   const websocket = useWebSocketStore((state) => state.websocket);
+  const connectionState = useWebSocketStore((state) => state.connectionState);
   const {
     data: webSocketToken,
     mutateAsync: getWebSocketToken,
@@ -16,6 +17,7 @@ function useConnectWebSocket() {
   const websocketEndpoint = import.meta.env.VITE_WEBSOCKET_ENDPOINT;
 
   useEffect(() => {
+    if (connectionState !== "closed") return;
     if (!websocket && isSuccess) {
       connectToWebsocket(websocketEndpoint + "?token=" + webSocketToken.token);
     }

@@ -62,12 +62,13 @@ function RenderCompanyDashboard() {
   const sendWebSocketMessage = useWebSocketStore(
     (state) => state.sendWebSocketMessage
   );
+  const connectionState = useWebSocketStore((state) => state.connectionState);
   const websocket = useWebSocketStore((state) => state.websocket);
   const subscribedGroup = useWebSocketStore((state) => state.subscribedGroup);
   const setSubscribedGroup = useWebSocketStore(
     (state) => state.setSubscribedGroup
   );
-
+  const liveData = useWebSocketStore((state) => state.liveData);
   const setliveDataToNull = useWebSocketStore(
     (state) => state.setliveDataToNull
   );
@@ -85,9 +86,7 @@ function RenderCompanyDashboard() {
   );
 
   useEffect(() => {
-    setValue(0);
     if (websocket && subscribedGroup !== companySlug) {
-      setliveDataToNull();
       sendWebSocketMessage({
         type: "group_subscribe",
         company_slug: companySlug,
@@ -95,14 +94,22 @@ function RenderCompanyDashboard() {
       });
       setSubscribedGroup(companySlug || null);
     }
+    if (!websocket && connectionState === "disconnected") {
+      setSubscribedGroup(null);
+    }
   }, [
     websocket,
     companySlug,
     subscribedGroup,
-    setliveDataToNull,
+    connectionState,
     sendWebSocketMessage,
     setSubscribedGroup,
   ]);
+
+  useEffect(() => {
+    setValue(0);
+    setliveDataToNull();
+  }, [companySlug, setliveDataToNull]);
 
   const handleChange = (_event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -115,7 +122,7 @@ function RenderCompanyDashboard() {
     return (
       <>
         <LiveDataCardContainer />
-        <LineGraphContainer companySlug={companySlug} />
+        {liveData && <LineGraphContainer companySlug={companySlug} />}
       </>
     );
   }
@@ -139,7 +146,7 @@ function RenderCompanyDashboard() {
       </Tabs>
       <TabPanel value={value} index={0}>
         <LiveDataCardContainer />
-        <LineGraphContainer companySlug={companySlug} />
+        {liveData && <LineGraphContainer companySlug={companySlug} />}
       </TabPanel>
       <TabPanel value={value} index={1}>
         <SuspenseFallback

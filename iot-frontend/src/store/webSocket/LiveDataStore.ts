@@ -17,17 +17,20 @@ const liveDataStore: StateCreator<ILiveDataStore> = (set) => {
               ...state,
               liveData: liveData,
             };
-          const device_id = +deviceIDArray[0];
-          const newData = {
-            ...state.liveData[device_id],
-            ...liveData[device_id],
-          };
+
+          const updatedLiveData = { ...state.liveData };
+          deviceIDArray.forEach((deviceID) => {
+            const device_id = +deviceID;
+            const newData = {
+              ...updatedLiveData[device_id],
+              ...liveData[device_id],
+            };
+            updatedLiveData[device_id] = newData;
+          });
+
           return {
             ...state,
-            liveData: {
-              ...state.liveData,
-              [device_id]: newData,
-            },
+            liveData: updatedLiveData,
           };
         } else {
           return {

@@ -420,7 +420,9 @@ def resend_set_password_email(request):
 
         sending_confirmation_email.delay(send_email_to_user.username)
 
-        return Response("Email is send successfully", status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Email is send successfully"}, status=status.HTTP_200_OK
+        )
 
     else:
         return Response(

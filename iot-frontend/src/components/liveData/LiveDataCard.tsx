@@ -11,13 +11,14 @@ interface Props {
 }
 
 function LiveDataCard({ sensorName, data, sensors }: Props) {
+  const isMainsOff = sensorName === "mains" && !data;
   return (
     <Card
       elevation={1}
       sx={{
         borderStyle: "solid",
-        borderWidth: "1px",
-        borderColor: "primary.main",
+        borderWidth: !isMainsOff ? "1px" : "2px",
+        borderColor: !isMainsOff ? "primary.main" : "error.main",
         width: { xs: 320, smd: 1 },
         paddingBottom: 0,
       }}
