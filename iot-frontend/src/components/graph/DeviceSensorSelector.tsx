@@ -19,6 +19,7 @@ interface Props {
   iotDevices: IotDevice[];
   sensor: string;
   isLoading: boolean;
+  mainsinterruptionCountLoading: boolean;
   sensorList: string[] | undefined;
   anchorRef: RefObject<HTMLButtonElement>;
   handleDeviceChange: (event: SelectChangeEvent) => void;
@@ -38,6 +39,7 @@ function DeviceSensorSelector({
   sensor,
   sensorList,
   isLoading,
+  mainsinterruptionCountLoading,
   anchorRef,
   compareTo,
   handleDeviceChange,
@@ -143,7 +145,10 @@ function DeviceSensorSelector({
             </Select>
           </FormControl>
         </Stack>
-        {isLoading && <CircularProgress variant="indeterminate" size={20} />}
+        {(isLoading ||
+          (sensor === "mains" && mainsinterruptionCountLoading)) && (
+          <CircularProgress variant="indeterminate" size={20} />
+        )}
 
         <Box marginLeft="auto">
           {!!compareTo && (

@@ -1,6 +1,7 @@
 import { Dayjs } from "dayjs";
 import { useCallback, useEffect } from "react";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
+import ISendMessage from "../../entities/webSocket/SendMessage";
 
 interface Props {
   sensor: string;
@@ -48,7 +49,7 @@ function useRequestData({
       sensorName: string
     ) => {
       if (sensorName) {
-        const message = {
+        const message: ISendMessage = {
           type: "sensor_data",
           sensor_name: sensorName,
           iot_device_id: iotDeviceId,

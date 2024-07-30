@@ -15,14 +15,20 @@ const createChartOptions = (
   sensorSymbol: string | null,
   compareSensorSymbol: string | null,
   isCompareSensorValueBoolean: boolean,
-  zoomOptions: ZoomPluginOptions
+  zoomOptions: ZoomPluginOptions,
+  mainsinterruptionCount: number | null
 ) => {
   const titlefontSize = isMobile ? 12 : 15;
   const spanGaps = isSensorValueBoolean ? true : 1000 * 60 * 60 * 24 * 1; // 1 days,
-  const sensorName =
+  let sensorName =
     sensor && !isCompareEnabled
       ? sensor.charAt(0).toUpperCase() + sensor.substring(1) + " Sensor"
       : undefined;
+
+  if (sensor === "mains" && mainsinterruptionCount !== null) {
+    sensorName =
+      sensorName + ` (Interruption counted: ${mainsinterruptionCount})`;
+  }
 
   const options: ChartOptions<"line"> = {
     responsive: true,
@@ -43,7 +49,7 @@ const createChartOptions = (
         backgroundColor: theme.palette.background.paper,
       },
       chartAreaBorder: {
-        borderColor: theme.palette.primary.main,
+        borderColor: theme.palette.primary.light,
       },
 
       legend: {

@@ -14,6 +14,7 @@ from django.utils.timezone import make_aware
 from iot_devices.cache import IotDeviceCache
 from send_livedata.cache import SendLiveDataCache
 from sensor_data.models import SensorData
+from sensor_data.utilis import get_mains_interruption_count
 
 
 class ConvertTz(Func):
@@ -124,3 +125,52 @@ def get_sensor_data(sensor_name, iot_device_id, channel_name, start_date, end_da
         async_to_sync(channel_layer.send)(
             channel_name, {"type": "send_binary_data", "data": compressed_data}
         )
+
+
+@shared_task
+def get_mains_interruption(channel_name, iot_device_id, start_date, end_date=None):
+    """Counting the Number of times Mains Interputted"""
+    try:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59, microsecond=999999
+            )
+        else:
+            end_date = datetime.now()
+    except ValueError:
+        start_date = (datetime.now() - timedelta(days=1)).date()
+        end_date = datetime.now()
+
+    kathmandu_tz = zoneinfo.ZoneInfo("Asia/Kathmandu")
+    start_date = make_aware(start_date, kathmandu_tz)
+    end_date = make_aware(end_date, kathmandu_tz)
+
+    sensor_data_qs = (
+        SensorData.objects.filter(
+            iot_device__id=iot_device_id,
+            timestamp__range=(start_date, end_date),
+            device_sensor__sensor__name="mains",
+        )
+        .values("value", "timestamp")
+        .order_by("timestamp")
+    )
+
+    mains_interruption_count = get_mains_interruption_count(list(sensor_data_qs))
+
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.send)(
+        channel_name,
+        {
+            "type": "send_data",
+            "data": json.dumps(
+                [
+                    {
+                        "message_type": "mains_interruption",
+                        "iot_device_id": iot_device_id,
+                    },
+                    {"count": mains_interruption_count},
+                ]
+            ),
+        },
+    )

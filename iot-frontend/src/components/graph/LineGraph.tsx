@@ -49,6 +49,7 @@ interface Props {
     deviceId: number;
     sensor: string;
   } | null;
+  mainsinterruptionCount: number | null;
 }
 
 function LineGraph({
@@ -59,6 +60,7 @@ function LineGraph({
   device,
   compareTo,
   uptoDays,
+  mainsinterruptionCount,
 }: Props) {
   const isMobile = useDrawerStore((state) => state.isMobile);
   const theme = useTheme();
@@ -106,7 +108,8 @@ function LineGraph({
         sensorSymbol,
         compareSensorSymbol,
         isCompareSensorValueBoolean,
-        zoomOptions
+        zoomOptions,
+        mainsinterruptionCount
       ),
     [
       theme,
@@ -120,6 +123,7 @@ function LineGraph({
       compareSensorSymbol,
       isCompareSensorValueBoolean,
       zoomOptions,
+      mainsinterruptionCount,
     ]
   );
 

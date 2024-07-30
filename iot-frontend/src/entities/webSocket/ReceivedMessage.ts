@@ -1,4 +1,5 @@
 import ILiveData from "./LiveData";
+import { IReceivedMessageMainsInterruption } from "./MainsInterruption";
 import ISensorData from "./SensorData";
 
 interface MessageInfo {
@@ -7,6 +8,9 @@ interface MessageInfo {
   iot_device_id?: number;
 }
 
-type IReceivedMessage = [MessageInfo, ILiveData | ISensorData[]];
+type IReceivedMessage = [
+  MessageInfo,
+  ILiveData | ISensorData[] | IReceivedMessageMainsInterruption
+];
 
 export default IReceivedMessage;

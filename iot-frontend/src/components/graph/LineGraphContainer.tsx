@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import minMax from "dayjs/plugin/minMax";
 import { useEffect, useRef, useState } from "react";
 import useGetDeviceSensorList from "../../hooks/graph/useGetDeviceSensorList";
+import useMainsInterruptionCount from "../../hooks/graph/useMainsInterruptionCount";
 import useRequestData from "../../hooks/graph/useRequestData";
 import useWebSocketStore from "../../store/webSocket/webSocketStore";
 import CompareSensorSelector from "./CompareSensorSelector";
@@ -50,6 +51,16 @@ function LineGraphContainer({ username, companySlug }: Props) {
     endDate: endDate,
     selectedDays: selectedDays,
     compareTo: compareTo,
+  });
+
+  const {
+    count: mainsinterruptionCount,
+    isLoading: mainsinterruptionCountLoading,
+  } = useMainsInterruptionCount({
+    sensor: sensor,
+    iotDeviceId: device,
+    uptoDays: selectedDays,
+    startDate: startDate,
   });
 
   useEffect(() => {
@@ -153,6 +164,8 @@ function LineGraphContainer({ username, companySlug }: Props) {
         selectedDays={selectedDays}
         onClick={handleButtonClick}
         isLoading={isLoading}
+        sensor={sensor}
+        mainsinterruptionCountLoading={mainsinterruptionCountLoading}
       />
       <DeviceSensorSelector
         device={device}
@@ -161,6 +174,7 @@ function LineGraphContainer({ username, companySlug }: Props) {
         compareTo={compareTo}
         sensorList={deviceSensorList}
         isLoading={isLoading}
+        mainsinterruptionCountLoading={mainsinterruptionCountLoading}
         anchorRef={anchorRef}
         handleDeviceChange={handleDeviceChange}
         handleSensorChange={handleSensorChange}
@@ -176,6 +190,7 @@ function LineGraphContainer({ username, companySlug }: Props) {
         compareTo={compareTo}
         uptoDays={selectedDays}
         endDate={endDate}
+        mainsinterruptionCount={mainsinterruptionCount}
       />
       <CompareSensorSelector
         open={open}

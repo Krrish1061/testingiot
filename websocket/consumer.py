@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from company.cache import CompanyCache
 from iot_devices.cache import IotDeviceCache
-from sensor_data.tasks import get_sensor_data
+from sensor_data.tasks import get_mains_interruption, get_sensor_data
 from users.cache import UserCache
 from utils.commom_functions import get_groups_tuple
 from utils.constants import GroupName, UserType
@@ -105,6 +105,16 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
                 channel_name=self.channel_name,
                 start_date=start_date,
                 end_date=end_date,
+            )
+        elif message_type == "mains_interruption":
+            start_date = data.get("start_date")
+            end_date = data.get("end_date")
+            iot_device_id = data.get("iot_device_id")
+            get_mains_interruption.delay(
+                self.channel_name,
+                iot_device_id,
+                start_date,
+                end_date,
             )
 
     async def subscribe_to_group(self, group_name):
