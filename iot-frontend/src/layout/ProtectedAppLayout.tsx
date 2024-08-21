@@ -16,13 +16,14 @@ function ProtectedAppLayout() {
   } = useRefreshToken();
   const { isInitialLoading: isUserLoading, isSuccess: isFetchingUserSuccess } =
     useGetUser(isRefreshTokenSuccess);
-  const isUserCompanySuperAdmin = useAuthStore(
-    (state) => state.isUserCompanySuperAdmin
+
+  const isUserAssociatedWithCompany = useAuthStore(
+    (state) => state.isUserAssociatedWithCompany
   );
 
   const { isInitialLoading: isDealerLoading } = useGetDealer();
   const { isInitialLoading: isCompanyLoading } = useCompany(
-    isUserCompanySuperAdmin && isFetchingUserSuccess
+    isUserAssociatedWithCompany && isFetchingUserSuccess
   );
 
   useEffect(() => {

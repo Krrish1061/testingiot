@@ -9,6 +9,7 @@ const initialAuthState = {
   isUserCompanySuperAdmin: false,
   isUserDealer: false,
   isUserAdmin: false,
+  isUserAssociatedWithCompany: false,
 };
 
 const useAuthStore = create<IAuthStore>((set) => {
@@ -23,6 +24,8 @@ const useAuthStore = create<IAuthStore>((set) => {
     setIsUserDealer: (isUserDealer) => set({ isUserDealer: isUserDealer }),
     setIsUserAdmin: (isUserAdmin) => set({ isUserAdmin: isUserAdmin }),
     setToken: (token) => set({ token: token }),
+    setIsUserAssociatedWithCompany: (isUserAssociatedWithCompany) =>
+      set({ isUserAssociatedWithCompany: isUserAssociatedWithCompany }),
   };
 });
 

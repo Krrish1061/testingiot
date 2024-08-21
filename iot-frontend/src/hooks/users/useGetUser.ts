@@ -15,6 +15,9 @@ function useGetUser(isEnabled: boolean = true) {
   );
   const setIsUserDealer = useAuthStore((state) => state.setIsUserDealer);
   const setIsUserAdmin = useAuthStore((state) => state.setIsUserAdmin);
+  const setIsUserAssociatedWithCompany = useAuthStore(
+    (state) => state.setIsUserAssociatedWithCompany
+  );
   const axiosInstance = useAxios();
 
   const fetchUser = () =>
@@ -39,6 +42,9 @@ function useGetUser(isEnabled: boolean = true) {
       }
       if (data.profile?.date_of_birth) {
         data.profile.date_of_birth = new Date(data.profile.date_of_birth);
+      }
+      if (data.is_associated_with_company) {
+        setIsUserAssociatedWithCompany(true);
       }
       setUser(data);
     },

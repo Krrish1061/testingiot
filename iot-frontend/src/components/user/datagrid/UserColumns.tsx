@@ -19,7 +19,6 @@ import useUserDataGrid from "../../../hooks/muiDataGrid/useUserDataGrid";
 import UserProfileModel from "./UserProfileModel";
 import useGetAllCompany from "../../../hooks/company/useGetAllCompany";
 import useCompanyStore from "../../../store/companyStore";
-import useCompany from "../../../hooks/company/useCompany";
 import useGetAllDealer from "../../../hooks/dealer/useGetAllDealer";
 
 interface Props {
@@ -73,8 +72,6 @@ function UserColumns({ users }: Props) {
   );
   const { data: companyList } = useGetAllCompany(isUserSuperAdmin);
   const { data: dealerList } = useGetAllDealer();
-  // fetching the user company detail
-  useCompany(!isUserSuperAdmin && user?.is_associated_with_company);
 
   const {
     handleEditClick,

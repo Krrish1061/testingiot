@@ -217,12 +217,16 @@ def device_sensor(request, device_id):
                 if device_sensor.field_name in delete_fieldname_sensor_list:
                     try:
                         device_sensor.delete()
-                    except:
+                    except ProtectedError:
                         error_list.append(device_sensor.sensor.name)
             IotDeviceCache.delete_device_sensors(device_id)
             if error_list:
+                error_sensors = ",".join(error_list)
                 return Response(
-                    {"error": error_list}, status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": f"Cannot delete sensor(s) {error_sensors} with associated data."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
     else:

@@ -7,6 +7,7 @@ interface IAuthState {
   isUserDealer: boolean;
   isUserAdmin: boolean;
   token: string | null;
+  isUserAssociatedWithCompany: boolean;
 }
 
 interface IAuthAction {
@@ -16,6 +17,9 @@ interface IAuthAction {
   setIsUserDealer: (isUserSuperAdmin: boolean) => void;
   setIsUserAdmin: (isUserSuperAdmin: boolean) => void;
   setToken: (token: string | null) => void;
+  setIsUserAssociatedWithCompany: (
+    isUserAssociatedWithCompany: boolean
+  ) => void;
 }
 
 type IAuthStore = IAuthState & IAuthAction;
