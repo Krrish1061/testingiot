@@ -24,6 +24,8 @@ class IotDevice(models.Model):
     - is_active: Flag indicating if the device is active.
     - api_key: Unique Identity for each iot devices
     - created_at: Date and time in which Iot devices is registered in system
+    - email_alert: enables email notification for the device
+    - send_live_data: enables sending live-data to the specified URL for the device
 
     An Iot device is either owned by a company or an individual user but not both.
     """
@@ -58,6 +60,8 @@ class IotDevice(models.Model):
     )
     board_id = models.PositiveSmallIntegerField(unique=True, blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now, editable=False)
+    email_alert = models.BooleanField(default=False, blank=True, null=True)
+    send_live_data = models.BooleanField(default=False, blank=True, null=True)
 
     def __str__(self):
         """Returns the string representation of the Iot Device model"""
@@ -84,7 +88,7 @@ class IotDevice(models.Model):
 
 # models deviceSensor
 class IotDeviceSensor(models.Model):
-    """Model refresenting Sensor associated with the individual Iot device"""
+    """This Model represents Sensor associated with the individual IoT device"""
 
     iot_device = models.ForeignKey(
         IotDevice, on_delete=models.CASCADE, related_name="iot_device_sensors"

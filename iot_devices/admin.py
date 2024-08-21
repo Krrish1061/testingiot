@@ -12,6 +12,8 @@ class IotDeviceAdmin(admin.ModelAdmin):
         "dealer",
         "board_id",
         "is_active",
+        "email_alert",
+        "send_live_data",
         "api_key",
     )
 

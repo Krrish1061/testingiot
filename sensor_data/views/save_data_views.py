@@ -65,13 +65,14 @@ def save_sensor_data(request):
     )
 
     # call celery for sending live data to an api end point
-    send_live_data_to.delay(
-        username=username,
-        company_slug=company_slug,
-        data=serializer.validated_data,
-        iot_device_id=iot_device.id,
-        board_id=iot_device.board_id,
-        timestamp=timestamp,
-    )
+    if iot_device.send_live_data:
+        send_live_data_to.delay(
+            username=username,
+            company_slug=company_slug,
+            data=serializer.validated_data,
+            iot_device_id=iot_device.id,
+            board_id=iot_device.board_id,
+            timestamp=timestamp,
+        )
 
     return Response(status=status.HTTP_200_OK)
