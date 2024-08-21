@@ -43,17 +43,7 @@ def send_live_data_to(username, company_slug, data, iot_device_id, board_id, tim
                     else data[device_sensor.field_name]
                 )
                 for device_sensor in device_sensors
-                if (
-                    device_sensor.field_name in data
-                    and (
-                        device_sensor.max_limit is None
-                        or data[device_sensor.field_name] <= device_sensor.max_limit
-                    )
-                    and (
-                        device_sensor.min_limit is None
-                        or data[device_sensor.field_name] >= device_sensor.min_limit
-                    )
-                )
+                if (device_sensor.field_name in data)
             }
 
             sensor_data["timestamp"] = timestamp

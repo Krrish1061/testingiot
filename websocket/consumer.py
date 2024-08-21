@@ -159,18 +159,7 @@ class SensorDataConsumer(AsyncWebsocketConsumer):
         sensor_data = {
             device_sensor.sensor.name: data[device_sensor.field_name]
             for device_sensor in device_sensors
-            if (
-                device_sensor.field_name in data
-                and (
-                    device_sensor.max_limit is None
-                    or data[device_sensor.field_name] <= device_sensor.max_limit
-                )
-                and (
-                    device_sensor.min_limit is None
-                    or data[device_sensor.field_name] >= device_sensor.min_limit
-                )
-            )
+            if (device_sensor.field_name in data)
         }
-
         sensor_data["timestamp"] = timestamp
         return {device_id: sensor_data}

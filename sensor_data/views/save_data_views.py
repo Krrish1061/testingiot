@@ -35,6 +35,10 @@ def save_sensor_data(request):
         },
     )
     serializer.is_valid(raise_exception=True)
+    if not serializer.validated_data:
+        # this means all the sensor values received are beyond the max and min limit of the device sensor
+        return Response(status=status.HTTP_200_OK)
+
     with transaction.atomic():
         serializer.save()
 
