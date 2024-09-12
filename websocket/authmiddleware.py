@@ -12,6 +12,9 @@ from django.utils import timezone
 
 from users.cache import UserCache
 from websocket.cache import WebSocketCache
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @database_sync_to_async
@@ -40,10 +43,19 @@ class JwtAuthMiddleware(BaseMiddleware):
             if token_obj:
                 # set the user
                 scope["user"] = user
+                company_slug = (
+                    user.company.slug if user.is_associated_with_company else None
+                )
+                logger.warning(
+                    f"inside JwtAuthMiddleware websocket method initiated by user {user.username}-{user.type}-{company_slug}"
+                )
                 return await super().__call__(scope, receive, send)
 
         # to disconnect the websocket connection a bit slow
         # probably need to throw channels.exceptions.StopConsumer exception check docs Closing Consumers
+        logger.warning(
+            f"outside JwtAuthMiddleware websocket method initiated by user {user.username}-{user.type}-{company_slug}"
+        )
         return None
 
     # another approach is to accept connection as annoomous user
