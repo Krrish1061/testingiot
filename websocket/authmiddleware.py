@@ -37,9 +37,11 @@ class JwtAuthMiddleware(BaseMiddleware):
         # Get the token from query params
         token_query_string = parse_qs(scope["query_string"].decode("utf8"))
         token = token_query_string.get("token", [None])[0]
+        logger.warning(f"inside JwtAuthMiddleware websocket method initiated 1")
         if token:
             # get the token object from the database
             token_obj, user = await get_token(token)
+            logger.warning(f"inside JwtAuthMiddleware websocket method initiated 2")
             if token_obj:
                 # set the user
                 scope["user"] = user
