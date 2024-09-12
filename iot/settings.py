@@ -305,7 +305,7 @@ LOGGING = {
     "loggers": {
         "": {
             "handlers": ["file"],
-            "level": "WARNING",
+            "level": "DEBUG",
         }
     },
 }
