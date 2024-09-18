@@ -49,8 +49,8 @@ class IotDeviceCaching(Cache):
         user=None,
         username: str | None = None,
     ) -> str | None:
-        company_slug = company.slug if company else None
-        username = user.username if user else None
+        company_slug = company.slug if company else company_slug
+        username = user.username if user else username
         if company_slug:
             return self.__get_company_device_cache_key(company_slug)
         elif username:
