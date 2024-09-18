@@ -13,4 +13,5 @@ urlpatterns = [
     path(
         "api-key/", settings_views.generate_user_api_key, name="generate-user-api-key"
     ),
+    path("clear-cache/", settings_views.clear_cache, name="clear-cache"),
 ]

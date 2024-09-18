@@ -428,3 +428,25 @@ def resend_set_password_email(request):
         return Response(
             {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
         )
+
+
+@csrf_protect
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def clear_cache(request, username):
+    requested_user = UserCache.get_user(request.user.username)
+    user_groups = get_groups_tuple(requested_user)
+
+    if GroupName.SUPERADMIN_GROUP in user_groups:
+        from django.core.cache import cache
+
+        cache.clear()
+
+        return Response(
+            {"message": "cache cleared successfully"}, status=status.HTTP_200_OK
+        )
+
+    else:
+        return Response(
+            {"error": ERROR_PERMISSION_DENIED}, status=status.HTTP_403_FORBIDDEN
+        )
